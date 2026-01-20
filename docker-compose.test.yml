@@ -29,9 +29,9 @@ services:
       - --host-port=0.0.0.0:8085
       - --project=test-project
     ports:
-      - "8085:8085"
+      - '8085:8085'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8085']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -43,7 +43,7 @@ services:
       context: ./services/${SERVICE_DIR:-go-gin}
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - '8080:8080'
     environment:
       - PORT=8080
       - DISCORD_PUBLIC_KEY=398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159
@@ -54,7 +54,7 @@ services:
       pubsub-emulator:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/health']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -75,4 +75,4 @@ services:
       pubsub-emulator:
         condition: service_healthy
     # Run tests and exit
-    command: ["go", "test", "-v", "./..."]
+    command: ['go', 'test', '-v', './...']

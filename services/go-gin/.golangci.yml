@@ -34,7 +34,7 @@ linters-settings:
     locale: US
   gosec:
     excludes:
-      - G104  # Unhandled errors (we handle these explicitly where needed)
+      - G104 # Unhandled errors (we handle these explicitly where needed)
 
 issues:
   exclude-rules:
@@ -42,4 +42,4 @@ issues:
     - path: main\.go
       linters:
         - gocritic
-      text: "exitAfterDefer"
+      text: 'exitAfterDefer'

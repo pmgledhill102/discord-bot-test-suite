@@ -4,148 +4,148 @@
 version: 2
 updates:
   # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "ci"
+      prefix: 'ci'
     labels:
-      - "dependencies"
-      - "github-actions"
+      - 'dependencies'
+      - 'github-actions'
 
   # Go modules (contract tests and Go service)
-  - package-ecosystem: "gomod"
-    directory: "/"
+  - package-ecosystem: 'gomod'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(go)"
+      prefix: 'deps(go)'
     labels:
-      - "dependencies"
-      - "go"
+      - 'dependencies'
+      - 'go'
     groups:
       go-deps:
         patterns:
-          - "*"
+          - '*'
 
   # Go service (when it exists)
-  - package-ecosystem: "gomod"
-    directory: "/services/go-gin"
+  - package-ecosystem: 'gomod'
+    directory: '/services/go-gin'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(go-gin)"
+      prefix: 'deps(go-gin)'
     labels:
-      - "dependencies"
-      - "go"
+      - 'dependencies'
+      - 'go'
 
   # Python services
-  - package-ecosystem: "pip"
-    directory: "/services/python-django"
+  - package-ecosystem: 'pip'
+    directory: '/services/python-django'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(django)"
+      prefix: 'deps(django)'
     labels:
-      - "dependencies"
-      - "python"
+      - 'dependencies'
+      - 'python'
 
-  - package-ecosystem: "pip"
-    directory: "/services/python-flask"
+  - package-ecosystem: 'pip'
+    directory: '/services/python-flask'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(flask)"
+      prefix: 'deps(flask)'
     labels:
-      - "dependencies"
-      - "python"
+      - 'dependencies'
+      - 'python'
 
   # Node.js service
-  - package-ecosystem: "npm"
-    directory: "/services/node-express"
+  - package-ecosystem: 'npm'
+    directory: '/services/node-express'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(express)"
+      prefix: 'deps(express)'
     labels:
-      - "dependencies"
-      - "javascript"
+      - 'dependencies'
+      - 'javascript'
 
   # Java service
-  - package-ecosystem: "maven"
-    directory: "/services/java-spring"
+  - package-ecosystem: 'maven'
+    directory: '/services/java-spring'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(spring)"
+      prefix: 'deps(spring)'
     labels:
-      - "dependencies"
-      - "java"
+      - 'dependencies'
+      - 'java'
 
   # Rust service
-  - package-ecosystem: "cargo"
-    directory: "/services/rust-actix"
+  - package-ecosystem: 'cargo'
+    directory: '/services/rust-actix'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(actix)"
+      prefix: 'deps(actix)'
     labels:
-      - "dependencies"
-      - "rust"
+      - 'dependencies'
+      - 'rust'
 
   # .NET service
-  - package-ecosystem: "nuget"
-    directory: "/services/csharp-aspnet"
+  - package-ecosystem: 'nuget'
+    directory: '/services/csharp-aspnet'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(aspnet)"
+      prefix: 'deps(aspnet)'
     labels:
-      - "dependencies"
-      - "csharp"
+      - 'dependencies'
+      - 'csharp'
 
   # Ruby service
-  - package-ecosystem: "bundler"
-    directory: "/services/ruby-rails"
+  - package-ecosystem: 'bundler'
+    directory: '/services/ruby-rails'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(rails)"
+      prefix: 'deps(rails)'
     labels:
-      - "dependencies"
-      - "ruby"
+      - 'dependencies'
+      - 'ruby'
 
   # PHP service
-  - package-ecosystem: "composer"
-    directory: "/services/php-laravel"
+  - package-ecosystem: 'composer'
+    directory: '/services/php-laravel'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(laravel)"
+      prefix: 'deps(laravel)'
     labels:
-      - "dependencies"
-      - "php"
+      - 'dependencies'
+      - 'php'
 
   # Docker
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: 'docker'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps(docker)"
+      prefix: 'deps(docker)'
     labels:
-      - "dependencies"
-      - "docker"
+      - 'dependencies'
+      - 'docker'
