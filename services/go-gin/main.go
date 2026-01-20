@@ -31,8 +31,8 @@ const (
 
 // Response types
 const (
-	ResponseTypePong                     = 1
-	ResponseTypeDeferredChannelMessage   = 5
+	ResponseTypePong                   = 1
+	ResponseTypeDeferredChannelMessage = 5
 )
 
 // Interaction represents a Discord interaction request

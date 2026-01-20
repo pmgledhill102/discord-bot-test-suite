@@ -26,6 +26,8 @@ linters-settings:
     check-blank: true
   govet:
     enable-all: true
+    disable:
+      - fieldalignment # Optimization, not a correctness issue
   gofmt:
     simplify: true
   goimports:
@@ -35,6 +37,10 @@ linters-settings:
   gosec:
     excludes:
       - G104 # Unhandled errors (we handle these explicitly where needed)
+  staticcheck:
+    checks:
+      - all
+      - '-SA1019' # Ignore deprecation warnings (pubsub v1 → v2 migration pending)
 
 issues:
   exclude-rules:
