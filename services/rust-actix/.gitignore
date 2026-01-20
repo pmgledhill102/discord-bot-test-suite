@@ -1,0 +1,12 @@
+# Build artifacts
+target/
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Debug
+*.pdb

@@ -1,101 +1,134 @@
-#!/usr/bin/env bash
-#
-# Run contract tests against a service implementation
-#
-# Usage:
-#   ./scripts/run-contract-tests.sh [service-dir]
-#
-# Examples:
-#   ./scripts/run-contract-tests.sh go-gin
-#   ./scripts/run-contract-tests.sh python-flask
-#
-# If no service is specified, defaults to go-gin.
+#!/bin/bash
+# Run contract tests for a service with dynamic port allocation
+# Usage: run-contract-tests.sh <service-dir>
+# Example: run-contract-tests.sh rust-actix
 
-set -euo pipefail
+set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+SERVICE_DIR=${1:?Usage: run-contract-tests.sh <service-dir>}
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-SERVICE_DIR="${1:-go-gin}"
-COMPOSE_FILE="$PROJECT_ROOT/docker-compose.test.yml"
-
-echo "=============================================="
-echo "Running contract tests against: $SERVICE_DIR"
-echo "=============================================="
-echo ""
-
-# Check if service directory exists
+# Validate service directory exists
 if [[ ! -d "$PROJECT_ROOT/services/$SERVICE_DIR" ]]; then
-  echo "ERROR: Service directory not found: services/$SERVICE_DIR"
-  echo ""
-  echo "Available services:"
-  ls -1 "$PROJECT_ROOT/services/" 2>/dev/null || echo "  (none yet)"
-  exit 1
+    echo "Error: Service directory 'services/$SERVICE_DIR' does not exist"
+    exit 1
 fi
 
-# Check if Dockerfile exists
-if [[ ! -f "$PROJECT_ROOT/services/$SERVICE_DIR/Dockerfile" ]]; then
-  echo "ERROR: Dockerfile not found in services/$SERVICE_DIR"
-  exit 1
-fi
+# Find free ports
+find_free_port() {
+    local start_port=${1:-10000}
+    for port in $(seq $start_port 65000); do
+        if ! lsof -i:$port >/dev/null 2>&1; then
+            echo $port
+            return 0
+        fi
+    done
+    echo "No free port found" >&2
+    return 1
+}
 
-# Export service directory for docker-compose
-export SERVICE_DIR
+SERVICE_PORT=$(find_free_port 10000)
+PUBSUB_PORT=$(find_free_port $((SERVICE_PORT + 1)))
 
-# Clean up any previous runs
-echo "Cleaning up previous test runs..."
-docker-compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
-
-# Build and start infrastructure
+echo "=== Port Allocation ==="
+echo "Service port: $SERVICE_PORT"
+echo "Pub/Sub port: $PUBSUB_PORT"
 echo ""
-echo "Building and starting test infrastructure..."
-docker-compose -f "$COMPOSE_FILE" up -d --build pubsub-emulator service-under-test
 
-# Wait for services to be healthy
+# Generate unique container names based on service and timestamp
+TIMESTAMP=$(date +%s)
+SERVICE_CONTAINER="test-${SERVICE_DIR}-${TIMESTAMP}"
+PUBSUB_CONTAINER="pubsub-${SERVICE_DIR}-${TIMESTAMP}"
+NETWORK_NAME="test-network-${SERVICE_DIR}-${TIMESTAMP}"
+
+# Cleanup function
+cleanup() {
+    echo ""
+    echo "=== Cleanup ==="
+    docker stop "$SERVICE_CONTAINER" 2>/dev/null || true
+    docker rm "$SERVICE_CONTAINER" 2>/dev/null || true
+    docker stop "$PUBSUB_CONTAINER" 2>/dev/null || true
+    docker rm "$PUBSUB_CONTAINER" 2>/dev/null || true
+    docker network rm "$NETWORK_NAME" 2>/dev/null || true
+    echo "Cleanup complete"
+}
+
+# Set up trap for cleanup
+trap cleanup EXIT
+
+# Configuration
+DISCORD_PUBLIC_KEY="398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159"
+GOOGLE_CLOUD_PROJECT="test-project"
+PUBSUB_TOPIC="discord-interactions"
+
+echo "=== Creating Docker Network ==="
+docker network create "$NETWORK_NAME"
+
 echo ""
-echo "Waiting for services to be ready..."
-for i in {1..60}; do
-  if docker-compose -f "$COMPOSE_FILE" ps | grep -q "healthy"; then
-    break
-  fi
-  echo "  Waiting... ($i/60)"
-  sleep 2
+echo "=== Starting Pub/Sub Emulator ==="
+docker run -d \
+    --name "$PUBSUB_CONTAINER" \
+    --network "$NETWORK_NAME" \
+    -p "$PUBSUB_PORT:8085" \
+    -e "PUBSUB_PROJECT1=test-project,discord-interactions" \
+    gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators \
+    gcloud beta emulators pubsub start --host-port=0.0.0.0:8085
+
+# Wait for Pub/Sub emulator
+echo "Waiting for Pub/Sub emulator..."
+for i in {1..30}; do
+    if curl -s "http://localhost:$PUBSUB_PORT" >/dev/null 2>&1; then
+        echo "Pub/Sub emulator ready"
+        break
+    fi
+    if [[ $i -eq 30 ]]; then
+        echo "Pub/Sub emulator failed to start"
+        docker logs "$PUBSUB_CONTAINER"
+        exit 1
+    fi
+    sleep 1
 done
 
-# Check if services are actually healthy
-if ! docker-compose -f "$COMPOSE_FILE" ps service-under-test | grep -q "healthy"; then
-  echo ""
-  echo "ERROR: Service failed to become healthy"
-  echo ""
-  echo "Service logs:"
-  docker-compose -f "$COMPOSE_FILE" logs service-under-test
-  docker-compose -f "$COMPOSE_FILE" down
-  exit 1
-fi
+echo ""
+echo "=== Building Service Image ==="
+docker build -t "service-$SERVICE_DIR:test" "$PROJECT_ROOT/services/$SERVICE_DIR"
 
 echo ""
-echo "Services are ready. Running contract tests..."
+echo "=== Starting Service ==="
+docker run -d \
+    --name "$SERVICE_CONTAINER" \
+    --network "$NETWORK_NAME" \
+    -p "$SERVICE_PORT:8080" \
+    -e "PORT=8080" \
+    -e "DISCORD_PUBLIC_KEY=$DISCORD_PUBLIC_KEY" \
+    -e "PUBSUB_EMULATOR_HOST=$PUBSUB_CONTAINER:8085" \
+    -e "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" \
+    -e "PUBSUB_TOPIC=$PUBSUB_TOPIC" \
+    "service-$SERVICE_DIR:test"
+
+# Wait for service
+echo "Waiting for service..."
+for i in {1..30}; do
+    if curl -s "http://localhost:$SERVICE_PORT/health" >/dev/null 2>&1; then
+        echo "Service ready"
+        break
+    fi
+    if [[ $i -eq 30 ]]; then
+        echo "Service failed to start"
+        docker logs "$SERVICE_CONTAINER"
+        exit 1
+    fi
+    sleep 1
+done
+
 echo ""
+echo "=== Running Contract Tests ==="
+cd "$PROJECT_ROOT/tests/contract"
+CONTRACT_TEST_TARGET="http://localhost:$SERVICE_PORT" \
+PUBSUB_EMULATOR_HOST="localhost:$PUBSUB_PORT" \
+GOOGLE_CLOUD_PROJECT="$GOOGLE_CLOUD_PROJECT" \
+go test -v -race ./...
 
-# Run the contract tests
-docker-compose -f "$COMPOSE_FILE" run --rm contract-tests
-TEST_EXIT_CODE=$?
-
-# Cleanup
 echo ""
-echo "Cleaning up..."
-docker-compose -f "$COMPOSE_FILE" down
-
-# Report result
-echo ""
-if [[ $TEST_EXIT_CODE -eq 0 ]]; then
-  echo "=============================================="
-  echo "SUCCESS: All contract tests passed!"
-  echo "=============================================="
-else
-  echo "=============================================="
-  echo "FAILURE: Contract tests failed (exit code: $TEST_EXIT_CODE)"
-  echo "=============================================="
-fi
-
-exit $TEST_EXIT_CODE
+echo "=== All Tests Passed ==="
