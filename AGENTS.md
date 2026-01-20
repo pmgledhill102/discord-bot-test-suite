@@ -41,14 +41,16 @@ git checkout -b <branch-name>          # Create feature branch
    gh pr create --title "Title" --body "Description"
    ```
 
-3. **Wait for CI to pass** - All 7 status checks must succeed:
-   - actionlint
-   - markdown-lint
-   - prettier
-   - shellcheck
-   - yaml-lint
-   - Lint Go Code
-   - Contract Tests
+3. **Wait for CI to pass** - Required status checks:
+   - Lint Markdown
+   - Lint YAML
+   - Lint GitHub Actions
+   - Check Formatting (Prettier)
+
+   Additional checks run on path-specific changes:
+   - Lint Go Code (when `services/go-gin/**` changes)
+   - Contract Tests (when Go service or tests change)
+   - Lint Shell Scripts (when `.sh` files change)
 
 4. **Merge when green:**
 
