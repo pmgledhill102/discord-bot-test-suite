@@ -1,0 +1,45 @@
+# golangci-lint configuration for Go/Gin service
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosimple
+    - gofmt
+    - goimports
+    - misspell
+    - unconvert
+    - bodyclose
+    - noctx
+    - gosec
+    - prealloc
+
+linters-settings:
+  errcheck:
+    check-blank: true
+  govet:
+    enable-all: true
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: github.com/pmgledhill102/discord-bot-test-suite
+  misspell:
+    locale: US
+  gosec:
+    excludes:
+      - G104  # Unhandled errors (we handle these explicitly where needed)
+
+issues:
+  exclude-rules:
+    # Allow log.Fatal in main
+    - path: main\.go
+      linters:
+        - gocritic
+      text: "exitAfterDefer"

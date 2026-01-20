@@ -1,0 +1,99 @@
+# Main Lint Workflow
+#
+# Runs generic linting checks that apply across the entire repository.
+# Language-specific linting is handled in per-service workflows.
+
+name: Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/**'
+      - '**.md'
+      - '**.yml'
+      - '**.yaml'
+      - '**.json'
+      - '.pre-commit-config.yaml'
+      - '.prettierrc'
+      - '.editorconfig'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/**'
+      - '**.md'
+      - '**.yml'
+      - '**.yaml'
+      - '**.json'
+      - '.pre-commit-config.yaml'
+      - '.prettierrc'
+      - '.editorconfig'
+
+jobs:
+  actionlint:
+    name: Lint GitHub Actions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run actionlint
+        uses: raven-actions/actionlint@v2
+        with:
+          fail-on-error: true
+
+  markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: |
+            **/*.md
+            !.beads/**
+
+  prettier:
+    name: Check Formatting (Prettier)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      - name: Check formatting
+        run: prettier --check "**/*.{json,yml,yaml}" --ignore-path .prettierignore
+
+  yaml-lint:
+    name: Lint YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 120
+              truthy:
+                check-keys: false
+              document-start: disable
+            ignore: |
+              .beads/
+              node_modules/
+              vendor/
