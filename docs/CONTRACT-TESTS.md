@@ -1,0 +1,146 @@
+# CONTRACT-TESTS.md - Golden Contract Test Specification
+
+This document defines the contract tests that all service implementations must pass.
+
+## Overview
+
+Contract tests are black-box tests written in Go that validate service behavior by making HTTP requests to the containerized service. Tests do NOT inspect internal code—only external behavior matters.
+
+## Test Categories
+
+### 1. Signature Validation Tests
+
+| Test | Request | Expected Response |
+|------|---------|-------------------|
+| Valid signature | Properly signed request | 200 OK |
+| Missing signature header | No `X-Signature-Ed25519` | 401 Unauthorized |
+| Missing timestamp header | No `X-Signature-Timestamp` | 401 Unauthorized |
+| Invalid signature | Wrong signature value | 401 Unauthorized |
+| Expired timestamp | Timestamp > 5 seconds old | 401 Unauthorized |
+
+### 2. Ping/Pong Tests
+
+| Test | Request | Expected Response |
+|------|---------|-------------------|
+| Valid ping | `{"type": 1}` | `{"type": 1}` |
+| Ping does not publish | Valid ping | No Pub/Sub message |
+
+### 3. Slash Command Tests
+
+| Test | Request | Expected Response |
+|------|---------|-------------------|
+| Valid slash command | `{"type": 2, ...}` | `{"type": 5}` (deferred) |
+| Publishes to Pub/Sub | Valid slash command | Message in Pub/Sub |
+| Sensitive fields redacted | Valid slash command | `token` not in Pub/Sub message |
+| Response is non-ephemeral | Valid slash command | No `flags: 64` in response |
+
+### 4. Error Handling Tests
+
+| Test | Request | Expected Response |
+|------|---------|-------------------|
+| Malformed JSON | Invalid JSON body | 400 Bad Request |
+| Unknown interaction type | `{"type": 99}` | 400 Bad Request |
+| Missing required fields | `{}` | 400 Bad Request |
+
+## Test Fixtures
+
+### Discord Key Pair (Test Only)
+
+Tests use a deterministic Ed25519 key pair for signature validation:
+
+```
+Public Key (hex):  <generated at test init>
+Private Key (hex): <generated at test init>
+```
+
+Services under test must be configured with the test public key via environment variable:
+```
+DISCORD_PUBLIC_KEY=<test-public-key>
+```
+
+### Sample Payloads
+
+#### Ping Request
+```json
+{
+  "type": 1,
+  "id": "test-interaction-id",
+  "application_id": "test-app-id",
+  "token": "test-token"
+}
+```
+
+#### Slash Command Request
+```json
+{
+  "type": 2,
+  "id": "test-interaction-id",
+  "application_id": "test-app-id",
+  "token": "sensitive-token-should-be-redacted",
+  "data": {
+    "id": "cmd-id",
+    "name": "test-command"
+  },
+  "guild_id": "test-guild",
+  "channel_id": "test-channel",
+  "member": {
+    "user": {
+      "id": "user-id",
+      "username": "testuser"
+    }
+  }
+}
+```
+
+## Pub/Sub Verification
+
+Tests verify Pub/Sub behavior using the emulator:
+
+1. Create unique topic/subscription per test (enables parallel execution)
+2. Send interaction request to service
+3. Pull from subscription with timeout
+4. Assert message contents (or absence for pings)
+
+### Expected Pub/Sub Message Schema
+
+See [PUBSUB-SCHEMA.md](./PUBSUB-SCHEMA.md) for the message format specification.
+
+## Test Execution
+
+```bash
+# Run all contract tests against a service
+CONTRACT_TEST_TARGET=http://localhost:8080 \
+PUBSUB_EMULATOR_HOST=localhost:8085 \
+go test ./tests/contract/...
+
+# Run specific test category
+go test ./tests/contract/... -run TestSignature
+go test ./tests/contract/... -run TestPing
+go test ./tests/contract/... -run TestSlashCommand
+```
+
+## Container Test Harness
+
+Tests run against the container image, not source code:
+
+```bash
+# Build service image
+docker build -t service-under-test ./services/go-gin
+
+# Start test infrastructure
+docker-compose -f docker-compose.test.yml up -d
+
+# Run contract tests
+go test ./tests/contract/...
+
+# Cleanup
+docker-compose -f docker-compose.test.yml down
+```
+
+## Adding New Tests
+
+When adding contract tests:
+1. Tests must be language-agnostic (no Go-specific assertions)
+2. Tests must clean up Pub/Sub resources after completion
+3. Tests must not depend on execution order
+4. Tests must complete within 30 seconds

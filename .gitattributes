@@ -1,3 +1,71 @@
+# Git attributes for consistent behavior across environments
+# https://git-scm.com/docs/gitattributes
 
-# Use bd merge for beads JSONL files
+# Default behavior: auto-detect text files and normalize line endings
+* text=auto eol=lf
+
+# Explicitly declare text files
+*.md text
+*.txt text
+*.json text
+*.yaml text
+*.yml text
+*.toml text
+*.xml text
+*.html text
+*.css text
+*.scss text
+
+# Source code files
+*.go text
+*.py text
+*.js text
+*.ts text
+*.jsx text
+*.tsx text
+*.java text
+*.cs text
+*.cpp text
+*.c text
+*.h text
+*.hpp text
+*.rs text
+*.rb text
+*.php text
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Config files
+*.env text
+*.ini text
+*.cfg text
+*.conf text
+Dockerfile text
+Makefile text
+.editorconfig text
+.gitattributes text
+.gitignore text
+
+# Binary files - do not normalize
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.db binary
+
+# Linguist overrides for GitHub language statistics
+*.md linguist-documentation
+docs/* linguist-documentation
+
+# Beads - use bd merge driver for JSONL files
 .beads/issues.jsonl merge=beads

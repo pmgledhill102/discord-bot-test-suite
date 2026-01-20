@@ -1,0 +1,31 @@
+# Beads issue tracking
+.beads/
+
+# Build outputs
+dist/
+build/
+target/
+bin/
+obj/
+
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Generated files
+*.min.js
+*.min.css
+go.sum
+package-lock.json
+yarn.lock
+Cargo.lock
+composer.lock
+Gemfile.lock

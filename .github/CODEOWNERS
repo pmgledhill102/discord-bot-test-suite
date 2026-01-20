@@ -1,0 +1,20 @@
+# CODEOWNERS - Define code ownership for review requirements
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @paul
+
+# Documentation
+/docs/ @paul
+*.md @paul
+
+# CI/CD configuration
+/.github/ @paul
+
+# Contract tests (critical path)
+/tests/ @paul
+
+# Individual service implementations can have specific owners
+# /services/go-gin/ @go-team
+# /services/python-django/ @python-team
+# /services/java-spring/ @java-team

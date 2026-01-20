@@ -1,0 +1,73 @@
+# EditorConfig - Consistent coding styles across editors
+# https://editorconfig.org
+
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Go files - use tabs per Go convention
+[*.go]
+indent_style = tab
+indent_size = 4
+
+# Python files
+[*.py]
+indent_size = 4
+
+# Java files
+[*.java]
+indent_size = 4
+
+# C# files
+[*.cs]
+indent_size = 4
+
+# C++ files
+[*.{cpp,hpp,c,h}]
+indent_size = 4
+
+# Rust files
+[*.rs]
+indent_size = 4
+
+# Ruby files
+[*.rb]
+indent_size = 2
+
+# PHP files
+[*.php]
+indent_size = 4
+
+# Makefiles - must use tabs
+[Makefile]
+indent_style = tab
+
+[*.mk]
+indent_style = tab
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_size = 2
+
+# Markdown files
+[*.md]
+trim_trailing_whitespace = false
+
+# Shell scripts
+[*.sh]
+indent_size = 2
+
+# Dockerfiles
+[Dockerfile*]
+indent_size = 2
