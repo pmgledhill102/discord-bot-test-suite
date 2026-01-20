@@ -99,7 +99,7 @@ jobs:
         run: |
           docker-compose -f docker-compose.pubsub.yml up -d
           echo "Waiting for Pub/Sub emulator..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:8085 > /dev/null 2>&1; then
               echo "Pub/Sub emulator is ready"
               break
@@ -121,7 +121,7 @@ jobs:
             service-under-test
 
           echo "Waiting for service to be ready..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -s http://localhost:8080/health > /dev/null 2>&1; then
               echo "Service is ready"
               break
