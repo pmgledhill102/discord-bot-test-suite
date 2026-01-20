@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
+
 	"github.com/pmgledhill102/discord-bot-test-suite/tests/contract/testkeys"
 )
 

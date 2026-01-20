@@ -33,6 +33,10 @@ linters-settings:
     local-prefixes: github.com/pmgledhill102/discord-bot-test-suite
   misspell:
     locale: US
+  staticcheck:
+    checks:
+      - all
+      - '-SA1019' # Ignore deprecation warnings (pubsub v2 migration pending)
 
 issues:
   exclude-rules:
