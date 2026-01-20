@@ -45,7 +45,10 @@ tests/contract/
 ├── ping_test.go        # Ping/Pong tests
 ├── slash_test.go       # Slash command tests
 ├── error_test.go       # Error handling tests
-└── testdata/           # Test fixtures and payloads
+├── testdata/           # Test fixtures and payloads
+└── testkeys/           # Ed25519 key pair for signing test requests
+    ├── keys.go         # Key generation and signing helpers
+    └── keys_test.go    # Key verification tests
 ```
 
 ## Prerequisites
@@ -57,4 +60,21 @@ tests/contract/
 
 ## Test Configuration
 
-Tests use a deterministic Ed25519 key pair for reproducible signature validation. The service under test must be configured with the test public key via `DISCORD_PUBLIC_KEY` environment variable.
+Tests use a deterministic Ed25519 key pair for reproducible signature validation.
+
+**Test Public Key:**
+```
+398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159
+```
+
+The service under test must be configured with this key:
+```bash
+DISCORD_PUBLIC_KEY=398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159
+```
+
+The `testkeys` package provides:
+- `TestPublicKey` / `TestPublicKeyHex` - The public key for services
+- `SignRequest(body)` - Signs a request body, returns signature and timestamp
+- `SignRequestWithTimestamp(body, ts)` - Signs with a specific timestamp
+- `ExpiredTimestamp()` - Returns a timestamp older than 5 seconds
+- `InvalidSignature()` - Returns a syntactically valid but incorrect signature
