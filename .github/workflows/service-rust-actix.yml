@@ -40,15 +40,9 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache cargo
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            services/rust-actix/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('services/rust-actix/Cargo.toml') }}
+          workspaces: services/rust-actix -> target
 
       - name: Check formatting
         working-directory: services/rust-actix
