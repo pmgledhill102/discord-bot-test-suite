@@ -1,0 +1,31 @@
+# RuboCop configuration for Ruby/Rails Discord webhook service
+
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+  SuggestExtensions: false
+
+# Line length - be lenient for Rails
+Layout/LineLength:
+  Max: 120
+
+# Allow frozen_string_literal comment
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+# Allow class length for controllers
+Metrics/ClassLength:
+  Max: 150
+
+# Allow method length for webhook handling
+Metrics/MethodLength:
+  Max: 25
+
+# Allow ABC size for webhook handling
+Metrics/AbcSize:
+  Max: 30
+
+# Skip documentation requirement for simple classes
+Style/Documentation:
+  Enabled: false
