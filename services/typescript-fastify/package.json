@@ -1,0 +1,23 @@
+{
+  "name": "typescript-fastify-discord",
+  "version": "1.0.0",
+  "description": "Discord webhook service using TypeScript and Fastify",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "^4.9.0",
+    "fastify": "^5.2.1",
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
