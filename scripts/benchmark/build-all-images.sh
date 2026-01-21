@@ -2,7 +2,7 @@
 # Build all service Docker images for benchmarking
 # Usage: ./scripts/benchmark/build-all-images.sh [--parallel]
 #
-# Builds all 13 service images with consistent naming: discord-{service}:benchmark
+# Builds all 14 service images with consistent naming: discord-{service}:benchmark
 
 set -e
 
@@ -20,6 +20,7 @@ SERVICES=(
     "typescript-fastify"
     "python-django"
     "java-spring"
+    "java-spring2"
     "kotlin-ktor"
     "scala-play"
     "csharp-aspnet"

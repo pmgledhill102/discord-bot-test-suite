@@ -2,9 +2,18 @@
     "service": "scala-play",
     "iteration": 1,
     "status": "success",
-    "startup_time_seconds": 1.8947899341583252,
-    "avg_ping_time_seconds": 0.034864187240600586,
-    "memory_usage_mb": 216.9,
     "image_size_mb": 296.82,
-    "timestamp": "2026-01-21T09:26:36+00:00"
+    "ping_test": {
+        "startup_time_seconds": 1.8146147727966309,
+        "avg_ping_time_seconds": 0.0394188404083252,
+        "memory_usage_mb": 208.7
+    },
+    "interaction_test": {
+        "startup_time_seconds": 2.0288803577423096,
+        "interaction_latency_seconds": 0.1915287971496582,
+        "pubsub_received": true,
+        "pubsub_latency_seconds": 1.0384728908538818,
+        "memory_usage_mb": 242.4
+    },
+    "timestamp": "2026-01-21T10:41:04+00:00"
 }

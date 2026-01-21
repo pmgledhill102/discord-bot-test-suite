@@ -2,9 +2,18 @@
     "service": "ruby-rails",
     "iteration": 1,
     "status": "success",
-    "startup_time_seconds": 1.3034610748291016,
-    "avg_ping_time_seconds": 0.03648948669433594,
-    "memory_usage_mb": 88.56,
     "image_size_mb": 448.04,
-    "timestamp": "2026-01-21T09:26:44+00:00"
+    "ping_test": {
+        "startup_time_seconds": 0.9734411239624023,
+        "avg_ping_time_seconds": 0.036412286758422854,
+        "memory_usage_mb": 64.62
+    },
+    "interaction_test": {
+        "startup_time_seconds": 0.965994119644165,
+        "interaction_latency_seconds": 0.1632242202758789,
+        "pubsub_received": true,
+        "pubsub_latency_seconds": 0.9885680675506592,
+        "memory_usage_mb": 82.66
+    },
+    "timestamp": "2026-01-21T10:41:26+00:00"
 }

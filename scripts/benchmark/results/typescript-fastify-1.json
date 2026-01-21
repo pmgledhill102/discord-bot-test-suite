@@ -2,9 +2,18 @@
     "service": "typescript-fastify",
     "iteration": 1,
     "status": "success",
-    "startup_time_seconds": 0.6498191356658936,
-    "avg_ping_time_seconds": 0.03130640983581543,
-    "memory_usage_mb": 53.66,
     "image_size_mb": 189.99,
-    "timestamp": "2026-01-21T09:26:05+00:00"
+    "ping_test": {
+        "startup_time_seconds": 0.3958289623260498,
+        "avg_ping_time_seconds": 0.03229832649230957,
+        "memory_usage_mb": 51.63
+    },
+    "interaction_test": {
+        "startup_time_seconds": 0.5317890644073486,
+        "interaction_latency_seconds": 0.08956193923950195,
+        "pubsub_received": true,
+        "pubsub_latency_seconds": 0.9456090927124023,
+        "memory_usage_mb": 82.15
+    },
+    "timestamp": "2026-01-21T10:40:09+00:00"
 }

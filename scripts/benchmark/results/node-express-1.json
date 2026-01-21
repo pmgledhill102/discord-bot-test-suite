@@ -2,9 +2,18 @@
     "service": "node-express",
     "iteration": 1,
     "status": "success",
-    "startup_time_seconds": 0.6400668621063232,
-    "avg_ping_time_seconds": 0.031789541244506836,
-    "memory_usage_mb": 107.9,
     "image_size_mb": 202.56,
-    "timestamp": "2026-01-21T09:25:51+00:00"
+    "ping_test": {
+        "startup_time_seconds": 0.3995389938354492,
+        "avg_ping_time_seconds": 0.0321965217590332,
+        "memory_usage_mb": 45.84
+    },
+    "interaction_test": {
+        "startup_time_seconds": 3.502816915512085,
+        "interaction_latency_seconds": 0.07486486434936523,
+        "pubsub_received": true,
+        "pubsub_latency_seconds": 0.9274320602416992,
+        "memory_usage_mb": 82.87
+    },
+    "timestamp": "2026-01-21T10:40:01+00:00"
 }
