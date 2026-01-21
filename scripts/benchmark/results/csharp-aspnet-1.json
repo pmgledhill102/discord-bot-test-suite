@@ -1,19 +1,19 @@
 {
-    "service": "csharp-aspnet",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 130.55,
-    "ping_test": {
-        "startup_time_seconds": 0.32648205757141113,
-        "avg_ping_time_seconds": 0.03239364624023437,
-        "memory_usage_mb": 21.29
-    },
-    "interaction_test": {
-        "startup_time_seconds": 1.9351840019226074,
-        "interaction_latency_seconds": 0.04480719566345215,
-        "pubsub_received": false,
-        "pubsub_latency_seconds": 0,
-        "memory_usage_mb": 32.41
-    },
-    "timestamp": "2026-01-21T10:41:17+00:00"
+  "service": "csharp-aspnet",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 130.55,
+  "ping_test": {
+    "startup_time_seconds": 0.32648205757141113,
+    "avg_ping_time_seconds": 0.03239364624023437,
+    "memory_usage_mb": 21.29
+  },
+  "interaction_test": {
+    "startup_time_seconds": 1.9351840019226074,
+    "interaction_latency_seconds": 0.04480719566345215,
+    "pubsub_received": false,
+    "pubsub_latency_seconds": 0,
+    "memory_usage_mb": 32.41
+  },
+  "timestamp": "2026-01-21T10:41:17+00:00"
 }

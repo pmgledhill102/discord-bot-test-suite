@@ -1,19 +1,19 @@
 {
-    "service": "python-django",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 213.55,
-    "ping_test": {
-        "startup_time_seconds": 0.6073958873748779,
-        "avg_ping_time_seconds": 0.03293304443359375,
-        "memory_usage_mb": 64.61
-    },
-    "interaction_test": {
-        "startup_time_seconds": 0.44896936416625977,
-        "interaction_latency_seconds": 0.05432295799255371,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 0.8929169178009033,
-        "memory_usage_mb": 65.69
-    },
-    "timestamp": "2026-01-21T10:40:18+00:00"
+  "service": "python-django",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 213.55,
+  "ping_test": {
+    "startup_time_seconds": 0.6073958873748779,
+    "avg_ping_time_seconds": 0.03293304443359375,
+    "memory_usage_mb": 64.61
+  },
+  "interaction_test": {
+    "startup_time_seconds": 0.44896936416625977,
+    "interaction_latency_seconds": 0.05432295799255371,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 0.8929169178009033,
+    "memory_usage_mb": 65.69
+  },
+  "timestamp": "2026-01-21T10:40:18+00:00"
 }
