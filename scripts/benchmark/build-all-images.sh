@@ -21,6 +21,7 @@ SERVICES=(
     "python-django"
     "java-spring"
     "java-spring2"
+    "java-quarkus"
     "kotlin-ktor"
     "scala-play"
     "csharp-aspnet"
