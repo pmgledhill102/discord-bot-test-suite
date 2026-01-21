@@ -1,19 +1,19 @@
 {
-    "service": "go-gin",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 25.15,
-    "ping_test": {
-        "startup_time_seconds": 0.3052821159362793,
-        "avg_ping_time_seconds": 0.029996776580810548,
-        "memory_usage_mb": 27.14
-    },
-    "interaction_test": {
-        "startup_time_seconds": 0.1676480770111084,
-        "interaction_latency_seconds": 0.033109188079833984,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 0.8742899894714355,
-        "memory_usage_mb": 8.434
-    },
-    "timestamp": "2026-01-21T12:32:59+00:00"
+  "service": "go-gin",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 25.15,
+  "ping_test": {
+    "startup_time_seconds": 0.3052821159362793,
+    "avg_ping_time_seconds": 0.029996776580810548,
+    "memory_usage_mb": 27.14
+  },
+  "interaction_test": {
+    "startup_time_seconds": 0.1676480770111084,
+    "interaction_latency_seconds": 0.033109188079833984,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 0.8742899894714355,
+    "memory_usage_mb": 8.434
+  },
+  "timestamp": "2026-01-21T12:32:59+00:00"
 }

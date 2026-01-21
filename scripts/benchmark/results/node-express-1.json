@@ -1,19 +1,19 @@
 {
-    "service": "node-express",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 202.56,
-    "ping_test": {
-        "startup_time_seconds": 0.6417758464813232,
-        "avg_ping_time_seconds": 0.030555105209350585,
-        "memory_usage_mb": 108.4
-    },
-    "interaction_test": {
-        "startup_time_seconds": 3.533518075942993,
-        "interaction_latency_seconds": 0.08034110069274902,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 0.9073750972747803,
-        "memory_usage_mb": 84.55
-    },
-    "timestamp": "2026-01-21T12:33:32+00:00"
+  "service": "node-express",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 202.56,
+  "ping_test": {
+    "startup_time_seconds": 0.6417758464813232,
+    "avg_ping_time_seconds": 0.030555105209350585,
+    "memory_usage_mb": 108.4
+  },
+  "interaction_test": {
+    "startup_time_seconds": 3.533518075942993,
+    "interaction_latency_seconds": 0.08034110069274902,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 0.9073750972747803,
+    "memory_usage_mb": 84.55
+  },
+  "timestamp": "2026-01-21T12:33:32+00:00"
 }

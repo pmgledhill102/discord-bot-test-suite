@@ -1,19 +1,19 @@
 {
-    "service": "ruby-rails",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 448.04,
-    "ping_test": {
-        "startup_time_seconds": 1.3114252090454102,
-        "avg_ping_time_seconds": 0.03484101295471191,
-        "memory_usage_mb": 87.77
-    },
-    "interaction_test": {
-        "startup_time_seconds": 0.8559300899505615,
-        "interaction_latency_seconds": 0.14911317825317383,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 0.975459098815918,
-        "memory_usage_mb": 81.82
-    },
-    "timestamp": "2026-01-21T12:34:45+00:00"
+  "service": "ruby-rails",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 448.04,
+  "ping_test": {
+    "startup_time_seconds": 1.3114252090454102,
+    "avg_ping_time_seconds": 0.03484101295471191,
+    "memory_usage_mb": 87.77
+  },
+  "interaction_test": {
+    "startup_time_seconds": 0.8559300899505615,
+    "interaction_latency_seconds": 0.14911317825317383,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 0.975459098815918,
+    "memory_usage_mb": 81.82
+  },
+  "timestamp": "2026-01-21T12:34:45+00:00"
 }

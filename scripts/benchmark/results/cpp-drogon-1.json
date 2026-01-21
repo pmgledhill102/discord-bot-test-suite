@@ -1,19 +1,19 @@
 {
-    "service": "cpp-drogon",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 102.86,
-    "ping_test": {
-        "startup_time_seconds": 0.2823331356048584,
-        "avg_ping_time_seconds": 0.028747129440307616,
-        "memory_usage_mb": 12.94
-    },
-    "interaction_test": {
-        "startup_time_seconds": 0.16325092315673828,
-        "interaction_latency_seconds": 0.031601905822753906,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 0.8712058067321777,
-        "memory_usage_mb": 2.461
-    },
-    "timestamp": "2026-01-21T12:33:14+00:00"
+  "service": "cpp-drogon",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 102.86,
+  "ping_test": {
+    "startup_time_seconds": 0.2823331356048584,
+    "avg_ping_time_seconds": 0.028747129440307616,
+    "memory_usage_mb": 12.94
+  },
+  "interaction_test": {
+    "startup_time_seconds": 0.16325092315673828,
+    "interaction_latency_seconds": 0.031601905822753906,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 0.8712058067321777,
+    "memory_usage_mb": 2.461
+  },
+  "timestamp": "2026-01-21T12:33:14+00:00"
 }

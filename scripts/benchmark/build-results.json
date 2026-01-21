@@ -3,7 +3,7 @@
     {
       "service": "go-gin",
       "image": "discord-go-gin:benchmark",
-      "build_time_seconds": 1.425667000,
+      "build_time_seconds": 1.425667,
       "size_bytes": 26371252,
       "size_mb": 25.14,
       "status": "success"
@@ -11,7 +11,7 @@
     {
       "service": "python-flask",
       "image": "discord-python-flask:benchmark",
-      "build_time_seconds": 0.172323000,
+      "build_time_seconds": 0.172323,
       "size_bytes": 198243486,
       "size_mb": 189.05,
       "status": "success"
@@ -19,7 +19,7 @@
     {
       "service": "cpp-drogon",
       "image": "discord-cpp-drogon:benchmark",
-      "build_time_seconds": 1.146471000,
+      "build_time_seconds": 1.146471,
       "size_bytes": 107854859,
       "size_mb": 102.85,
       "status": "success"
@@ -27,15 +27,15 @@
     {
       "service": "rust-actix",
       "image": "discord-rust-actix:benchmark",
-      "build_time_seconds": 1.175008000,
+      "build_time_seconds": 1.175008,
       "size_bytes": 112203430,
-      "size_mb": 107.00,
+      "size_mb": 107.0,
       "status": "success"
     },
     {
       "service": "node-express",
       "image": "discord-node-express:benchmark",
-      "build_time_seconds": 0.994200000,
+      "build_time_seconds": 0.9942,
       "size_bytes": 212403307,
       "size_mb": 202.56,
       "status": "success"
@@ -43,7 +43,7 @@
     {
       "service": "typescript-fastify",
       "image": "discord-typescript-fastify:benchmark",
-      "build_time_seconds": 0.384094000,
+      "build_time_seconds": 0.384094,
       "size_bytes": 199218389,
       "size_mb": 189.98,
       "status": "success"
@@ -51,7 +51,7 @@
     {
       "service": "python-django",
       "image": "discord-python-django:benchmark",
-      "build_time_seconds": 0.171978000,
+      "build_time_seconds": 0.171978,
       "size_bytes": 223921170,
       "size_mb": 213.54,
       "status": "success"
@@ -59,7 +59,7 @@
     {
       "service": "java-spring",
       "image": "discord-java-spring:benchmark",
-      "build_time_seconds": 1.073304000,
+      "build_time_seconds": 1.073304,
       "size_bytes": 277930240,
       "size_mb": 265.05,
       "status": "success"
@@ -67,7 +67,7 @@
     {
       "service": "java-spring2",
       "image": "discord-java-spring2:benchmark",
-      "build_time_seconds": 1.038839000,
+      "build_time_seconds": 1.038839,
       "size_bytes": 356891477,
       "size_mb": 340.35,
       "status": "success"
@@ -75,7 +75,7 @@
     {
       "service": "kotlin-ktor",
       "image": "discord-kotlin-ktor:benchmark",
-      "build_time_seconds": 0.982847000,
+      "build_time_seconds": 0.982847,
       "size_bytes": 269837181,
       "size_mb": 257.33,
       "status": "success"
@@ -83,7 +83,7 @@
     {
       "service": "scala-play",
       "image": "discord-scala-play:benchmark",
-      "build_time_seconds": 0.393772000,
+      "build_time_seconds": 0.393772,
       "size_bytes": 311233544,
       "size_mb": 296.81,
       "status": "success"
@@ -91,7 +91,7 @@
     {
       "service": "csharp-aspnet",
       "image": "discord-csharp-aspnet:benchmark",
-      "build_time_seconds": 0.306560000,
+      "build_time_seconds": 0.30656,
       "size_bytes": 136895683,
       "size_mb": 130.55,
       "status": "success"
@@ -99,7 +99,7 @@
     {
       "service": "ruby-rails",
       "image": "discord-ruby-rails:benchmark",
-      "build_time_seconds": 0.166604000,
+      "build_time_seconds": 0.166604,
       "size_bytes": 469805996,
       "size_mb": 448.04,
       "status": "success"
@@ -107,12 +107,12 @@
     {
       "service": "php-laravel",
       "image": "discord-php-laravel:benchmark",
-      "build_time_seconds": 3.215215000,
+      "build_time_seconds": 3.215215,
       "size_bytes": 134834862,
       "size_mb": 128.58,
       "status": "success"
     }
   ],
   "timestamp": "2026-01-21T12:32:04+00:00",
-  "total_build_time_seconds": 13.155528000
+  "total_build_time_seconds": 13.155528
 }
