@@ -1,0 +1,32 @@
+# Build stage
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
+WORKDIR /app
+
+# Copy Maven wrapper and pom.xml for dependency caching
+COPY pom.xml .
+
+# Copy source code
+COPY src ./src
+
+# Download dependencies and build
+RUN apk add --no-cache maven && \
+    mvn package -DskipTests -q
+
+# Runtime stage
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# Copy the built JAR
+COPY --from=builder /app/target/*.jar app.jar
+
+# Run as non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+# Expose port
+EXPOSE 8080
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
