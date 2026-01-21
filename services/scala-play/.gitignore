@@ -1,0 +1,20 @@
+# Build output
+/target/
+/project/target/
+/project/project/
+
+# sbt cache
+.sbt/
+.ivy2/
+.cache/
+
+# IDE
+.idea/
+.bsp/
+*.iml
+.metals/
+.bloop/
+
+# Runtime
+logs/
+RUNNING_PID
