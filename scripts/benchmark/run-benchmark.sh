@@ -28,6 +28,7 @@ SERVICES=(
     "typescript-fastify"
     "python-django"
     "java-spring"
+    "java-spring2"
     "kotlin-ktor"
     "scala-play"
     "csharp-aspnet"

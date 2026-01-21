@@ -1,0 +1,19 @@
+{
+  "service": "java-spring2",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 340.36,
+  "ping_test": {
+    "startup_time_seconds": 1.427340030670166,
+    "avg_ping_time_seconds": 0.033586740493774414,
+    "memory_usage_mb": 168.8
+  },
+  "interaction_test": {
+    "startup_time_seconds": 1.5470499992370605,
+    "interaction_latency_seconds": 0.17848610877990723,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 1.036142110824585,
+    "memory_usage_mb": 239.3
+  },
+  "timestamp": "2026-01-21T10:40:39+00:00"
+}
