@@ -19,9 +19,6 @@
         }
     },
     "scripts": {
-        "post-autoload-dump": [
-            "@php artisan package:discover --ansi"
-        ],
         "lint": "pint --test",
         "lint:fix": "pint"
     },

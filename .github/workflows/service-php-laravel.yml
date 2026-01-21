@@ -36,12 +36,14 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@cf4cade2721270509d5b1c766ab3549210a39a2a # v2.33.0
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           tools: composer
 
       - name: Install dependencies
         working-directory: services/php-laravel
-        run: composer install --prefer-dist --no-progress
+        run: |
+          mkdir -p bootstrap/cache
+          composer install --prefer-dist --no-progress
 
       - name: Run Laravel Pint
         working-directory: services/php-laravel
