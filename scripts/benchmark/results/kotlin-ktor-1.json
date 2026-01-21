@@ -1,19 +1,19 @@
 {
-  "service": "kotlin-ktor",
-  "iteration": 1,
-  "status": "success",
-  "image_size_mb": 257.34,
-  "ping_test": {
-    "startup_time_seconds": 0.6027970314025879,
-    "avg_ping_time_seconds": 0.03508467674255371,
-    "memory_usage_mb": 129.4
-  },
-  "interaction_test": {
-    "startup_time_seconds": 0.5981528759002686,
-    "interaction_latency_seconds": 0.20508885383605957,
-    "pubsub_received": false,
-    "pubsub_latency_seconds": 0,
-    "memory_usage_mb": 103.0
-  },
-  "timestamp": "2026-01-21T10:40:53+00:00"
+    "service": "kotlin-ktor",
+    "iteration": 1,
+    "status": "success",
+    "image_size_mb": 257.34,
+    "ping_test": {
+        "startup_time_seconds": 0.7182679176330566,
+        "avg_ping_time_seconds": 0.032908058166503905,
+        "memory_usage_mb": 129.2
+    },
+    "interaction_test": {
+        "startup_time_seconds": 0.5928702354431152,
+        "interaction_latency_seconds": 0.2722327709197998,
+        "pubsub_received": true,
+        "pubsub_latency_seconds": 1.0935437679290771,
+        "memory_usage_mb": 148.7
+    },
+    "timestamp": "2026-01-21T12:34:16+00:00"
 }
