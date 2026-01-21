@@ -27,6 +27,7 @@ var publicKey = PublicKey.Import(SignatureAlgorithm.Ed25519, publicKeyBytes, Key
 // Pub/Sub setup
 var projectId = Environment.GetEnvironmentVariable("GOOGLE_CLOUD_PROJECT");
 var topicName = Environment.GetEnvironmentVariable("PUBSUB_TOPIC");
+var emulatorHost = Environment.GetEnvironmentVariable("PUBSUB_EMULATOR_HOST");
 PublisherClient? publisher = null;
 
 if (!string.IsNullOrEmpty(projectId) && !string.IsNullOrEmpty(topicName))
@@ -35,22 +36,61 @@ if (!string.IsNullOrEmpty(projectId) && !string.IsNullOrEmpty(topicName))
     {
         var topicPath = TopicName.FromProjectTopic(projectId, topicName);
 
-        // Create topic if it doesn't exist (for emulator)
-        var publisherApi = PublisherServiceApiClient.Create();
-        try
+        // Configure for emulator if specified
+        if (!string.IsNullOrEmpty(emulatorHost))
         {
-            publisherApi.GetTopic(topicPath);
+            Console.WriteLine($"Pub/Sub configured for emulator: {emulatorHost}");
+
+            // Create API client with emulator settings
+            var apiClientBuilder = new PublisherServiceApiClientBuilder
+            {
+                Endpoint = emulatorHost,
+                ChannelCredentials = Grpc.Core.ChannelCredentials.Insecure
+            };
+            var publisherApi = apiClientBuilder.Build();
+
+            // Create topic if it doesn't exist (for emulator)
+            try
+            {
+                publisherApi.GetTopic(topicPath);
+            }
+            catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.NotFound)
+            {
+                publisherApi.CreateTopic(topicPath);
+                Console.WriteLine($"Created topic: {topicName}");
+            }
+
+            // Create publisher client with emulator settings
+            var clientBuilder = new PublisherClientBuilder
+            {
+                TopicName = topicPath,
+                ApiSettings = new PublisherServiceApiSettings(),
+                Endpoint = emulatorHost,
+                ChannelCredentials = Grpc.Core.ChannelCredentials.Insecure
+            };
+            publisher = clientBuilder.Build();
         }
-        catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.NotFound)
+        else
         {
-            publisherApi.CreateTopic(topicPath);
+            // Standard client for production
+            var publisherApi = PublisherServiceApiClient.Create();
+            try
+            {
+                publisherApi.GetTopic(topicPath);
+            }
+            catch (Grpc.Core.RpcException ex) when (ex.StatusCode == Grpc.Core.StatusCode.NotFound)
+            {
+                publisherApi.CreateTopic(topicPath);
+            }
+            publisher = PublisherClient.Create(topicPath);
         }
 
-        publisher = PublisherClient.Create(topicPath);
+        Console.WriteLine($"Pub/Sub publisher initialized for topic: {topicName}");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"Warning: Failed to initialize Pub/Sub: {ex.Message}");
+        Console.WriteLine(ex.StackTrace);
     }
 }
 

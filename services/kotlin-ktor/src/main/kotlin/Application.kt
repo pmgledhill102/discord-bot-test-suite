@@ -1,10 +1,14 @@
 package com.discord.webhook
 
 import com.google.api.core.ApiFuture
+import com.google.api.gax.core.NoCredentialsProvider
+import com.google.api.gax.grpc.GrpcTransportChannel
+import com.google.api.gax.rpc.FixedTransportChannelProvider
 import com.google.cloud.pubsub.v1.Publisher
 import com.google.protobuf.ByteString
 import com.google.pubsub.v1.PubsubMessage
 import com.google.pubsub.v1.TopicName
+import io.grpc.ManagedChannelBuilder
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -37,6 +41,7 @@ private val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
 private val publicKeyHex = System.getenv("DISCORD_PUBLIC_KEY") ?: ""
 private val projectId = System.getenv("GOOGLE_CLOUD_PROJECT") ?: ""
 private val topicName = System.getenv("PUBSUB_TOPIC") ?: ""
+private val emulatorHost = System.getenv("PUBSUB_EMULATOR_HOST") ?: ""
 
 private val json = Json { ignoreUnknownKeys = true }
 
@@ -44,9 +49,27 @@ private val json = Json { ignoreUnknownKeys = true }
 private val publisher: Publisher? by lazy {
     if (projectId.isNotEmpty() && topicName.isNotEmpty()) {
         try {
-            Publisher.newBuilder(TopicName.of(projectId, topicName)).build()
+            val topic = TopicName.of(projectId, topicName)
+            val builder = Publisher.newBuilder(topic)
+
+            // Configure for emulator if specified
+            if (emulatorHost.isNotEmpty()) {
+                val channel = ManagedChannelBuilder.forTarget(emulatorHost)
+                    .usePlaintext()
+                    .build()
+
+                builder.setChannelProvider(
+                    FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel))
+                )
+                builder.setCredentialsProvider(NoCredentialsProvider.create())
+
+                println("Pub/Sub configured for emulator: $emulatorHost")
+            }
+
+            builder.build()
         } catch (e: Exception) {
             println("Warning: Failed to create Pub/Sub publisher: ${e.message}")
+            e.printStackTrace()
             null
         }
     } else {

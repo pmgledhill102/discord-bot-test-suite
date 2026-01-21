@@ -22,6 +22,38 @@
 
 using namespace drogon;
 
+// Base64 encoding table
+static const char base64_chars[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/**
+ * Encode string to Base64
+ */
+std::string base64Encode(const std::string& input) {
+    std::string output;
+    int val = 0;
+    int valb = -6;
+
+    for (unsigned char c : input) {
+        val = (val << 8) + c;
+        valb += 8;
+        while (valb >= 0) {
+            output.push_back(base64_chars[(val >> valb) & 0x3F]);
+            valb -= 6;
+        }
+    }
+
+    if (valb > -6) {
+        output.push_back(base64_chars[((val << 8) >> (valb + 8)) & 0x3F]);
+    }
+
+    while (output.size() % 4) {
+        output.push_back('=');
+    }
+
+    return output;
+}
+
 // Interaction types
 constexpr int INTERACTION_TYPE_PING = 1;
 constexpr int INTERACTION_TYPE_APPLICATION_COMMAND = 2;
@@ -34,6 +66,7 @@ constexpr int RESPONSE_TYPE_DEFERRED_CHANNEL_MESSAGE = 5;
 std::vector<unsigned char> g_public_key;
 std::string g_pubsub_topic;
 std::string g_project_id;
+std::string g_pubsub_emulator_host;
 
 /**
  * Convert hex string to bytes
@@ -129,17 +162,90 @@ Json::Value sanitizeInteraction(const Json::Value& interaction) {
 }
 
 /**
- * Publish interaction to Pub/Sub (placeholder - would need google-cloud-cpp)
+ * Publish interaction to Pub/Sub emulator via REST API
  */
 void publishToPubSub(const Json::Value& interaction) {
-    if (g_pubsub_topic.empty() || g_project_id.empty()) {
+    if (g_pubsub_topic.empty() || g_project_id.empty() || g_pubsub_emulator_host.empty()) {
         return;
     }
 
     Json::Value sanitized = sanitizeInteraction(interaction);
 
-    // Log for now - full Pub/Sub implementation would use google-cloud-cpp
-    LOG_INFO << "Would publish to Pub/Sub: " << sanitized.toStyledString();
+    // Convert to JSON string and base64 encode
+    Json::StreamWriterBuilder writer;
+    writer["indentation"] = "";
+    std::string jsonStr = Json::writeString(writer, sanitized);
+    std::string base64Data = base64Encode(jsonStr);
+
+    // Build Pub/Sub REST API request body
+    Json::Value pubsubMsg;
+    pubsubMsg["messages"][0]["data"] = base64Data;
+
+    // Add attributes
+    if (sanitized.isMember("id")) {
+        pubsubMsg["messages"][0]["attributes"]["interaction_id"] = sanitized["id"].asString();
+    }
+    if (sanitized.isMember("type")) {
+        pubsubMsg["messages"][0]["attributes"]["interaction_type"] = std::to_string(sanitized["type"].asInt());
+    }
+    if (sanitized.isMember("application_id")) {
+        pubsubMsg["messages"][0]["attributes"]["application_id"] = sanitized["application_id"].asString();
+    }
+    if (sanitized.isMember("guild_id")) {
+        pubsubMsg["messages"][0]["attributes"]["guild_id"] = sanitized["guild_id"].asString();
+    }
+    if (sanitized.isMember("channel_id")) {
+        pubsubMsg["messages"][0]["attributes"]["channel_id"] = sanitized["channel_id"].asString();
+    }
+    if (sanitized.isMember("data") && sanitized["data"].isMember("name")) {
+        pubsubMsg["messages"][0]["attributes"]["command_name"] = sanitized["data"]["name"].asString();
+    }
+
+    // Get current timestamp
+    auto now = std::chrono::system_clock::now();
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::gmtime(&time_t_now), "%Y-%m-%dT%H:%M:%SZ");
+    pubsubMsg["messages"][0]["attributes"]["timestamp"] = ss.str();
+
+    std::string requestBody = Json::writeString(writer, pubsubMsg);
+
+    // Build URL: http://{emulator}/v1/projects/{project}/topics/{topic}:publish
+    std::string url = "http://" + g_pubsub_emulator_host +
+                      "/v1/projects/" + g_project_id +
+                      "/topics/" + g_pubsub_topic + ":publish";
+
+    // Parse host and port from emulator host
+    std::string host = g_pubsub_emulator_host;
+    uint16_t port = 8085;
+    size_t colonPos = host.find(':');
+    if (colonPos != std::string::npos) {
+        port = static_cast<uint16_t>(std::stoi(host.substr(colonPos + 1)));
+        host = host.substr(0, colonPos);
+    }
+
+    // Create HTTP client and send request
+    auto client = HttpClient::newHttpClient("http://" + g_pubsub_emulator_host);
+
+    auto req = HttpRequest::newHttpRequest();
+    req->setMethod(Post);
+    req->setPath("/v1/projects/" + g_project_id + "/topics/" + g_pubsub_topic + ":publish");
+    req->setContentTypeCode(CT_APPLICATION_JSON);
+    req->setBody(requestBody);
+
+    // Send synchronously (we're already in a background thread)
+    auto [result, resp] = client->sendRequest(req, 5.0);
+
+    if (result == ReqResult::Ok && resp) {
+        if (resp->getStatusCode() == k200OK) {
+            LOG_INFO << "Published to Pub/Sub successfully";
+        } else {
+            LOG_ERROR << "Pub/Sub publish failed: HTTP " << resp->getStatusCode()
+                      << " - " << resp->body();
+        }
+    } else {
+        LOG_ERROR << "Pub/Sub publish failed: connection error";
+    }
 }
 
 /**
@@ -262,8 +368,16 @@ int main() {
     // Optional Pub/Sub configuration
     const char* project_id = std::getenv("GOOGLE_CLOUD_PROJECT");
     const char* topic_name = std::getenv("PUBSUB_TOPIC");
+    const char* emulator_host = std::getenv("PUBSUB_EMULATOR_HOST");
     if (project_id) g_project_id = project_id;
     if (topic_name) g_pubsub_topic = topic_name;
+    if (emulator_host) g_pubsub_emulator_host = emulator_host;
+
+    if (!g_pubsub_emulator_host.empty() && !g_project_id.empty() && !g_pubsub_topic.empty()) {
+        std::cout << "Pub/Sub configured: " << g_pubsub_emulator_host
+                  << " project=" << g_project_id
+                  << " topic=" << g_pubsub_topic << std::endl;
+    }
 
     // Configure routes
     app().registerHandler("/health", &healthCheck, {Get});

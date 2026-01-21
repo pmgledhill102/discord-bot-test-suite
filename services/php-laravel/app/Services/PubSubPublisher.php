@@ -2,41 +2,42 @@
 
 namespace App\Services;
 
-use Google\Cloud\PubSub\PubSubClient;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Pub/Sub publisher using direct HTTP REST API calls to the emulator.
+ *
+ * This bypasses the Google Cloud PHP library for better emulator compatibility.
+ */
 class PubSubPublisher
 {
-    private ?PubSubClient $client = null;
+    private ?string $projectId = null;
 
     private ?string $topicName = null;
 
+    private ?string $emulatorHost = null;
+
     public function __construct()
     {
-        $projectId = env('GOOGLE_CLOUD_PROJECT');
-        $this->topicName = env('PUBSUB_TOPIC');
+        // Use getenv() directly for Docker environment variables
+        $this->projectId = getenv('GOOGLE_CLOUD_PROJECT') ?: env('GOOGLE_CLOUD_PROJECT');
+        $this->topicName = getenv('PUBSUB_TOPIC') ?: env('PUBSUB_TOPIC');
+        $this->emulatorHost = getenv('PUBSUB_EMULATOR_HOST') ?: env('PUBSUB_EMULATOR_HOST');
 
-        if ($projectId && $this->topicName) {
-            try {
-                $this->client = new PubSubClient([
-                    'projectId' => $projectId,
-                ]);
-
-                // Ensure topic exists (for emulator)
-                $topic = $this->client->topic($this->topicName);
-                if (! $topic->exists()) {
-                    $this->client->createTopic($this->topicName);
-                }
-            } catch (\Exception $e) {
-                Log::warning('Failed to initialize Pub/Sub client: '.$e->getMessage());
-                $this->client = null;
-            }
+        if ($this->isConfigured()) {
+            Log::info("Pub/Sub configured: emulator={$this->emulatorHost} project={$this->projectId} topic={$this->topicName}");
         }
+    }
+
+    public function isConfigured(): bool
+    {
+        return ! empty($this->projectId) && ! empty($this->topicName) && ! empty($this->emulatorHost);
     }
 
     public function publish(array $interaction): void
     {
-        if (! $this->client || ! $this->topicName) {
+        if (! $this->isConfigured()) {
             return;
         }
 
@@ -76,11 +77,29 @@ class PubSubPublisher
         }
 
         try {
-            $topic = $this->client->topic($this->topicName);
-            $topic->publish([
-                'data' => $data,
-                'attributes' => $attributes,
-            ]);
+            // Build Pub/Sub REST API URL
+            $url = "http://{$this->emulatorHost}/v1/projects/{$this->projectId}/topics/{$this->topicName}:publish";
+
+            // Build request body
+            $requestBody = [
+                'messages' => [
+                    [
+                        'data' => base64_encode($data),
+                        'attributes' => $attributes,
+                    ],
+                ],
+            ];
+
+            // Send POST request to Pub/Sub emulator
+            $response = Http::timeout(5)
+                ->withHeaders(['Content-Type' => 'application/json'])
+                ->post($url, $requestBody);
+
+            if ($response->successful()) {
+                Log::debug('Published to Pub/Sub successfully');
+            } else {
+                Log::error("Pub/Sub publish failed: HTTP {$response->status()} - {$response->body()}");
+            }
         } catch (\Exception $e) {
             Log::error('Failed to publish to Pub/Sub: '.$e->getMessage());
         }
