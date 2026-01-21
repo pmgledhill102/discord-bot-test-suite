@@ -1,0 +1,9 @@
+# Discord webhook service routes
+# https://www.playframework.com/documentation/latest/ScalaRouting
+
+# Health check endpoint
+GET     /health                     controllers.InteractionController.health
+
+# Discord interactions endpoint
+POST    /                           controllers.InteractionController.handleInteraction
+POST    /interactions               controllers.InteractionController.handleInteraction
