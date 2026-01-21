@@ -8,9 +8,9 @@
  * - Publishes sanitized slash command payloads to Pub/Sub
  */
 
-import Fastify, { FastifyRequest, FastifyReply } from "fastify";
-import nacl from "tweetnacl";
-import { PubSub, Topic } from "@google-cloud/pubsub";
+import Fastify, { FastifyRequest, FastifyReply } from 'fastify';
+import nacl from 'tweetnacl';
+import { PubSub, Topic } from '@google-cloud/pubsub';
 
 // Interaction types
 const INTERACTION_TYPE_PING = 1;
@@ -40,17 +40,17 @@ interface InteractionResponse {
 }
 
 // Configuration
-const port = parseInt(process.env.PORT || "8080", 10);
+const port = parseInt(process.env.PORT || '8080', 10);
 const publicKeyHex = process.env.DISCORD_PUBLIC_KEY;
 const projectId = process.env.GOOGLE_CLOUD_PROJECT;
 const topicName = process.env.PUBSUB_TOPIC;
 
 if (!publicKeyHex) {
-  console.error("DISCORD_PUBLIC_KEY environment variable is required");
+  console.error('DISCORD_PUBLIC_KEY environment variable is required');
   process.exit(1);
 }
 
-const publicKey = Buffer.from(publicKeyHex, "hex");
+const publicKey = Buffer.from(publicKeyHex, 'hex');
 
 // Pub/Sub client
 let pubsubTopic: Topic | null = null;
@@ -74,11 +74,7 @@ async function initPubSub(): Promise<void> {
   }
 }
 
-function validateSignature(
-  signature: string,
-  timestamp: string,
-  body: Buffer
-): boolean {
+function validateSignature(signature: string, timestamp: string, body: Buffer): boolean {
   if (!signature || !timestamp) {
     return false;
   }
@@ -90,7 +86,7 @@ function validateSignature(
     if (!/^[0-9a-fA-F]*$/.test(signature)) {
       return false;
     }
-    sigBytes = Uint8Array.from(Buffer.from(signature, "hex"));
+    sigBytes = Uint8Array.from(Buffer.from(signature, 'hex'));
     // Ed25519 signature must be 64 bytes
     if (sigBytes.length !== 64) {
       return false;
@@ -139,16 +135,16 @@ async function publishToPubSub(interaction: Interaction): Promise<void> {
   };
 
   const attributes: Record<string, string> = {
-    interaction_id: interaction.id || "",
+    interaction_id: interaction.id || '',
     interaction_type: String(interaction.type),
-    application_id: interaction.application_id || "",
-    guild_id: interaction.guild_id || "",
-    channel_id: interaction.channel_id || "",
+    application_id: interaction.application_id || '',
+    guild_id: interaction.guild_id || '',
+    channel_id: interaction.channel_id || '',
     timestamp: new Date().toISOString(),
   };
 
   // Add command name if available
-  if (interaction.data && typeof interaction.data.name === "string") {
+  if (interaction.data && typeof interaction.data.name === 'string') {
     attributes.command_name = interaction.data.name;
   }
 
@@ -168,17 +164,13 @@ const fastify = Fastify({
 });
 
 // Register raw body parser
-fastify.addContentTypeParser(
-  "application/json",
-  { parseAs: "buffer" },
-  (_req, body, done) => {
-    done(null, body);
-  }
-);
+fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, (_req, body, done) => {
+  done(null, body);
+});
 
 // Health check endpoint
-fastify.get("/health", async () => {
-  return { status: "ok" };
+fastify.get('/health', async () => {
+  return { status: 'ok' };
 });
 
 // Discord interactions handler
@@ -189,12 +181,12 @@ async function handleInteraction(
   const body = request.body;
 
   // Get headers (normalize to string)
-  const signature = request.headers["x-signature-ed25519"] as string || "";
-  const timestamp = request.headers["x-signature-timestamp"] as string || "";
+  const signature = (request.headers['x-signature-ed25519'] as string) || '';
+  const timestamp = (request.headers['x-signature-timestamp'] as string) || '';
 
   // Validate signature
   if (!validateSignature(signature, timestamp, body)) {
-    return reply.code(401).send({ error: "invalid signature" });
+    return reply.code(401).send({ error: 'invalid signature' });
   }
 
   // Parse interaction
@@ -202,12 +194,12 @@ async function handleInteraction(
   try {
     const parsed = JSON.parse(body.toString());
     // Ensure parsed result is a valid object (not null, array, or primitive)
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return reply.code(400).send({ error: "invalid JSON" });
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return reply.code(400).send({ error: 'invalid JSON' });
     }
     interaction = parsed as Interaction;
   } catch {
-    return reply.code(400).send({ error: "invalid JSON" });
+    return reply.code(400).send({ error: 'invalid JSON' });
   }
 
   // Handle by type
@@ -218,23 +210,25 @@ async function handleInteraction(
     case INTERACTION_TYPE_APPLICATION_COMMAND:
       // Publish to Pub/Sub (fire and forget)
       publishToPubSub(interaction);
-      return reply.code(200).send({ type: RESPONSE_TYPE_DEFERRED_CHANNEL_MESSAGE } satisfies InteractionResponse);
+      return reply
+        .code(200)
+        .send({ type: RESPONSE_TYPE_DEFERRED_CHANNEL_MESSAGE } satisfies InteractionResponse);
 
     default:
-      return reply.code(400).send({ error: "unsupported interaction type" });
+      return reply.code(400).send({ error: 'unsupported interaction type' });
   }
 }
 
 // Register interaction endpoints
-fastify.post("/", handleInteraction);
-fastify.post("/interactions", handleInteraction);
+fastify.post('/', handleInteraction);
+fastify.post('/interactions', handleInteraction);
 
 // Start server
 async function start(): Promise<void> {
   await initPubSub();
 
   try {
-    await fastify.listen({ port, host: "0.0.0.0" });
+    await fastify.listen({ port, host: '0.0.0.0' });
     console.log(`Starting server on port ${port}`);
   } catch (err) {
     console.error(err);

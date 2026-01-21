@@ -69,41 +69,41 @@ The `data` field contains a base64-encoded JSON object with the sanitized intera
 
 The following fields MUST be removed or redacted before publishing:
 
-| Field | Location | Action |
-|-------|----------|--------|
-| `token` | Root level | **Remove entirely** |
-| `X-Signature-Ed25519` | HTTP header | Never include |
-| `X-Signature-Timestamp` | HTTP header | Never include |
-| Raw request body | N/A | Never log or include |
+| Field                   | Location    | Action               |
+| ----------------------- | ----------- | -------------------- |
+| `token`                 | Root level  | **Remove entirely**  |
+| `X-Signature-Ed25519`   | HTTP header | Never include        |
+| `X-Signature-Timestamp` | HTTP header | Never include        |
+| Raw request body        | N/A         | Never log or include |
 
 ### Fields That Are Safe to Include
 
-| Field | Description |
-|-------|-------------|
-| `type` | Interaction type (always 2 for slash commands) |
-| `id` | Unique interaction ID |
-| `application_id` | Bot application ID |
-| `data` | Command data (name, options) |
-| `guild_id` | Server ID (may be empty for DMs) |
-| `channel_id` | Channel ID |
-| `member` | Member info (user, roles, nickname) |
-| `user` | User info (for DM interactions) |
-| `locale` | User's locale |
-| `guild_locale` | Server's locale |
+| Field            | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `type`           | Interaction type (always 2 for slash commands) |
+| `id`             | Unique interaction ID                          |
+| `application_id` | Bot application ID                             |
+| `data`           | Command data (name, options)                   |
+| `guild_id`       | Server ID (may be empty for DMs)               |
+| `channel_id`     | Channel ID                                     |
+| `member`         | Member info (user, roles, nickname)            |
+| `user`           | User info (for DM interactions)                |
+| `locale`         | User's locale                                  |
+| `guild_locale`   | Server's locale                                |
 
 ## Message Attributes
 
 Attributes provide metadata for filtering and routing without parsing the message body:
 
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `interaction_id` | string | Unique interaction ID |
-| `interaction_type` | string | Always "2" for slash commands |
-| `application_id` | string | Bot application ID |
-| `guild_id` | string | Server ID (empty string for DMs) |
-| `channel_id` | string | Channel ID |
-| `command_name` | string | Name of the slash command invoked |
-| `timestamp` | string | ISO 8601 timestamp of when message was published |
+| Attribute          | Type   | Description                                      |
+| ------------------ | ------ | ------------------------------------------------ |
+| `interaction_id`   | string | Unique interaction ID                            |
+| `interaction_type` | string | Always "2" for slash commands                    |
+| `application_id`   | string | Bot application ID                               |
+| `guild_id`         | string | Server ID (empty string for DMs)                 |
+| `channel_id`       | string | Channel ID                                       |
+| `command_name`     | string | Name of the slash command invoked                |
+| `timestamp`        | string | ISO 8601 timestamp of when message was published |
 
 ## Example
 
@@ -200,9 +200,9 @@ Contract tests verify:
 
 ## Topic Configuration
 
-| Environment | Topic Name Pattern |
-|-------------|-------------------|
-| Production | `projects/{project}/topics/discord-interactions` |
-| Testing | `projects/{project}/topics/test-{unique-id}` |
+| Environment | Topic Name Pattern                               |
+| ----------- | ------------------------------------------------ |
+| Production  | `projects/{project}/topics/discord-interactions` |
+| Testing     | `projects/{project}/topics/test-{unique-id}`     |
 
 Tests use unique topic names per test to enable parallel execution without interference.

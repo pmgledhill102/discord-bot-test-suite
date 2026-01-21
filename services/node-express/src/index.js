@@ -6,9 +6,9 @@
 // - Responds to Slash commands (type=2) with Deferred (type=5)
 // - Publishes sanitized slash command payloads to Pub/Sub
 
-const express = require("express");
-const nacl = require("tweetnacl");
-const { PubSub } = require("@google-cloud/pubsub");
+const express = require('express');
+const nacl = require('tweetnacl');
+const { PubSub } = require('@google-cloud/pubsub');
 
 // Interaction types
 const INTERACTION_TYPE_PING = 1;
@@ -25,16 +25,16 @@ const GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT;
 const PUBSUB_TOPIC = process.env.PUBSUB_TOPIC;
 
 if (!DISCORD_PUBLIC_KEY) {
-  console.error("DISCORD_PUBLIC_KEY environment variable is required");
+  console.error('DISCORD_PUBLIC_KEY environment variable is required');
   process.exit(1);
 }
 
 // Decode public key from hex
 let publicKey;
 try {
-  publicKey = Buffer.from(DISCORD_PUBLIC_KEY, "hex");
+  publicKey = Buffer.from(DISCORD_PUBLIC_KEY, 'hex');
 } catch (err) {
-  console.error("Invalid DISCORD_PUBLIC_KEY:", err.message);
+  console.error('Invalid DISCORD_PUBLIC_KEY:', err.message);
   process.exit(1);
 }
 
@@ -55,7 +55,7 @@ async function initPubSub() {
         console.log(`Created topic: ${PUBSUB_TOPIC}`);
       }
     } catch (err) {
-      console.warn("Warning: Failed to initialize Pub/Sub:", err.message);
+      console.warn('Warning: Failed to initialize Pub/Sub:', err.message);
     }
   }
 }
@@ -77,7 +77,7 @@ function validateSignature(signature, timestamp, body) {
   }
 
   // Decode signature from hex
-  const sigBytes = Buffer.from(signature, "hex");
+  const sigBytes = Buffer.from(signature, 'hex');
 
   // Check timestamp (must be within 5 seconds)
   const ts = parseInt(timestamp, 10);
@@ -120,11 +120,11 @@ async function publishToPubSub(interaction) {
 
     // Build message attributes
     const attributes = {
-      interaction_id: interaction.id || "",
+      interaction_id: interaction.id || '',
       interaction_type: String(interaction.type),
-      application_id: interaction.application_id || "",
-      guild_id: interaction.guild_id || "",
-      channel_id: interaction.channel_id || "",
+      application_id: interaction.application_id || '',
+      guild_id: interaction.guild_id || '',
+      channel_id: interaction.channel_id || '',
       timestamp: new Date().toISOString(),
     };
 
@@ -136,7 +136,7 @@ async function publishToPubSub(interaction) {
     const data = Buffer.from(JSON.stringify(sanitized));
     await topic.publishMessage({ data, attributes });
   } catch (err) {
-    console.error("Failed to publish to Pub/Sub:", err.message);
+    console.error('Failed to publish to Pub/Sub:', err.message);
   }
 }
 
@@ -146,14 +146,14 @@ const app = express();
 // Parse raw body for signature validation
 app.use(
   express.raw({
-    type: "application/json",
-    limit: "10mb",
+    type: 'application/json',
+    limit: '10mb',
   })
 );
 
 // Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 // Discord interactions endpoint
@@ -161,11 +161,11 @@ function handleInteraction(req, res) {
   const body = req.body;
 
   // Validate signature
-  const signature = req.headers["x-signature-ed25519"];
-  const timestamp = req.headers["x-signature-timestamp"];
+  const signature = req.headers['x-signature-ed25519'];
+  const timestamp = req.headers['x-signature-timestamp'];
 
   if (!validateSignature(signature, timestamp, body)) {
-    return res.status(401).json({ error: "invalid signature" });
+    return res.status(401).json({ error: 'invalid signature' });
   }
 
   // Parse JSON
@@ -173,16 +173,12 @@ function handleInteraction(req, res) {
   try {
     interaction = JSON.parse(body.toString());
   } catch {
-    return res.status(400).json({ error: "invalid JSON" });
+    return res.status(400).json({ error: 'invalid JSON' });
   }
 
   // Validate interaction is an object
-  if (
-    !interaction ||
-    typeof interaction !== "object" ||
-    Array.isArray(interaction)
-  ) {
-    return res.status(400).json({ error: "invalid JSON" });
+  if (!interaction || typeof interaction !== 'object' || Array.isArray(interaction)) {
+    return res.status(400).json({ error: 'invalid JSON' });
   }
 
   // Handle by type
@@ -198,12 +194,12 @@ function handleInteraction(req, res) {
       return res.json({ type: RESPONSE_TYPE_DEFERRED_CHANNEL_MESSAGE });
 
     default:
-      return res.status(400).json({ error: "unsupported interaction type" });
+      return res.status(400).json({ error: 'unsupported interaction type' });
   }
 }
 
-app.post("/", handleInteraction);
-app.post("/interactions", handleInteraction);
+app.post('/', handleInteraction);
+app.post('/interactions', handleInteraction);
 
 // Start server
 async function main() {
@@ -215,6 +211,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Failed to start server:", err);
+  console.error('Failed to start server:', err);
   process.exit(1);
 });

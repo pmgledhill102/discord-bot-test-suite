@@ -83,17 +83,17 @@ Use **modern but stable** versions—not bleeding-edge:
 
 ### Language/Runtime Versions
 
-| Language | Version Policy |
-|----------|----------------|
-| Go | Latest stable (1.x) |
-| Python | Latest 3.x LTS |
-| Node.js | Latest LTS |
-| Java | Latest LTS (17, 21) |
-| Rust | Latest stable |
-| C# / .NET | Latest LTS |
-| Ruby | Latest stable |
-| PHP | Latest stable 8.x |
-| C++ | C++17 or C++20 |
+| Language  | Version Policy      |
+| --------- | ------------------- |
+| Go        | Latest stable (1.x) |
+| Python    | Latest 3.x LTS      |
+| Node.js   | Latest LTS          |
+| Java      | Latest LTS (17, 21) |
+| Rust      | Latest stable       |
+| C# / .NET | Latest LTS          |
+| Ruby      | Latest stable       |
+| PHP       | Latest stable 8.x   |
+| C++       | C++17 or C++20      |
 
 ### Framework Versions
 
@@ -105,16 +105,16 @@ Prefer the latest stable release of each framework unless there are known stabil
 
 Each service should include appropriate linting configuration:
 
-| Language | Linter | Config File |
-|----------|--------|-------------|
-| Go | golangci-lint | `.golangci.yml` |
-| Python | flake8, black | `pyproject.toml` |
-| JavaScript/TypeScript | ESLint, Prettier | `.eslintrc.js` |
-| Java | Checkstyle | `checkstyle.xml` |
-| Rust | clippy, rustfmt | `rustfmt.toml` |
-| C# | dotnet format | `.editorconfig` |
-| Ruby | RuboCop | `.rubocop.yml` |
-| PHP | PHP_CodeSniffer | `phpcs.xml` |
+| Language              | Linter           | Config File      |
+| --------------------- | ---------------- | ---------------- |
+| Go                    | golangci-lint    | `.golangci.yml`  |
+| Python                | flake8, black    | `pyproject.toml` |
+| JavaScript/TypeScript | ESLint, Prettier | `.eslintrc.js`   |
+| Java                  | Checkstyle       | `checkstyle.xml` |
+| Rust                  | clippy, rustfmt  | `rustfmt.toml`   |
+| C#                    | dotnet format    | `.editorconfig`  |
+| Ruby                  | RuboCop          | `.rubocop.yml`   |
+| PHP                   | PHP_CodeSniffer  | `phpcs.xml`      |
 
 ### General Guidelines
 

@@ -48,7 +48,7 @@ Validate Ed25519 signature
 ## Language/Framework Matrix
 
 | Language | Framework    | Status  |
-|----------|--------------|---------|
+| -------- | ------------ | ------- |
 | Go       | Gin          | Planned |
 | Python   | Django       | Planned |
 | Python   | Flask        | Planned |

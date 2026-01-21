@@ -11,37 +11,37 @@ the containerized service. Tests do NOT inspect internal code—only external be
 
 ### 1. Signature Validation Tests
 
-| Test | Request | Expected Response |
-|------|---------|-------------------|
-| Valid signature | Properly signed request | 200 OK |
-| Missing signature header | No `X-Signature-Ed25519` | 401 Unauthorized |
-| Missing timestamp header | No `X-Signature-Timestamp` | 401 Unauthorized |
-| Invalid signature | Wrong signature value | 401 Unauthorized |
-| Expired timestamp | Timestamp > 5 seconds old | 401 Unauthorized |
+| Test                     | Request                    | Expected Response |
+| ------------------------ | -------------------------- | ----------------- |
+| Valid signature          | Properly signed request    | 200 OK            |
+| Missing signature header | No `X-Signature-Ed25519`   | 401 Unauthorized  |
+| Missing timestamp header | No `X-Signature-Timestamp` | 401 Unauthorized  |
+| Invalid signature        | Wrong signature value      | 401 Unauthorized  |
+| Expired timestamp        | Timestamp > 5 seconds old  | 401 Unauthorized  |
 
 ### 2. Ping/Pong Tests
 
-| Test | Request | Expected Response |
-|------|---------|-------------------|
-| Valid ping | `{"type": 1}` | `{"type": 1}` |
-| Ping does not publish | Valid ping | No Pub/Sub message |
+| Test                  | Request       | Expected Response  |
+| --------------------- | ------------- | ------------------ |
+| Valid ping            | `{"type": 1}` | `{"type": 1}`      |
+| Ping does not publish | Valid ping    | No Pub/Sub message |
 
 ### 3. Slash Command Tests
 
-| Test | Request | Expected Response |
-|------|---------|-------------------|
-| Valid slash command | `{"type": 2, ...}` | `{"type": 5}` (deferred) |
-| Publishes to Pub/Sub | Valid slash command | Message in Pub/Sub |
+| Test                      | Request             | Expected Response              |
+| ------------------------- | ------------------- | ------------------------------ |
+| Valid slash command       | `{"type": 2, ...}`  | `{"type": 5}` (deferred)       |
+| Publishes to Pub/Sub      | Valid slash command | Message in Pub/Sub             |
 | Sensitive fields redacted | Valid slash command | `token` not in Pub/Sub message |
-| Response is non-ephemeral | Valid slash command | No `flags: 64` in response |
+| Response is non-ephemeral | Valid slash command | No `flags: 64` in response     |
 
 ### 4. Error Handling Tests
 
-| Test | Request | Expected Response |
-|------|---------|-------------------|
-| Malformed JSON | Invalid JSON body | 400 Bad Request |
-| Unknown interaction type | `{"type": 99}` | 400 Bad Request |
-| Missing required fields | `{}` | 400 Bad Request |
+| Test                     | Request           | Expected Response |
+| ------------------------ | ----------------- | ----------------- |
+| Malformed JSON           | Invalid JSON body | 400 Bad Request   |
+| Unknown interaction type | `{"type": 99}`    | 400 Bad Request   |
+| Missing required fields  | `{}`              | 400 Bad Request   |
 
 ## Test Fixtures
 
