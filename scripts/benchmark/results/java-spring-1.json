@@ -4,16 +4,16 @@
   "status": "success",
   "image_size_mb": 265.05,
   "ping_test": {
-    "startup_time_seconds": 1.5637469291687012,
-    "avg_ping_time_seconds": 0.03311161994934082,
-    "memory_usage_mb": 159.0
+    "startup_time_seconds": 1.6466681957244873,
+    "avg_ping_time_seconds": 0.031015920639038085,
+    "memory_usage_mb": 182.4
   },
   "interaction_test": {
-    "startup_time_seconds": 1.6537339687347412,
-    "interaction_latency_seconds": 0.1788930892944336,
+    "startup_time_seconds": 1.6523358821868896,
+    "interaction_latency_seconds": 0.18512988090515137,
     "pubsub_received": true,
-    "pubsub_latency_seconds": 1.0232441425323486,
-    "memory_usage_mb": 206.4
+    "pubsub_latency_seconds": 1.0196001529693604,
+    "memory_usage_mb": 201.0
   },
-  "timestamp": "2026-01-21T10:40:28+00:00"
+  "timestamp": "2026-01-21T12:33:58+00:00"
 }

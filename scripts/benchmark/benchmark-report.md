@@ -1,6 +1,6 @@
 # Performance Benchmark Results (Full)
 
-Generated: 2026-01-21 10:44:59
+Generated: 2026-01-21 12:35:10
 
 ## Summary
 
@@ -11,49 +11,49 @@ This benchmark tests each service with two separate cold-start scenarios:
 
 ## Ping Test Results
 
-| Service | Startup | Ping Latency | Memory | Image Size |
-|---------|---------|--------------|--------|------------|
-| rust-actix | 0.161s | 30.40ms | 1.9 MB | 105.6 MB |
-| cpp-drogon | 0.177s | 31.47ms | 2.4 MB | 102.9 MB |
-| go-gin | 0.202s | 32.02ms | 5.2 MB | 25.1 MB |
-| csharp-aspnet | 0.326s | 32.39ms | 21.3 MB | 130.6 MB |
-| php-laravel | 0.377s | 45.47ms | 56.2 MB | 128.6 MB |
-| typescript-fastify | 0.396s | 32.30ms | 51.6 MB | 190.0 MB |
-| node-express | 0.400s | 32.20ms | 45.8 MB | 202.6 MB |
-| python-flask | 0.450s | 31.25ms | 55.5 MB | 189.1 MB |
-| kotlin-ktor | 0.603s | 35.08ms | 129.4 MB | 257.3 MB |
-| python-django | 0.607s | 32.93ms | 64.6 MB | 213.6 MB |
-| ruby-rails | 0.973s | 36.41ms | 64.6 MB | 448.0 MB |
-| java-spring2 | 1.427s | 33.59ms | 168.8 MB | 340.4 MB |
-| java-spring | 1.564s | 33.11ms | 159.0 MB | 265.1 MB |
-| scala-play | 1.815s | 39.42ms | 208.7 MB | 296.8 MB |
+| Service            | Startup | Ping Latency | Memory   | Image Size |
+| ------------------ | ------- | ------------ | -------- | ---------- |
+| cpp-drogon         | 0.282s  | 28.75ms      | 12.9 MB  | 102.9 MB   |
+| rust-actix         | 0.284s  | 28.67ms      | 15.5 MB  | 107.0 MB   |
+| go-gin             | 0.305s  | 30.00ms      | 27.1 MB  | 25.1 MB    |
+| php-laravel        | 0.379s  | 46.16ms      | 56.1 MB  | 128.6 MB   |
+| csharp-aspnet      | 0.450s  | 31.26ms      | 69.8 MB  | 130.6 MB   |
+| typescript-fastify | 0.530s  | 31.10ms      | 53.5 MB  | 190.0 MB   |
+| python-flask       | 0.631s  | 31.01ms      | 86.0 MB  | 189.1 MB   |
+| python-django      | 0.632s  | 29.87ms      | 76.6 MB  | 213.6 MB   |
+| node-express       | 0.642s  | 30.56ms      | 108.4 MB | 202.6 MB   |
+| kotlin-ktor        | 0.718s  | 32.91ms      | 129.2 MB | 257.3 MB   |
+| ruby-rails         | 1.311s  | 34.84ms      | 87.8 MB  | 448.0 MB   |
+| java-spring2       | 1.521s  | 31.84ms      | 208.0 MB | 340.4 MB   |
+| java-spring        | 1.647s  | 31.02ms      | 182.4 MB | 265.1 MB   |
+| scala-play         | 1.891s  | 35.13ms      | 203.7 MB | 296.8 MB   |
 
 ## Interaction Test Results (with Pub/Sub)
 
-| Service | Startup | Interaction Latency | Pub/Sub | Memory |
-|---------|---------|---------------------|---------|--------|
-| cpp-drogon | 0.153s | 32.16ms | N/A | 2.6 MB |
-| go-gin | 0.171s | 33.47ms | 100% | 7.4 MB |
-| rust-actix | 0.225s | 31.49ms | N/A | 1.7 MB |
-| php-laravel | 0.378s | 1580.38ms | N/A | 56.0 MB |
-| python-flask | 0.424s | 34.19ms | 100% | 56.5 MB |
-| python-django | 0.449s | 54.32ms | 100% | 65.7 MB |
-| typescript-fastify | 0.532s | 89.56ms | 100% | 82.2 MB |
-| kotlin-ktor | 0.598s | 205.09ms | N/A | 103.0 MB |
-| ruby-rails | 0.966s | 163.22ms | 100% | 82.7 MB |
-| java-spring2 | 1.547s | 178.49ms | 100% | 239.3 MB |
-| java-spring | 1.654s | 178.89ms | 100% | 206.4 MB |
-| csharp-aspnet | 1.935s | 44.81ms | N/A | 32.4 MB |
-| scala-play | 2.029s | 191.53ms | 100% | 242.4 MB |
-| node-express | 3.503s | 74.86ms | 100% | 82.9 MB |
+| Service            | Startup | Interaction Latency | Pub/Sub | Memory   |
+| ------------------ | ------- | ------------------- | ------- | -------- |
+| cpp-drogon         | 0.163s  | 31.60ms             | 100%    | 2.5 MB   |
+| go-gin             | 0.168s  | 33.11ms             | 100%    | 8.4 MB   |
+| rust-actix         | 0.283s  | 30.18ms             | 100%    | 4.8 MB   |
+| typescript-fastify | 0.398s  | 77.52ms             | 100%    | 82.0 MB  |
+| php-laravel        | 0.400s  | 61.80ms             | 100%    | 57.7 MB  |
+| csharp-aspnet      | 0.436s  | 59.58ms             | 100%    | 38.2 MB  |
+| python-django      | 0.444s  | 60.52ms             | 100%    | 69.8 MB  |
+| python-flask       | 0.455s  | 33.32ms             | 100%    | 60.3 MB  |
+| kotlin-ktor        | 0.593s  | 272.23ms            | 100%    | 148.7 MB |
+| ruby-rails         | 0.856s  | 149.11ms            | 100%    | 81.8 MB  |
+| java-spring2       | 1.558s  | 186.03ms            | 100%    | 275.0 MB |
+| java-spring        | 1.652s  | 185.13ms            | 100%    | 201.0 MB |
+| scala-play         | 1.891s  | 173.53ms            | 100%    | 244.1 MB |
+| node-express       | 3.534s  | 80.34ms             | 100%    | 84.5 MB  |
 
 ## Key Findings
 
-- **Fastest Ping Startup**: rust-actix (0.161s)
-- **Fastest Interaction Startup**: cpp-drogon (0.153s)
+- **Fastest Ping Startup**: cpp-drogon (0.282s)
+- **Fastest Interaction Startup**: cpp-drogon (0.163s)
 - **Smallest Image**: go-gin (25.1 MB)
-- **Lowest Memory**: rust-actix (1.9 MB)
+- **Lowest Memory**: cpp-drogon (12.9 MB)
 
 ---
 
-*Benchmarks run with Docker Desktop. Each test uses a completely fresh container (killed between tests).*
+_Benchmarks run with Docker Desktop. Each test uses a completely fresh container (killed between tests)._
