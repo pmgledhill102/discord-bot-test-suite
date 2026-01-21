@@ -1,0 +1,31 @@
+# Ignore git
+.git
+.gitignore
+
+# Ignore logs and temp files
+log/
+tmp/
+*.log
+
+# Ignore test files
+test/
+spec/
+
+# Ignore development files
+.ruby-version
+.ruby-gemset
+.rspec
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore documentation
+README*
+CHANGELOG*
+LICENSE*
+
+# Ignore CI files
+.github/
