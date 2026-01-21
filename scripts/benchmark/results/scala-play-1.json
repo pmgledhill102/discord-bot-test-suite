@@ -1,0 +1,10 @@
+{
+    "service": "scala-play",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 1.8947899341583252,
+    "avg_ping_time_seconds": 0.034864187240600586,
+    "memory_usage_mb": 216.9,
+    "image_size_mb": 296.82,
+    "timestamp": "2026-01-21T09:26:36+00:00"
+}

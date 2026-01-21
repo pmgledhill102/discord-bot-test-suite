@@ -1,0 +1,10 @@
+{
+    "service": "cpp-drogon",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 0.29709315299987793,
+    "avg_ping_time_seconds": 0.029736423492431642,
+    "memory_usage_mb": 12.98,
+    "image_size_mb": 102.86,
+    "timestamp": "2026-01-21T09:25:43+00:00"
+}

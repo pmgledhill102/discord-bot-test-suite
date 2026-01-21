@@ -1,0 +1,10 @@
+{
+    "service": "go-gin",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 0.19592070579528809,
+    "avg_ping_time_seconds": 0.030433082580566408,
+    "memory_usage_mb": 5.047,
+    "image_size_mb": 25.15,
+    "timestamp": "2026-01-21T09:25:35+00:00"
+}

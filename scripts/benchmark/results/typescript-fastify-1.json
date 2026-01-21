@@ -1,0 +1,10 @@
+{
+    "service": "typescript-fastify",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 0.6498191356658936,
+    "avg_ping_time_seconds": 0.03130640983581543,
+    "memory_usage_mb": 53.66,
+    "image_size_mb": 189.99,
+    "timestamp": "2026-01-21T09:26:05+00:00"
+}

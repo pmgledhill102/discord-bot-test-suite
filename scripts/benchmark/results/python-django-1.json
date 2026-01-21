@@ -1,0 +1,10 @@
+{
+    "service": "python-django",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 0.6590750217437744,
+    "avg_ping_time_seconds": 0.030441761016845703,
+    "memory_usage_mb": 77.15,
+    "image_size_mb": 213.55,
+    "timestamp": "2026-01-21T09:26:19+00:00"
+}

@@ -1,0 +1,10 @@
+{
+    "service": "kotlin-ktor",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 0.7129848003387451,
+    "avg_ping_time_seconds": 0.03345799446105957,
+    "memory_usage_mb": 129.9,
+    "image_size_mb": 257.34,
+    "timestamp": "2026-01-21T09:26:28+00:00"
+}

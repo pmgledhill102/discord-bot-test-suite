@@ -1,0 +1,110 @@
+{
+  "builds": [
+    {
+      "service": "go-gin",
+      "image": "discord-go-gin:benchmark",
+      "build_time_seconds": 45.296439000,
+      "size_bytes": 26371252,
+      "size_mb": 25.14,
+      "status": "success"
+    },
+    {
+      "service": "python-flask",
+      "image": "discord-python-flask:benchmark",
+      "build_time_seconds": 0.220403000,
+      "size_bytes": 198243486,
+      "size_mb": 189.05,
+      "status": "success"
+    },
+    {
+      "service": "cpp-drogon",
+      "image": "discord-cpp-drogon:benchmark",
+      "build_time_seconds": 1.094724000,
+      "size_bytes": 107851827,
+      "size_mb": 102.85,
+      "status": "success"
+    },
+    {
+      "service": "rust-actix",
+      "image": "discord-rust-actix:benchmark",
+      "build_time_seconds": 1.065633000,
+      "size_bytes": 110692134,
+      "size_mb": 105.56,
+      "status": "success"
+    },
+    {
+      "service": "node-express",
+      "image": "discord-node-express:benchmark",
+      "build_time_seconds": 1.172393000,
+      "size_bytes": 212403307,
+      "size_mb": 202.56,
+      "status": "success"
+    },
+    {
+      "service": "typescript-fastify",
+      "image": "discord-typescript-fastify:benchmark",
+      "build_time_seconds": 0.409048000,
+      "size_bytes": 199218389,
+      "size_mb": 189.98,
+      "status": "success"
+    },
+    {
+      "service": "python-django",
+      "image": "discord-python-django:benchmark",
+      "build_time_seconds": 0.173904000,
+      "size_bytes": 223921170,
+      "size_mb": 213.54,
+      "status": "success"
+    },
+    {
+      "service": "java-spring",
+      "image": "discord-java-spring:benchmark",
+      "build_time_seconds": 1.097611000,
+      "size_bytes": 277930240,
+      "size_mb": 265.05,
+      "status": "success"
+    },
+    {
+      "service": "kotlin-ktor",
+      "image": "discord-kotlin-ktor:benchmark",
+      "build_time_seconds": 0.987593000,
+      "size_bytes": 269836619,
+      "size_mb": 257.33,
+      "status": "success"
+    },
+    {
+      "service": "scala-play",
+      "image": "discord-scala-play:benchmark",
+      "build_time_seconds": 0.394037000,
+      "size_bytes": 311233544,
+      "size_mb": 296.81,
+      "status": "success"
+    },
+    {
+      "service": "csharp-aspnet",
+      "image": "discord-csharp-aspnet:benchmark",
+      "build_time_seconds": 0.296537000,
+      "size_bytes": 136894455,
+      "size_mb": 130.55,
+      "status": "success"
+    },
+    {
+      "service": "ruby-rails",
+      "image": "discord-ruby-rails:benchmark",
+      "build_time_seconds": 0.177468000,
+      "size_bytes": 469805996,
+      "size_mb": 448.04,
+      "status": "success"
+    },
+    {
+      "service": "php-laravel",
+      "image": "discord-php-laravel:benchmark",
+      "build_time_seconds": 13.186035000,
+      "size_bytes": 134834018,
+      "size_mb": 128.58,
+      "status": "success"
+    }
+  ],
+  "timestamp": "2026-01-21T09:23:34+00:00",
+  "total_build_time_seconds": 66.045521000
+}

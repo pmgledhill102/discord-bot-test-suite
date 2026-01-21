@@ -1,0 +1,10 @@
+{
+    "service": "csharp-aspnet",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 0.4557220935821533,
+    "avg_ping_time_seconds": 0.03089599609375,
+    "memory_usage_mb": 69.88,
+    "image_size_mb": 130.55,
+    "timestamp": "2026-01-21T09:26:40+00:00"
+}

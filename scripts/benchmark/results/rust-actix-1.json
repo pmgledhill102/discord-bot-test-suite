@@ -1,0 +1,10 @@
+{
+    "service": "rust-actix",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 0.16022515296936035,
+    "avg_ping_time_seconds": 0.030675220489501952,
+    "memory_usage_mb": 7.465,
+    "image_size_mb": 105.56,
+    "timestamp": "2026-01-21T09:25:46+00:00"
+}

@@ -1,0 +1,10 @@
+{
+    "service": "ruby-rails",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 1.3034610748291016,
+    "avg_ping_time_seconds": 0.03648948669433594,
+    "memory_usage_mb": 88.56,
+    "image_size_mb": 448.04,
+    "timestamp": "2026-01-21T09:26:44+00:00"
+}

@@ -1,0 +1,10 @@
+{
+    "service": "java-spring",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 1.946808099746704,
+    "avg_ping_time_seconds": 0.0321537971496582,
+    "memory_usage_mb": 193.0,
+    "image_size_mb": 265.05,
+    "timestamp": "2026-01-21T09:26:24+00:00"
+}

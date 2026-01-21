@@ -1,0 +1,10 @@
+{
+    "service": "node-express",
+    "iteration": 1,
+    "status": "success",
+    "startup_time_seconds": 0.6400668621063232,
+    "avg_ping_time_seconds": 0.031789541244506836,
+    "memory_usage_mb": 107.9,
+    "image_size_mb": 202.56,
+    "timestamp": "2026-01-21T09:25:51+00:00"
+}

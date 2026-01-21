@@ -1,0 +1,265 @@
+{
+  "generated_at": "2026-01-21T09:28:45.898364",
+  "services": {
+    "cpp-drogon": {
+      "iterations": 1,
+      "image_size_mb": 102.86,
+      "startup_time": {
+        "mean": 0.297,
+        "min": 0.297,
+        "max": 0.297,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 29.74,
+        "min": 29.74,
+        "max": 29.74
+      },
+      "memory_mb": {
+        "mean": 12.98,
+        "min": 12.98,
+        "max": 12.98
+      }
+    },
+    "csharp-aspnet": {
+      "iterations": 1,
+      "image_size_mb": 130.55,
+      "startup_time": {
+        "mean": 0.456,
+        "min": 0.456,
+        "max": 0.456,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 30.9,
+        "min": 30.9,
+        "max": 30.9
+      },
+      "memory_mb": {
+        "mean": 69.88,
+        "min": 69.88,
+        "max": 69.88
+      }
+    },
+    "go-gin": {
+      "iterations": 1,
+      "image_size_mb": 25.15,
+      "startup_time": {
+        "mean": 0.196,
+        "min": 0.196,
+        "max": 0.196,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 30.43,
+        "min": 30.43,
+        "max": 30.43
+      },
+      "memory_mb": {
+        "mean": 5.05,
+        "min": 5.05,
+        "max": 5.05
+      }
+    },
+    "java-spring": {
+      "iterations": 1,
+      "image_size_mb": 265.05,
+      "startup_time": {
+        "mean": 1.947,
+        "min": 1.947,
+        "max": 1.947,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 32.15,
+        "min": 32.15,
+        "max": 32.15
+      },
+      "memory_mb": {
+        "mean": 193.0,
+        "min": 193.0,
+        "max": 193.0
+      }
+    },
+    "kotlin-ktor": {
+      "iterations": 1,
+      "image_size_mb": 257.34,
+      "startup_time": {
+        "mean": 0.713,
+        "min": 0.713,
+        "max": 0.713,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 33.46,
+        "min": 33.46,
+        "max": 33.46
+      },
+      "memory_mb": {
+        "mean": 129.9,
+        "min": 129.9,
+        "max": 129.9
+      }
+    },
+    "node-express": {
+      "iterations": 1,
+      "image_size_mb": 202.56,
+      "startup_time": {
+        "mean": 0.64,
+        "min": 0.64,
+        "max": 0.64,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 31.79,
+        "min": 31.79,
+        "max": 31.79
+      },
+      "memory_mb": {
+        "mean": 107.9,
+        "min": 107.9,
+        "max": 107.9
+      }
+    },
+    "php-laravel": {
+      "iterations": 1,
+      "image_size_mb": 128.59,
+      "startup_time": {
+        "mean": 0.392,
+        "min": 0.392,
+        "max": 0.392,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 64.61,
+        "min": 64.61,
+        "max": 64.61
+      },
+      "memory_mb": {
+        "mean": 70.42,
+        "min": 70.42,
+        "max": 70.42
+      }
+    },
+    "python-django": {
+      "iterations": 1,
+      "image_size_mb": 213.55,
+      "startup_time": {
+        "mean": 0.659,
+        "min": 0.659,
+        "max": 0.659,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 30.44,
+        "min": 30.44,
+        "max": 30.44
+      },
+      "memory_mb": {
+        "mean": 77.15,
+        "min": 77.15,
+        "max": 77.15
+      }
+    },
+    "python-flask": {
+      "iterations": 1,
+      "image_size_mb": 189.06,
+      "startup_time": {
+        "mean": 0.637,
+        "min": 0.637,
+        "max": 0.637,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 30.47,
+        "min": 30.47,
+        "max": 30.47
+      },
+      "memory_mb": {
+        "mean": 85.99,
+        "min": 85.99,
+        "max": 85.99
+      }
+    },
+    "ruby-rails": {
+      "iterations": 1,
+      "image_size_mb": 448.04,
+      "startup_time": {
+        "mean": 1.303,
+        "min": 1.303,
+        "max": 1.303,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 36.49,
+        "min": 36.49,
+        "max": 36.49
+      },
+      "memory_mb": {
+        "mean": 88.56,
+        "min": 88.56,
+        "max": 88.56
+      }
+    },
+    "rust-actix": {
+      "iterations": 1,
+      "image_size_mb": 105.56,
+      "startup_time": {
+        "mean": 0.16,
+        "min": 0.16,
+        "max": 0.16,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 30.68,
+        "min": 30.68,
+        "max": 30.68
+      },
+      "memory_mb": {
+        "mean": 7.46,
+        "min": 7.46,
+        "max": 7.46
+      }
+    },
+    "scala-play": {
+      "iterations": 1,
+      "image_size_mb": 296.82,
+      "startup_time": {
+        "mean": 1.895,
+        "min": 1.895,
+        "max": 1.895,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 34.86,
+        "min": 34.86,
+        "max": 34.86
+      },
+      "memory_mb": {
+        "mean": 216.9,
+        "min": 216.9,
+        "max": 216.9
+      }
+    },
+    "typescript-fastify": {
+      "iterations": 1,
+      "image_size_mb": 189.99,
+      "startup_time": {
+        "mean": 0.65,
+        "min": 0.65,
+        "max": 0.65,
+        "stdev": 0
+      },
+      "ping_time": {
+        "mean": 31.31,
+        "min": 31.31,
+        "max": 31.31
+      },
+      "memory_mb": {
+        "mean": 53.66,
+        "min": 53.66,
+        "max": 53.66
+      }
+    }
+  }
+}
