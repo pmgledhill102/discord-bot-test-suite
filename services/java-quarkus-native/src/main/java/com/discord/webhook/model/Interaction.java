@@ -3,19 +3,11 @@ package com.discord.webhook.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-
-import java.util.HashMap;
 import java.util.Map;
 
 @RegisterForReflection
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Interaction {
-    public static final int TYPE_PING = 1;
-    public static final int TYPE_APPLICATION_COMMAND = 2;
-    public static final int TYPE_MESSAGE_COMPONENT = 3;
-    public static final int TYPE_AUTOCOMPLETE = 4;
-    public static final int TYPE_MODAL_SUBMIT = 5;
-
     private String id;
     private int type;
 
@@ -28,54 +20,74 @@ public class Interaction {
     @JsonProperty("channel_id")
     private String channelId;
 
-    private Map<String, Object> member;
-    private Map<String, Object> user;
-    private String token;
-    private int version;
     private Map<String, Object> data;
+    private String token;
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public int getType() { return type; }
-    public void setType(int type) { this.type = type; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public String getApplicationId() { return applicationId; }
-    public void setApplicationId(String applicationId) { this.applicationId = applicationId; }
+    public int getType() {
+        return type;
+    }
 
-    public String getGuildId() { return guildId; }
-    public void setGuildId(String guildId) { this.guildId = guildId; }
+    public void setType(int type) {
+        this.type = type;
+    }
 
-    public String getChannelId() { return channelId; }
-    public void setChannelId(String channelId) { this.channelId = channelId; }
+    public String getApplicationId() {
+        return applicationId;
+    }
 
-    public Map<String, Object> getMember() { return member; }
-    public void setMember(Map<String, Object> member) { this.member = member; }
+    public void setApplicationId(String applicationId) {
+        this.applicationId = applicationId;
+    }
 
-    public Map<String, Object> getUser() { return user; }
-    public void setUser(Map<String, Object> user) { this.user = user; }
+    public String getGuildId() {
+        return guildId;
+    }
 
-    public String getToken() { return token; }
-    public void setToken(String token) { this.token = token; }
+    public void setGuildId(String guildId) {
+        this.guildId = guildId;
+    }
 
-    public int getVersion() { return version; }
-    public void setVersion(int version) { this.version = version; }
+    public String getChannelId() {
+        return channelId;
+    }
 
-    public Map<String, Object> getData() { return data; }
-    public void setData(Map<String, Object> data) { this.data = data; }
+    public void setChannelId(String channelId) {
+        this.channelId = channelId;
+    }
+
+    public Map<String, Object> getData() {
+        return data;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
 
     public Interaction createSanitizedCopy() {
         Interaction copy = new Interaction();
-        copy.setId(this.id);
-        copy.setType(this.type);
-        copy.setApplicationId(this.applicationId);
-        copy.setGuildId(this.guildId);
-        copy.setChannelId(this.channelId);
-        copy.setMember(this.member != null ? new HashMap<>(this.member) : null);
-        copy.setUser(this.user != null ? new HashMap<>(this.user) : null);
-        copy.setVersion(this.version);
-        copy.setData(this.data != null ? new HashMap<>(this.data) : null);
-        // Token is intentionally NOT copied
+        copy.id = this.id;
+        copy.type = this.type;
+        copy.applicationId = this.applicationId;
+        copy.guildId = this.guildId;
+        copy.channelId = this.channelId;
+        copy.data = this.data;
+        // Deliberately exclude token
         return copy;
     }
 }

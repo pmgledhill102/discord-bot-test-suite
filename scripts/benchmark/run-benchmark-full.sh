@@ -40,6 +40,7 @@ SERVICES=(
     "java-spring"
     "java-spring2"
     "java-quarkus"
+    "java-quarkus-native"
     "java-micronaut"
     "kotlin-ktor"
     "scala-play"
