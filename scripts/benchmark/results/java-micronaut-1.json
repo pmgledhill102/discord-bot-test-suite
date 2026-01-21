@@ -1,19 +1,19 @@
 {
-  "service": "java-micronaut",
-  "iteration": 1,
-  "status": "success",
-  "image_size_mb": 357.01,
-  "ping_test": {
-    "startup_time_seconds": 1.128692865371704,
-    "avg_ping_time_seconds": 0.036547374725341794,
-    "memory_usage_mb": 183.1
-  },
-  "interaction_test": {
-    "startup_time_seconds": 1.020799160003662,
-    "interaction_latency_seconds": 0.16155004501342773,
-    "pubsub_received": true,
-    "pubsub_latency_seconds": 1.0148930549621582,
-    "memory_usage_mb": 191.6
-  },
-  "timestamp": "2026-01-21T16:55:38+00:00"
+    "service": "java-micronaut",
+    "iteration": 1,
+    "status": "success",
+    "image_size_mb": 357.01,
+    "ping_test": {
+        "startup_time_seconds": 1.1378381252288818,
+        "avg_ping_time_seconds": 0.03637118339538574,
+        "memory_usage_mb": 145.5
+    },
+    "interaction_test": {
+        "startup_time_seconds": 1.044692039489746,
+        "interaction_latency_seconds": 0.2248978614807129,
+        "pubsub_received": true,
+        "pubsub_latency_seconds": 1.0888831615447998,
+        "memory_usage_mb": 189.9
+    },
+    "timestamp": "2026-01-21T21:23:06+00:00"
 }

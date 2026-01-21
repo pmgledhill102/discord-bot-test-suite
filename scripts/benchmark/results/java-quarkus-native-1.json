@@ -1,0 +1,19 @@
+{
+    "service": "java-quarkus-native",
+    "iteration": 1,
+    "status": "success",
+    "image_size_mb": 81.22,
+    "ping_test": {
+        "startup_time_seconds": 0.32289886474609375,
+        "avg_ping_time_seconds": 0.04386920928955078,
+        "memory_usage_mb": 54.71
+    },
+    "interaction_test": {
+        "startup_time_seconds": 0.3107419013977051,
+        "interaction_latency_seconds": 0.04282784461975098,
+        "pubsub_received": true,
+        "pubsub_latency_seconds": 0.8722527027130127,
+        "memory_usage_mb": 13.56
+    },
+    "timestamp": "2026-01-21T21:22:55+00:00"
+}

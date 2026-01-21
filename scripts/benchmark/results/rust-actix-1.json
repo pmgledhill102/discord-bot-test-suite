@@ -1,19 +1,19 @@
 {
-  "service": "rust-actix",
-  "iteration": 1,
-  "status": "success",
-  "image_size_mb": 107.01,
-  "ping_test": {
-    "startup_time_seconds": 0.2841649055480957,
-    "avg_ping_time_seconds": 0.028668737411499022,
-    "memory_usage_mb": 15.52
-  },
-  "interaction_test": {
-    "startup_time_seconds": 0.2825338840484619,
-    "interaction_latency_seconds": 0.03018331527709961,
-    "pubsub_received": true,
-    "pubsub_latency_seconds": 0.860893964767456,
-    "memory_usage_mb": 4.82
-  },
-  "timestamp": "2026-01-21T12:33:21+00:00"
+    "service": "rust-actix",
+    "iteration": 1,
+    "status": "success",
+    "image_size_mb": 107.01,
+    "ping_test": {
+        "startup_time_seconds": 0.32288217544555664,
+        "avg_ping_time_seconds": 0.02909398078918457,
+        "memory_usage_mb": 15.86
+    },
+    "interaction_test": {
+        "startup_time_seconds": 0.2776358127593994,
+        "interaction_latency_seconds": 0.03138613700866699,
+        "pubsub_received": true,
+        "pubsub_latency_seconds": 0.8619182109832764,
+        "memory_usage_mb": 4.812
+    },
+    "timestamp": "2026-01-21T21:21:50+00:00"
 }

@@ -1,28 +1,28 @@
 {
-  "generated_at": "2026-01-21T12:35:10.027851",
+  "generated_at": "2026-01-21T21:28:22.172839",
   "services": {
     "cpp-drogon": {
       "iterations": 1,
       "image_size_mb": 102.86,
       "ping_test": {
         "startup_time": {
-          "mean": 0.282,
-          "min": 0.282,
-          "max": 0.282
+          "mean": 0.296,
+          "min": 0.296,
+          "max": 0.296
         },
-        "latency_ms": 28.75,
-        "memory_mb": 12.94
+        "latency_ms": 29.48,
+        "memory_mb": 13.17
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.163,
-          "min": 0.163,
-          "max": 0.163
+          "mean": 0.194,
+          "min": 0.194,
+          "max": 0.194
         },
-        "latency_ms": 31.6,
-        "memory_mb": 2.46,
+        "latency_ms": 31.79,
+        "memory_mb": 2.45,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 871.21
+        "pubsub_latency_ms": 897.1
       }
     },
     "csharp-aspnet": {
@@ -30,23 +30,23 @@
       "image_size_mb": 130.55,
       "ping_test": {
         "startup_time": {
-          "mean": 0.45,
-          "min": 0.45,
-          "max": 0.45
+          "mean": 0.486,
+          "min": 0.486,
+          "max": 0.486
         },
-        "latency_ms": 31.26,
-        "memory_mb": 69.85
+        "latency_ms": 32.45,
+        "memory_mb": 69.7
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.436,
-          "min": 0.436,
-          "max": 0.436
+          "mean": 0.556,
+          "min": 0.556,
+          "max": 0.556
         },
-        "latency_ms": 59.58,
-        "memory_mb": 38.2,
+        "latency_ms": 60.65,
+        "memory_mb": 38.55,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 882.06
+        "pubsub_latency_ms": 893.52
       }
     },
     "go-gin": {
@@ -54,23 +54,95 @@
       "image_size_mb": 25.15,
       "ping_test": {
         "startup_time": {
-          "mean": 0.305,
-          "min": 0.305,
-          "max": 0.305
+          "mean": 0.348,
+          "min": 0.348,
+          "max": 0.348
         },
-        "latency_ms": 30.0,
-        "memory_mb": 27.14
+        "latency_ms": 31.26,
+        "memory_mb": 26.22
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.168,
-          "min": 0.168,
-          "max": 0.168
+          "mean": 0.164,
+          "min": 0.164,
+          "max": 0.164
         },
-        "latency_ms": 33.11,
-        "memory_mb": 8.43,
+        "latency_ms": 36.48,
+        "memory_mb": 8.61,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 874.29
+        "pubsub_latency_ms": 895.05
+      }
+    },
+    "java-micronaut": {
+      "iterations": 1,
+      "image_size_mb": 357.01,
+      "ping_test": {
+        "startup_time": {
+          "mean": 1.138,
+          "min": 1.138,
+          "max": 1.138
+        },
+        "latency_ms": 36.37,
+        "memory_mb": 145.5
+      },
+      "interaction_test": {
+        "startup_time": {
+          "mean": 1.045,
+          "min": 1.045,
+          "max": 1.045
+        },
+        "latency_ms": 224.9,
+        "memory_mb": 189.9,
+        "pubsub_success_rate": 100.0,
+        "pubsub_latency_ms": 1088.88
+      }
+    },
+    "java-quarkus": {
+      "iterations": 1,
+      "image_size_mb": 363.63,
+      "ping_test": {
+        "startup_time": {
+          "mean": 1.11,
+          "min": 1.11,
+          "max": 1.11
+        },
+        "latency_ms": 35.45,
+        "memory_mb": 147.1
+      },
+      "interaction_test": {
+        "startup_time": {
+          "mean": 1.096,
+          "min": 1.096,
+          "max": 1.096
+        },
+        "latency_ms": 240.09,
+        "memory_mb": 215.3,
+        "pubsub_success_rate": 100.0,
+        "pubsub_latency_ms": 1099.62
+      }
+    },
+    "java-quarkus-native": {
+      "iterations": 1,
+      "image_size_mb": 81.22,
+      "ping_test": {
+        "startup_time": {
+          "mean": 0.323,
+          "min": 0.323,
+          "max": 0.323
+        },
+        "latency_ms": 43.87,
+        "memory_mb": 54.71
+      },
+      "interaction_test": {
+        "startup_time": {
+          "mean": 0.311,
+          "min": 0.311,
+          "max": 0.311
+        },
+        "latency_ms": 42.83,
+        "memory_mb": 13.56,
+        "pubsub_success_rate": 100.0,
+        "pubsub_latency_ms": 872.25
       }
     },
     "java-spring": {
@@ -78,23 +150,23 @@
       "image_size_mb": 265.05,
       "ping_test": {
         "startup_time": {
-          "mean": 1.647,
-          "min": 1.647,
-          "max": 1.647
+          "mean": 1.766,
+          "min": 1.766,
+          "max": 1.766
         },
-        "latency_ms": 31.02,
-        "memory_mb": 182.4
+        "latency_ms": 39.96,
+        "memory_mb": 188.9
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 1.652,
-          "min": 1.652,
-          "max": 1.652
+          "mean": 1.79,
+          "min": 1.79,
+          "max": 1.79
         },
-        "latency_ms": 185.13,
-        "memory_mb": 201.0,
+        "latency_ms": 188.03,
+        "memory_mb": 216.3,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 1019.6
+        "pubsub_latency_ms": 1035.0
       }
     },
     "java-spring2": {
@@ -102,23 +174,23 @@
       "image_size_mb": 340.36,
       "ping_test": {
         "startup_time": {
-          "mean": 1.521,
-          "min": 1.521,
-          "max": 1.521
+          "mean": 1.7,
+          "min": 1.7,
+          "max": 1.7
         },
-        "latency_ms": 31.84,
-        "memory_mb": 208.0
+        "latency_ms": 32.49,
+        "memory_mb": 211.6
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 1.558,
-          "min": 1.558,
-          "max": 1.558
+          "mean": 1.93,
+          "min": 1.93,
+          "max": 1.93
         },
-        "latency_ms": 186.03,
-        "memory_mb": 275.0,
+        "latency_ms": 186.5,
+        "memory_mb": 254.6,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 1028.66
+        "pubsub_latency_ms": 1032.92
       }
     },
     "kotlin-ktor": {
@@ -126,23 +198,23 @@
       "image_size_mb": 257.34,
       "ping_test": {
         "startup_time": {
-          "mean": 0.718,
-          "min": 0.718,
-          "max": 0.718
+          "mean": 0.843,
+          "min": 0.843,
+          "max": 0.843
         },
-        "latency_ms": 32.91,
-        "memory_mb": 129.2
+        "latency_ms": 38.88,
+        "memory_mb": 129.5
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.593,
-          "min": 0.593,
-          "max": 0.593
+          "mean": 0.586,
+          "min": 0.586,
+          "max": 0.586
         },
-        "latency_ms": 272.23,
-        "memory_mb": 148.7,
+        "latency_ms": 311.27,
+        "memory_mb": 150.1,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 1093.54
+        "pubsub_latency_ms": 1142.97
       }
     },
     "node-express": {
@@ -150,23 +222,23 @@
       "image_size_mb": 202.56,
       "ping_test": {
         "startup_time": {
-          "mean": 0.642,
-          "min": 0.642,
-          "max": 0.642
+          "mean": 0.538,
+          "min": 0.538,
+          "max": 0.538
         },
-        "latency_ms": 30.56,
-        "memory_mb": 108.4
+        "latency_ms": 38.78,
+        "memory_mb": 49.05
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 3.534,
-          "min": 3.534,
-          "max": 3.534
+          "mean": 3.501,
+          "min": 3.501,
+          "max": 3.501
         },
-        "latency_ms": 80.34,
-        "memory_mb": 84.55,
+        "latency_ms": 74.88,
+        "memory_mb": 84.29,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 907.38
+        "pubsub_latency_ms": 910.43
       }
     },
     "php-laravel": {
@@ -174,23 +246,23 @@
       "image_size_mb": 128.59,
       "ping_test": {
         "startup_time": {
-          "mean": 0.379,
-          "min": 0.379,
-          "max": 0.379
+          "mean": 0.554,
+          "min": 0.554,
+          "max": 0.554
         },
-        "latency_ms": 46.16,
-        "memory_mb": 56.12
+        "latency_ms": 50.75,
+        "memory_mb": 75.37
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.4,
-          "min": 0.4,
-          "max": 0.4
+          "mean": 0.391,
+          "min": 0.391,
+          "max": 0.391
         },
-        "latency_ms": 61.8,
-        "memory_mb": 57.73,
+        "latency_ms": 71.74,
+        "memory_mb": 58.13,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 886.77
+        "pubsub_latency_ms": 947.98
       }
     },
     "python-django": {
@@ -198,23 +270,23 @@
       "image_size_mb": 213.55,
       "ping_test": {
         "startup_time": {
-          "mean": 0.632,
-          "min": 0.632,
-          "max": 0.632
+          "mean": 0.637,
+          "min": 0.637,
+          "max": 0.637
         },
-        "latency_ms": 29.87,
-        "memory_mb": 76.61
+        "latency_ms": 31.15,
+        "memory_mb": 77.25
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.444,
-          "min": 0.444,
-          "max": 0.444
+          "mean": 0.473,
+          "min": 0.473,
+          "max": 0.473
         },
-        "latency_ms": 60.52,
-        "memory_mb": 69.85,
+        "latency_ms": 60.29,
+        "memory_mb": 69.5,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 905.55
+        "pubsub_latency_ms": 919.44
       }
     },
     "python-flask": {
@@ -222,23 +294,23 @@
       "image_size_mb": 189.06,
       "ping_test": {
         "startup_time": {
-          "mean": 0.631,
-          "min": 0.631,
-          "max": 0.631
+          "mean": 0.765,
+          "min": 0.765,
+          "max": 0.765
         },
-        "latency_ms": 31.01,
-        "memory_mb": 86.01
+        "latency_ms": 31.19,
+        "memory_mb": 85.91
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.455,
-          "min": 0.455,
-          "max": 0.455
+          "mean": 0.447,
+          "min": 0.447,
+          "max": 0.447
         },
-        "latency_ms": 33.32,
-        "memory_mb": 60.3,
+        "latency_ms": 33.14,
+        "memory_mb": 60.29,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 864.66
+        "pubsub_latency_ms": 888.36
       }
     },
     "ruby-rails": {
@@ -246,23 +318,23 @@
       "image_size_mb": 448.04,
       "ping_test": {
         "startup_time": {
-          "mean": 1.311,
-          "min": 1.311,
-          "max": 1.311
+          "mean": 1.533,
+          "min": 1.533,
+          "max": 1.533
         },
-        "latency_ms": 34.84,
-        "memory_mb": 87.77
+        "latency_ms": 40.32,
+        "memory_mb": 87.25
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.856,
-          "min": 0.856,
-          "max": 0.856
+          "mean": 1.017,
+          "min": 1.017,
+          "max": 1.017
         },
-        "latency_ms": 149.11,
-        "memory_mb": 81.82,
+        "latency_ms": 168.65,
+        "memory_mb": 82.55,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 975.46
+        "pubsub_latency_ms": 1028.91
       }
     },
     "rust-actix": {
@@ -270,23 +342,23 @@
       "image_size_mb": 107.01,
       "ping_test": {
         "startup_time": {
-          "mean": 0.284,
-          "min": 0.284,
-          "max": 0.284
+          "mean": 0.323,
+          "min": 0.323,
+          "max": 0.323
         },
-        "latency_ms": 28.67,
-        "memory_mb": 15.52
+        "latency_ms": 29.09,
+        "memory_mb": 15.86
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.283,
-          "min": 0.283,
-          "max": 0.283
+          "mean": 0.278,
+          "min": 0.278,
+          "max": 0.278
         },
-        "latency_ms": 30.18,
-        "memory_mb": 4.82,
+        "latency_ms": 31.39,
+        "memory_mb": 4.81,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 860.89
+        "pubsub_latency_ms": 861.92
       }
     },
     "scala-play": {
@@ -294,23 +366,23 @@
       "image_size_mb": 296.82,
       "ping_test": {
         "startup_time": {
-          "mean": 1.891,
-          "min": 1.891,
-          "max": 1.891
+          "mean": 2.156,
+          "min": 2.156,
+          "max": 2.156
         },
-        "latency_ms": 35.13,
-        "memory_mb": 203.7
+        "latency_ms": 44.43,
+        "memory_mb": 209.4
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 1.891,
-          "min": 1.891,
-          "max": 1.891
+          "mean": 2.113,
+          "min": 2.113,
+          "max": 2.113
         },
-        "latency_ms": 173.53,
-        "memory_mb": 244.1,
+        "latency_ms": 195.48,
+        "memory_mb": 245.3,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 1005.05
+        "pubsub_latency_ms": 1058.52
       }
     },
     "typescript-fastify": {
@@ -318,23 +390,23 @@
       "image_size_mb": 189.99,
       "ping_test": {
         "startup_time": {
-          "mean": 0.53,
-          "min": 0.53,
-          "max": 0.53
+          "mean": 0.519,
+          "min": 0.519,
+          "max": 0.519
         },
-        "latency_ms": 31.1,
-        "memory_mb": 53.51
+        "latency_ms": 32.1,
+        "memory_mb": 53.08
       },
       "interaction_test": {
         "startup_time": {
-          "mean": 0.398,
-          "min": 0.398,
-          "max": 0.398
+          "mean": 0.389,
+          "min": 0.389,
+          "max": 0.389
         },
-        "latency_ms": 77.52,
-        "memory_mb": 82.02,
+        "latency_ms": 73.4,
+        "memory_mb": 81.91,
         "pubsub_success_rate": 100.0,
-        "pubsub_latency_ms": 920.0
+        "pubsub_latency_ms": 925.49
       }
     }
   }
