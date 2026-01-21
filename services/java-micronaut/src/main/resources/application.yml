@@ -1,0 +1,22 @@
+micronaut:
+  application:
+    name: discord-webhook-micronaut
+  server:
+    port: ${PORT:8080}
+    host: 0.0.0.0
+
+discord:
+  public-key: ${DISCORD_PUBLIC_KEY}
+
+google:
+  cloud:
+    project: ${GOOGLE_CLOUD_PROJECT:}
+
+pubsub:
+  topic: ${PUBSUB_TOPIC:}
+  emulator:
+    host: ${PUBSUB_EMULATOR_HOST:}
+
+logger:
+  levels:
+    com.discord: DEBUG
