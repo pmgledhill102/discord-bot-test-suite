@@ -1,17 +1,22 @@
 #!/bin/bash
-# Find a free port in the specified range
-# Usage: find-free-port.sh [start_port] [end_port]
+# Find a free port using random selection in ephemeral range
+# Usage: find-free-port.sh [max_attempts]
 # Returns: a free port number
+#
+# Uses random port selection to avoid race conditions when
+# multiple processes are searching for ports simultaneously.
 
-START_PORT=${1:-10000}
-END_PORT=${2:-65000}
+MAX_ATTEMPTS=${1:-50}
 
-for port in $(seq $START_PORT $END_PORT); do
-    if ! lsof -i:$port >/dev/null 2>&1; then
-        echo $port
+for ((i=0; i<MAX_ATTEMPTS; i++)); do
+    # Generate random port in ephemeral range (49152-65535)
+    port=$((49152 + RANDOM % 16383))
+
+    if ! lsof -i:"$port" >/dev/null 2>&1; then
+        echo "$port"
         exit 0
     fi
 done
 
-echo "No free port found in range $START_PORT-$END_PORT" >&2
+echo "No free port found after $MAX_ATTEMPTS attempts" >&2
 exit 1
