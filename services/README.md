@@ -20,18 +20,18 @@ Each service directory should contain:
 
 ## Planned Implementations
 
-| Directory | Language | Framework |
-|-----------|----------|-----------|
-| `go-gin/` | Go | Gin |
-| `python-django/` | Python | Django |
-| `python-flask/` | Python | Flask |
-| `node-express/` | Node.js | Express |
-| `java-spring/` | Java | Spring Boot |
-| `rust-actix/` | Rust | Actix-web |
-| `csharp-aspnet/` | C# | ASP.NET Core |
-| `ruby-rails/` | Ruby | Rails |
-| `php-laravel/` | PHP | Laravel |
-| `cpp-drogon/` | C++ | Drogon |
+| Directory        | Language | Framework    |
+| ---------------- | -------- | ------------ |
+| `go-gin/`        | Go       | Gin          |
+| `python-django/` | Python   | Django       |
+| `python-flask/`  | Python   | Flask        |
+| `node-express/`  | Node.js  | Express      |
+| `java-spring/`   | Java     | Spring Boot  |
+| `rust-actix/`    | Rust     | Actix-web    |
+| `csharp-aspnet/` | C#       | ASP.NET Core |
+| `ruby-rails/`    | Ruby     | Rails        |
+| `php-laravel/`   | PHP      | Laravel      |
+| `cpp-drogon/`    | C++      | Drogon       |
 
 ## Federated .gitignore Strategy
 
@@ -193,10 +193,10 @@ Makefile
 
 All services must support these environment variables:
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | HTTP server port (default: 8080) |
-| `DISCORD_PUBLIC_KEY` | Ed25519 public key for signature validation |
-| `PUBSUB_TOPIC` | Pub/Sub topic for publishing slash commands |
-| `PUBSUB_EMULATOR_HOST` | Pub/Sub emulator endpoint (local dev only) |
-| `GOOGLE_CLOUD_PROJECT` | GCP project ID |
+| Variable               | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| `PORT`                 | HTTP server port (default: 8080)            |
+| `DISCORD_PUBLIC_KEY`   | Ed25519 public key for signature validation |
+| `PUBSUB_TOPIC`         | Pub/Sub topic for publishing slash commands |
+| `PUBSUB_EMULATOR_HOST` | Pub/Sub emulator endpoint (local dev only)  |
+| `GOOGLE_CLOUD_PROJECT` | GCP project ID                              |

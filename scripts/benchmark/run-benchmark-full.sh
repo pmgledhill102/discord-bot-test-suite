@@ -39,6 +39,7 @@ SERVICES=(
     "python-django"
     "java-spring"
     "java-spring2"
+    "java-quarkus"
     "java-micronaut"
     "kotlin-ktor"
     "scala-play"
