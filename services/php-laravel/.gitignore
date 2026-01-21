@@ -1,0 +1,12 @@
+/vendor/
+/.env
+/.env.backup
+/.env.production
+/storage/*.key
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+!storage/framework/.gitkeep
+!storage/logs/.gitkeep
+composer.lock
