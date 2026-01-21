@@ -1,0 +1,17 @@
+{
+  "name": "discord-webhook-node-express",
+  "version": "1.0.0",
+  "description": "Discord webhook service using Node.js and Express",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "@google-cloud/pubsub": "^5.0.0",
+    "tweetnacl": "^1.0.3"
+  }
+}
