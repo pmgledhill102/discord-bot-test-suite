@@ -57,6 +57,13 @@ public class InteractionResource {
                     .build();
         }
 
+        // Validate request body
+        if (body == null || body.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("bad_request", "Missing request body"))
+                    .build();
+        }
+
         // Verify signature
         if (!signatureService.verifySignature(signature, timestamp, body)) {
             logger.warn("Invalid signature for request");
@@ -72,6 +79,13 @@ public class InteractionResource {
                     .readValue(body, Interaction.class);
         } catch (Exception e) {
             logger.error("Failed to parse interaction: " + e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("bad_request", "Invalid interaction payload"))
+                    .build();
+        }
+
+        // Check for null body (JSON "null" parses to null object)
+        if (interaction == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse("bad_request", "Invalid interaction payload"))
                     .build();
