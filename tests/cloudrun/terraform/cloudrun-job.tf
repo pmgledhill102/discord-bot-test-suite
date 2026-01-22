@@ -31,6 +31,10 @@ resource "google_cloud_run_v2_job" "benchmark" {
           name  = "REGION"
           value = var.region
         }
+        env {
+          name  = "GCS_RESULTS_BUCKET"
+          value = google_storage_bucket.benchmark_results.name
+        }
       }
 
       # 1 hour max timeout for full benchmark runs

@@ -34,3 +34,9 @@ variable "ar_cleanup_untagged_days" {
   type        = number
   default     = 7
 }
+
+variable "claude_service_account_email" {
+  description = "Service account email for Claude Code (grants read access to benchmark results)"
+  type        = string
+  default     = ""
+}
