@@ -19,6 +19,7 @@ var (
 	outputDir    = flag.String("output", "results", "Output directory for results")
 	services     = flag.String("services", "", "Comma-separated list of services to benchmark (overrides config)")
 	localResults = flag.String("local-results", "", "Path to local benchmark results for comparison")
+	batchMode    = flag.Bool("batch", false, "Run in batch mode (deploy all → wait → test all, more efficient)")
 )
 
 func main() {
@@ -27,6 +28,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Commands:\n")
 		fmt.Fprintf(os.Stderr, "  deploy    Deploy services without running benchmarks\n")
 		fmt.Fprintf(os.Stderr, "  run       Run the full benchmark suite\n")
+		fmt.Fprintf(os.Stderr, "            Use --batch for efficient multi-service testing\n")
 		fmt.Fprintf(os.Stderr, "  cleanup   Clean up resources for a specific run\n")
 		fmt.Fprintf(os.Stderr, "  report    Generate reports from existing results\n")
 		fmt.Fprintf(os.Stderr, "\nOptions:\n")
@@ -137,8 +139,13 @@ func cmdRun(ctx context.Context) error {
 	}
 	defer runner.Close()
 
-	// Run benchmarks
-	result, err := runner.Run(ctx)
+	// Run benchmarks (batch mode or sequential)
+	var result *benchmark.BenchmarkResult
+	if *batchMode {
+		result, err = runner.RunBatch(ctx)
+	} else {
+		result, err = runner.Run(ctx)
+	}
 	if err != nil {
 		return fmt.Errorf("running benchmark: %w", err)
 	}

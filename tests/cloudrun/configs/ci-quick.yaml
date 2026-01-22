@@ -1,0 +1,34 @@
+# ci-quick.yaml - Fast validation for CI when benchmark tool changes
+#
+# This config validates the benchmark mechanics work without waiting for true cold starts.
+# Uses a short scale-to-zero timeout and minimal iterations.
+# Runs in ~5 minutes, suitable for PR validation.
+
+gcp:
+  project_id: '' # Set via environment: PROJECT_ID
+  region: 'europe-west1'
+
+profiles:
+  default:
+    cpu: '1'
+    memory: '512Mi'
+    max_instances: 1
+    concurrency: 80
+    execution_env: 'gen2'
+    startup_cpu_boost: true
+
+benchmark:
+  # Single iteration - just validate mechanics
+  cold_start_iterations: 1
+  # Short timeout - won't be true cold starts, just validates the process works
+  scale_to_zero_timeout: '10s'
+  # Minimal warm requests
+  warm_requests: 5
+  warm_concurrency: 2
+
+services:
+  # Fast-starting services only for quick validation
+  enabled:
+    - go-gin
+    - rust-actix
+    - node-express
