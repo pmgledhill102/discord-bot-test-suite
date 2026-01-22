@@ -1,14 +1,19 @@
 # Cloud Run Cold Start Benchmark Suite
 
-A comprehensive test suite for benchmarking Cloud Run cold-start latency across 17 language/framework implementations using a Discord interactions webhook as the workload.
+A comprehensive test suite for benchmarking Cloud Run cold-start latency across
+17 language/framework implementations using a Discord interactions webhook as the workload.
 
-**This is NOT a production Discord bot**—it's a test harness for measuring webhook handling performance and cold start characteristics across different runtimes.
+**This is NOT a production Discord bot**—it's a test harness for measuring webhook
+handling performance and cold start characteristics across different runtimes.
 
 ## Purpose
 
-Cloud Run services scale to zero when idle, meaning the first request after a period of inactivity must start a new container instance. This "cold start" latency varies significantly based on the language runtime, framework, container size, and other factors.
+Cloud Run services scale to zero when idle, meaning the first request after a period of
+inactivity must start a new container instance. This "cold start" latency varies significantly
+based on the language runtime, framework, container size, and other factors.
 
 This benchmark suite:
+
 - Measures cold start latency for Discord webhook handlers across 17 implementations
 - Compares warm request performance after containers are running
 - Provides reproducible, automated benchmarking on Cloud Run
@@ -18,7 +23,7 @@ This benchmark suite:
 
 ### Request Flow
 
-```
+```text
 Discord Webhook Request
         │
         ▼
@@ -40,7 +45,9 @@ Discord Webhook Request
 
 ### Testing Approach
 
-Black-box contract tests written in Go validate service behavior by making HTTP requests to containerized services. Tests run against container images, not internal code, ensuring all implementations behave identically regardless of language.
+Black-box contract tests written in Go validate service behavior by making HTTP requests
+to containerized services. Tests run against container images, not internal code, ensuring
+all implementations behave identically regardless of language.
 
 ## Service Implementations
 
@@ -100,7 +107,7 @@ go test ./tests/contract/...
 
 ## Project Structure
 
-```
+```text
 discord-bot-test-suite/
 ├── services/                    # Language/framework implementations
 │   ├── go-gin/
@@ -153,12 +160,16 @@ go test ./tests/contract/... -run TestSlashCommand
 Before running Claude Code or any AI assistant with GCP access:
 
 1. **Use a dedicated GCP project** for benchmarking—never your production project
+
 2. **Verify your active project** before starting:
+
    ```bash
    gcloud config get-value project
    # Should show your benchmark project, NOT production
    ```
+
 3. **Consider using gcloud configurations** to isolate benchmark credentials:
+
    ```bash
    gcloud config configurations create benchmark
    gcloud config set project YOUR_BENCHMARK_PROJECT
@@ -190,12 +201,14 @@ The setup script creates a service account with minimal required permissions:
 | `roles/iam.serviceAccountUser` | Run services as the SA |
 
 **What Claude CAN do** (with proper scoping):
+
 - Deploy Cloud Run services
 - Build and push container images
 - Read logs and metrics
 - Clean up benchmark resources
 
 **What Claude CANNOT do** (with proper project isolation):
+
 - Access other GCP projects
 - Modify IAM policies
 - Access production secrets
@@ -204,6 +217,7 @@ The setup script creates a service account with minimal required permissions:
 ### GCP Setup
 
 1. **Create or select a dedicated benchmark project**:
+
    ```bash
    # Create a new project (recommended)
    gcloud projects create your-benchmark-project --name="Discord Benchmark"
@@ -215,12 +229,14 @@ The setup script creates a service account with minimal required permissions:
 2. **Enable billing** on the project (required for Cloud Run)
 
 3. **Verify your active project**:
+
    ```bash
    gcloud config get-value project
    # MUST show your benchmark project before proceeding
    ```
 
 4. **Run the setup script**:
+
    ```bash
    cd tests/cloudrun
    export PROJECT_ID=your-benchmark-project
@@ -228,6 +244,7 @@ The setup script creates a service account with minimal required permissions:
    ```
 
    This script (idempotent—safe to run multiple times):
+
    - Enables required APIs (Cloud Run, Artifact Registry, Pub/Sub, etc.)
    - Creates a service account with minimal permissions
    - Creates an Artifact Registry repository for images
@@ -303,6 +320,7 @@ Benchmark results are written to the `results/` directory:
 - `comparison.md`: Comparison with local benchmark data (if provided)
 
 Key metrics:
+
 - **Cold Start Latency**: Time from request to first response when scaling from zero
 - **Warm Request Latency**: Request latency with a warm container
 - **P50/P95/P99**: Latency percentiles
