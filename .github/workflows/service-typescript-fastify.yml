@@ -186,3 +186,17 @@ jobs:
             ${{ env.AR_REPO }}/${{ env.SERVICE_DIR }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy discord-${{ env.SERVICE_DIR }} \
+            --image ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/discord-services/${{ env.SERVICE_DIR }}:${{ github.sha }} \
+            --region ${{ vars.GCP_REGION }} \
+            --service-account cloudrun-runtime@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --cpu 1 \
+            --memory 512Mi \
+            --max-instances 1 \
+            --concurrency 80 \
+            --cpu-boost \
+            --set-env-vars "DISCORD_PUBLIC_KEY=${{ env.DISCORD_PUBLIC_KEY }},GOOGLE_CLOUD_PROJECT=${{ vars.GCP_PROJECT_ID }}" \
+            --no-allow-unauthenticated

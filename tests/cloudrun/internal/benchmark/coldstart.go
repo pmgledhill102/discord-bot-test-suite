@@ -62,11 +62,13 @@ type ColdStartConfig struct {
 	ScaleToZeroTimeout time.Duration
 	Signer             *signing.Signer
 	LoggingClient      *gcp.LoggingClient
+	IDToken            string // ID token for IAM-authenticated services
 }
 
 // MeasureColdStart performs a single cold start measurement.
 // It sends a signed Discord ping request and measures the response time.
-func MeasureColdStart(ctx context.Context, serviceURL string, signer *signing.Signer) (*ColdStartResult, error) {
+// If idToken is provided, it is included as a Bearer token for IAM authentication.
+func MeasureColdStart(ctx context.Context, serviceURL string, signer *signing.Signer, idToken string) (*ColdStartResult, error) {
 	result := &ColdStartResult{
 		Timestamp: time.Now(),
 	}
@@ -85,6 +87,11 @@ func MeasureColdStart(ctx context.Context, serviceURL string, signer *signing.Si
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Signature-Ed25519", signature)
 	req.Header.Set("X-Signature-Timestamp", timestamp)
+
+	// Add authorization header if token provided (for IAM-authenticated services)
+	if idToken != "" {
+		req.Header.Set("Authorization", "Bearer "+idToken)
+	}
 
 	// Measure the request
 	client := &http.Client{
@@ -150,7 +157,7 @@ func RunColdStartBenchmark(ctx context.Context, cfg ColdStartConfig) (*ColdStart
 
 		// Measure cold start
 		fmt.Println("  Measuring cold start...")
-		result, err := MeasureColdStart(ctx, cfg.ServiceURL, cfg.Signer)
+		result, err := MeasureColdStart(ctx, cfg.ServiceURL, cfg.Signer, cfg.IDToken)
 		if err != nil {
 			fmt.Printf("  Warning: cold start measurement failed: %v\n", err)
 			stats.FailureCount++

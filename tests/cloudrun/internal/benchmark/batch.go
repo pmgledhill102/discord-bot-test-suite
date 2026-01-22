@@ -66,6 +66,14 @@ func (r *Runner) deployAll(ctx context.Context) map[string]*DeployedService {
 		} else {
 			result.URL = serviceURL
 			fmt.Printf("  Deployed %s -> %s (took %v)\n", service, serviceURL, deployTime)
+
+			// Fetch ID token for the service
+			idToken, err := gcp.GetIDToken(ctx, serviceURL)
+			if err != nil {
+				fmt.Printf("  Warning: failed to get ID token for %s: %v\n", service, err)
+			} else {
+				r.tokens[serviceURL] = idToken
+			}
 		}
 
 		results[service] = result
@@ -137,7 +145,10 @@ func (r *Runner) testAllColdStart(ctx context.Context, services map[string]*Depl
 		// Record the time before making the request (for log queries)
 		requestStartTime := time.Now()
 
-		result, err := MeasureColdStart(ctx, svc.URL, r.signer)
+		// Get the ID token for this service
+		idToken := r.tokens[svc.URL]
+
+		result, err := MeasureColdStart(ctx, svc.URL, r.signer, idToken)
 		if err != nil {
 			fmt.Printf("    Warning: cold start measurement failed for %s: %v\n", svc.Name, err)
 		} else {
@@ -183,6 +194,7 @@ func (r *Runner) testAllWarm(ctx context.Context, services map[string]*DeployedS
 			Concurrency:  r.config.Benchmark.WarmConcurrency,
 			Signer:       r.signer,
 			RequestType:  RequestTypePing,
+			IDToken:      r.tokens[svc.URL],
 		}
 
 		stats, err := RunWarmRequestBenchmark(ctx, warmCfg)

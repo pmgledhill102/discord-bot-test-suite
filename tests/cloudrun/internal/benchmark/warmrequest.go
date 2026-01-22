@@ -20,6 +20,7 @@ type WarmRequestConfig struct {
 	Concurrency  int
 	Signer       *signing.Signer
 	RequestType  RequestType // Ping or SlashCommand
+	IDToken      string      // ID token for IAM-authenticated services
 }
 
 // RequestType specifies the type of Discord request to send.
@@ -106,7 +107,7 @@ func RunWarmRequestBenchmark(ctx context.Context, cfg WarmRequestConfig) (*WarmR
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			worker(ctx, client, cfg.ServiceURL, body, cfg.Signer, work, results)
+			worker(ctx, client, cfg.ServiceURL, body, cfg.Signer, cfg.IDToken, work, results)
 		}()
 	}
 
@@ -140,7 +141,7 @@ func RunWarmRequestBenchmark(ctx context.Context, cfg WarmRequestConfig) (*WarmR
 }
 
 // worker processes requests from the work channel.
-func worker(ctx context.Context, client *http.Client, serviceURL string, body []byte, signer *signing.Signer, work <-chan int, results chan<- WarmRequestResult) {
+func worker(ctx context.Context, client *http.Client, serviceURL string, body []byte, signer *signing.Signer, idToken string, work <-chan int, results chan<- WarmRequestResult) {
 	for range work {
 		select {
 		case <-ctx.Done():
@@ -149,13 +150,13 @@ func worker(ctx context.Context, client *http.Client, serviceURL string, body []
 		default:
 		}
 
-		result := makeRequest(ctx, client, serviceURL, body, signer)
+		result := makeRequest(ctx, client, serviceURL, body, signer, idToken)
 		results <- result
 	}
 }
 
 // makeRequest performs a single HTTP request and measures latency.
-func makeRequest(ctx context.Context, client *http.Client, serviceURL string, body []byte, signer *signing.Signer) WarmRequestResult {
+func makeRequest(ctx context.Context, client *http.Client, serviceURL string, body []byte, signer *signing.Signer, idToken string) WarmRequestResult {
 	result := WarmRequestResult{}
 
 	// Sign the request
@@ -171,6 +172,11 @@ func makeRequest(ctx context.Context, client *http.Client, serviceURL string, bo
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Signature-Ed25519", signature)
 	req.Header.Set("X-Signature-Timestamp", timestamp)
+
+	// Add authorization header if token provided (for IAM-authenticated services)
+	if idToken != "" {
+		req.Header.Set("Authorization", "Bearer "+idToken)
+	}
 
 	// Make request and measure latency
 	start := time.Now()
