@@ -42,12 +42,14 @@ git checkout -b <branch-name>          # Create feature branch
    ```
 
 3. **Wait for CI to pass** - Required status checks:
+
    - Lint Markdown
    - Lint YAML
    - Lint GitHub Actions
    - Check Formatting (Prettier)
 
    Additional checks run on path-specific changes:
+
    - Lint Go Code (when `services/go-gin/**` changes)
    - Contract Tests (when Go service or tests change)
    - Lint Shell Scripts (when `.sh` files change)

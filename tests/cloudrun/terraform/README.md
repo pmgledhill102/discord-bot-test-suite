@@ -5,13 +5,13 @@ required by the Cloud Run cold start benchmark tool.
 
 ## Resources Managed
 
-| Resource | Purpose |
-|----------|---------|
-| GCP APIs | Enable required services (Cloud Run, AR, Pub/Sub, IAM) |
-| Artifact Registry | `discord-services` repository for container images |
-| Service Accounts | `cloudrun-benchmark` (CI/CD) and `cloudrun-runtime` (services) |
-| IAM Bindings | Roles for Cloud Run, AR, Pub/Sub, logging, monitoring |
-| Workload Identity | GitHub Actions OIDC authentication |
+| Resource          | Purpose                                                        |
+| ----------------- | -------------------------------------------------------------- |
+| GCP APIs          | Enable required services (Cloud Run, AR, Pub/Sub, IAM)         |
+| Artifact Registry | `discord-services` repository for container images             |
+| Service Accounts  | `cloudrun-benchmark` (CI/CD) and `cloudrun-runtime` (services) |
+| IAM Bindings      | Roles for Cloud Run, AR, Pub/Sub, logging, monitoring          |
+| Workload Identity | GitHub Actions OIDC authentication                             |
 
 ## Service Accounts
 
@@ -21,22 +21,22 @@ Two service accounts with distinct responsibilities:
 
 Used by GitHub Actions and terminal via `gcloud auth`.
 
-| Role | Purpose |
-|------|---------|
-| `roles/run.admin` | Deploy and manage Cloud Run services |
-| `roles/artifactregistry.writer` | Push images to AR |
-| `roles/artifactregistry.reader` | List/query images in AR |
-| `roles/pubsub.admin` | Create test topics/subscriptions |
-| `roles/logging.viewer` | View Cloud Run logs |
-| `roles/monitoring.viewer` | View metrics and dashboards |
-| `roles/iam.serviceAccountUser` | Impersonate runtime SA for deployments |
+| Role                            | Purpose                                |
+| ------------------------------- | -------------------------------------- |
+| `roles/run.admin`               | Deploy and manage Cloud Run services   |
+| `roles/artifactregistry.writer` | Push images to AR                      |
+| `roles/artifactregistry.reader` | List/query images in AR                |
+| `roles/pubsub.admin`            | Create test topics/subscriptions       |
+| `roles/logging.viewer`          | View Cloud Run logs                    |
+| `roles/monitoring.viewer`       | View metrics and dashboards            |
+| `roles/iam.serviceAccountUser`  | Impersonate runtime SA for deployments |
 
 ### `cloudrun-runtime` (Cloud Run Services)
 
 Used by Cloud Run services at runtime. Specified via `--service-account` when deploying.
 
-| Role | Purpose |
-|------|---------|
+| Role                     | Purpose                            |
+| ------------------------ | ---------------------------------- |
 | `roles/pubsub.publisher` | Publish messages to Pub/Sub topics |
 
 ## Prerequisites
@@ -131,11 +131,11 @@ terraform output
 
 Artifact Registry cleanup policies are configured to manage storage costs:
 
-| Policy | Behavior |
-|--------|----------|
-| Keep latest tag | Always retain images tagged `latest` |
-| Keep recent versions | Keep last N tagged versions (default: 5) |
-| Delete old untagged | Remove untagged images after N days (default: 7) |
+| Policy               | Behavior                                         |
+| -------------------- | ------------------------------------------------ |
+| Keep latest tag      | Always retain images tagged `latest`             |
+| Keep recent versions | Keep last N tagged versions (default: 5)         |
+| Delete old untagged  | Remove untagged images after N days (default: 7) |
 
 **Important**: These policies apply at the repository level, not per-image. The
 `keep_count` retains N versions across ALL images in the repository. For true
