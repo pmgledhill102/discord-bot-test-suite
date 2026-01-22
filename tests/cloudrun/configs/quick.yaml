@@ -6,16 +6,16 @@
 # Use case: CI pipeline validation, development testing
 
 gcp:
-  project_id: ""  # Set via environment or override
-  region: "us-central1"
+  project_id: '' # Set via environment or override
+  region: 'us-central1'
 
 profiles:
   default:
-    cpu: "1"
-    memory: "512Mi"
+    cpu: '1'
+    memory: '512Mi'
     max_instances: 1
     concurrency: 80
-    execution_env: "gen2"
+    execution_env: 'gen2'
     startup_cpu_boost: true
 
 benchmark:
@@ -23,7 +23,7 @@ benchmark:
   cold_start_iterations: 2
 
   # Short timeout - won't be true cold starts but validates mechanics
-  scale_to_zero_timeout: "60s"
+  scale_to_zero_timeout: '60s'
 
   # Minimal warm requests
   warm_requests: 10

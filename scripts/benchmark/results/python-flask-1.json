@@ -1,19 +1,19 @@
 {
-    "service": "python-flask",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 189.06,
-    "ping_test": {
-        "startup_time_seconds": 0.764845609664917,
-        "avg_ping_time_seconds": 0.03118553161621094,
-        "memory_usage_mb": 85.91
-    },
-    "interaction_test": {
-        "startup_time_seconds": 0.44659996032714844,
-        "interaction_latency_seconds": 0.03313899040222168,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 0.8883640766143799,
-        "memory_usage_mb": 60.29
-    },
-    "timestamp": "2026-01-21T21:21:34+00:00"
+  "service": "python-flask",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 189.06,
+  "ping_test": {
+    "startup_time_seconds": 0.764845609664917,
+    "avg_ping_time_seconds": 0.03118553161621094,
+    "memory_usage_mb": 85.91
+  },
+  "interaction_test": {
+    "startup_time_seconds": 0.44659996032714844,
+    "interaction_latency_seconds": 0.03313899040222168,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 0.8883640766143799,
+    "memory_usage_mb": 60.29
+  },
+  "timestamp": "2026-01-21T21:21:34+00:00"
 }

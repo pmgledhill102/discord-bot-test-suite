@@ -72,16 +72,19 @@ jobs:
           fi
 
           echo "Running cleanup with args: ${ARGS}"
+          # shellcheck disable=SC2086
           ./scripts/cleanup.sh ${ARGS}
 
       - name: Report cleanup results
         if: always()
         run: |
-          echo "## Cleanup Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Time:** $(date -u)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Dry Run:** ${{ github.event.inputs.dry_run || 'false' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Older Than:** ${{ github.event.inputs.older_than || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Cleanup Results"
+            echo ""
+            echo "- **Time:** $(date -u)"
+            echo "- **Dry Run:** ${{ github.event.inputs.dry_run || 'false' }}"
+            echo "- **Older Than:** ${{ github.event.inputs.older_than || 'N/A' }}"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Alert on orphaned resources
         if: success()

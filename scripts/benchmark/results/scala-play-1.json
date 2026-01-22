@@ -1,19 +1,19 @@
 {
-    "service": "scala-play",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 296.82,
-    "ping_test": {
-        "startup_time_seconds": 2.1558189392089844,
-        "avg_ping_time_seconds": 0.044428014755249025,
-        "memory_usage_mb": 209.4
-    },
-    "interaction_test": {
-        "startup_time_seconds": 2.1128811836242676,
-        "interaction_latency_seconds": 0.19547510147094727,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 1.0585181713104248,
-        "memory_usage_mb": 245.3
-    },
-    "timestamp": "2026-01-21T21:23:28+00:00"
+  "service": "scala-play",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 296.82,
+  "ping_test": {
+    "startup_time_seconds": 2.1558189392089844,
+    "avg_ping_time_seconds": 0.044428014755249025,
+    "memory_usage_mb": 209.4
+  },
+  "interaction_test": {
+    "startup_time_seconds": 2.1128811836242676,
+    "interaction_latency_seconds": 0.19547510147094727,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 1.0585181713104248,
+    "memory_usage_mb": 245.3
+  },
+  "timestamp": "2026-01-21T21:23:28+00:00"
 }

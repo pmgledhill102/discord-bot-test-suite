@@ -5,6 +5,7 @@ Generated: 2026-01-21 21:28:22
 ## Summary
 
 This benchmark tests each service with two separate cold-start scenarios:
+
 1. **Ping Test**: Container starts, health check, ping latency measured, container killed
 2. **Interaction Test**: Container starts (with Pub/Sub), slash command sent, Pub/Sub message verified, container killed
 

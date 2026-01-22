@@ -1,19 +1,19 @@
 {
-    "service": "typescript-fastify",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 189.99,
-    "ping_test": {
-        "startup_time_seconds": 0.5194699764251709,
-        "avg_ping_time_seconds": 0.03209762573242188,
-        "memory_usage_mb": 53.08
-    },
-    "interaction_test": {
-        "startup_time_seconds": 0.38872718811035156,
-        "interaction_latency_seconds": 0.07340288162231445,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 0.925494909286499,
-        "memory_usage_mb": 81.91
-    },
-    "timestamp": "2026-01-21T21:22:09+00:00"
+  "service": "typescript-fastify",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 189.99,
+  "ping_test": {
+    "startup_time_seconds": 0.5194699764251709,
+    "avg_ping_time_seconds": 0.03209762573242188,
+    "memory_usage_mb": 53.08
+  },
+  "interaction_test": {
+    "startup_time_seconds": 0.38872718811035156,
+    "interaction_latency_seconds": 0.07340288162231445,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 0.925494909286499,
+    "memory_usage_mb": 81.91
+  },
+  "timestamp": "2026-01-21T21:22:09+00:00"
 }
