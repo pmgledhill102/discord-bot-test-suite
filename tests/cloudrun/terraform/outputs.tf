@@ -6,8 +6,13 @@ output "workload_identity_provider" {
 }
 
 output "service_account_email" {
-  description = "Service account email for Cloud Run benchmark"
+  description = "CI/CD service account email for Cloud Run benchmark"
   value       = google_service_account.cloudrun_benchmark.email
+}
+
+output "runtime_service_account_email" {
+  description = "Runtime service account email for Cloud Run services"
+  value       = google_service_account.cloudrun_runtime.email
 }
 
 output "artifact_registry_url" {

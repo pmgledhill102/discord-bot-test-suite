@@ -15,6 +15,11 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "gcs" {
+    bucket = "cloud-run-test-suite-terraform-state"
+    prefix = "cloudrun-benchmark"
+  }
 }
 
 provider "google" {

@@ -9,71 +9,103 @@ required by the Cloud Run cold start benchmark tool.
 |----------|---------|
 | GCP APIs | Enable required services (Cloud Run, AR, Pub/Sub, IAM) |
 | Artifact Registry | `discord-services` repository for container images |
-| Service Account | `cloudrun-benchmark` SA for CI/CD operations |
-| IAM Bindings | Roles for Cloud Run, AR, Pub/Sub management |
+| Service Accounts | `cloudrun-benchmark` (CI/CD) and `cloudrun-runtime` (services) |
+| IAM Bindings | Roles for Cloud Run, AR, Pub/Sub, logging, monitoring |
 | Workload Identity | GitHub Actions OIDC authentication |
+
+## Service Accounts
+
+Two service accounts with distinct responsibilities:
+
+### `cloudrun-benchmark` (CI/CD + Terminal)
+
+Used by GitHub Actions and terminal via `gcloud auth`.
+
+| Role | Purpose |
+|------|---------|
+| `roles/run.admin` | Deploy and manage Cloud Run services |
+| `roles/artifactregistry.writer` | Push images to AR |
+| `roles/artifactregistry.reader` | List/query images in AR |
+| `roles/pubsub.admin` | Create test topics/subscriptions |
+| `roles/logging.viewer` | View Cloud Run logs |
+| `roles/monitoring.viewer` | View metrics and dashboards |
+| `roles/iam.serviceAccountUser` | Impersonate runtime SA for deployments |
+
+### `cloudrun-runtime` (Cloud Run Services)
+
+Used by Cloud Run services at runtime. Specified via `--service-account` when deploying.
+
+| Role | Purpose |
+|------|---------|
+| `roles/pubsub.publisher` | Publish messages to Pub/Sub topics |
 
 ## Prerequisites
 
 1. **GCP Project**: A dedicated GCP project for benchmarking
 2. **gcloud CLI**: Authenticated with project owner/editor permissions
 3. **Terraform**: Version 1.5.0 or later
+4. **GitHub CLI**: Authenticated with `gh auth login` (for `./tf.sh` wrapper)
+
+## Remote State
+
+Terraform state is stored in a GCS bucket for collaboration across devices:
+
+- **Bucket**: `{project-id}-terraform-state`
+- **Prefix**: `cloudrun-benchmark`
+- **Versioning**: Enabled (for state recovery)
+
+The bucket must be created before `terraform init` (chicken-and-egg problem).
 
 ## Initial Setup
 
-### 1. Configure Variables
+### 1. Set GitHub Variables
+
+Ensure these GitHub repository variables are set (used by `./tf.sh`):
+
+```bash
+gh variable set GCP_PROJECT_ID --body "your-project-id"
+gh variable set GCP_REGION --body "europe-west1"
+```
+
+### 2. Create State Bucket
+
+Create the GCS bucket for Terraform state (must exist before `terraform init`):
+
+```bash
+PROJECT_ID=$(gh variable get GCP_PROJECT_ID)
+REGION=$(gh variable get GCP_REGION)
+
+gcloud storage buckets create gs://${PROJECT_ID}-terraform-state \
+  --project=${PROJECT_ID} \
+  --location=${REGION} \
+  --uniform-bucket-level-access \
+  --public-access-prevention
+
+gcloud storage buckets update gs://${PROJECT_ID}-terraform-state --versioning
+```
+
+### 3. Initialize Terraform
 
 ```bash
 cd tests/cloudrun/terraform
-cp terraform.tfvars.example terraform.tfvars
-```
-
-Edit `terraform.tfvars` with your values:
-
-```hcl
-project_id  = "your-project-id"
-region      = "europe-west1"
-github_org  = "pmgledhill102"
-github_repo = "discord-bot-test-suite"
-```
-
-### 2. Initialize Terraform
-
-```bash
 terraform init
-```
-
-### 3. Import Existing Resources (if applicable)
-
-If you previously created resources using `setup-gcp.sh`, import them:
-
-```bash
-# Import Artifact Registry repository
-terraform import google_artifact_registry_repository.discord_services \
-  projects/YOUR_PROJECT/locations/YOUR_REGION/repositories/discord-services
-
-# Import service account
-terraform import google_service_account.cloudrun_benchmark \
-  projects/YOUR_PROJECT/serviceAccounts/cloudrun-benchmark@YOUR_PROJECT.iam.gserviceaccount.com
-
-# Import WIF pool (if exists)
-terraform import google_iam_workload_identity_pool.github_actions \
-  projects/YOUR_PROJECT/locations/global/workloadIdentityPools/github-actions
-
-# Import WIF provider (if exists)
-terraform import google_iam_workload_identity_pool_provider.github \
-  projects/YOUR_PROJECT/locations/global/workloadIdentityPools/github-actions/providers/github
 ```
 
 ### 4. Plan and Apply
 
+Use the `./tf.sh` wrapper script which fetches variables from GitHub:
+
 ```bash
 # Review changes
-terraform plan
+./tf.sh plan
 
 # Apply changes
-terraform apply
+./tf.sh apply
 ```
+
+The wrapper fetches `GCP_PROJECT_ID` and `GCP_REGION` from GitHub variables and
+derives `github_org`/`github_repo` from the current repository. This avoids
+storing project-specific values in the repo.
 
 ### 5. Configure GitHub Repository
 
@@ -93,6 +125,7 @@ terraform output
 
 - `GCP_WORKLOAD_IDENTITY_PROVIDER`: Value from `workload_identity_provider` output
 - `GCP_SERVICE_ACCOUNT`: Value from `service_account_email` output
+- `GCP_RUNTIME_SERVICE_ACCOUNT`: Value from `runtime_service_account_email` output (for Cloud Run deployments)
 
 ## Cleanup Policies
 
@@ -117,8 +150,9 @@ terraform/
 ├── outputs.tf           # Output values
 ├── apis.tf              # API enablement
 ├── artifact-registry.tf # AR repository + cleanup
-├── iam.tf               # Service account + roles
+├── iam.tf               # Service accounts + roles
 ├── workload-identity.tf # WIF pool + provider
+├── tf.sh                # Wrapper script (fetches vars from GitHub)
 ├── terraform.tfvars.example
 └── README.md
 ```
