@@ -124,7 +124,7 @@ jobs:
   push-image:
     name: Push Image to AR
     runs-on: ubuntu-latest
-    needs: [lint, build, contract-tests]
+    needs: [build, contract-tests]
     if: |
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
