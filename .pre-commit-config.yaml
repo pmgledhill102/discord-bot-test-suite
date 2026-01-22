@@ -29,6 +29,18 @@ repos:
         types_or: [json, yaml, markdown]
         exclude: \.beads/
 
+  # YAML lint
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args:
+          [
+            '-d',
+            '{extends: default, rules: {line-length: {max: 160}, truthy: {check-keys: false}, document-start: disable}}',
+          ]
+        exclude: \.beads/
+
   # Go
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1

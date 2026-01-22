@@ -211,6 +211,18 @@ func cmdAdhoc(ctx context.Context) error {
 		fmt.Printf("  %s -> %s\n", svc.ServiceKey, svc.URL)
 	}
 
+	// Pre-fetch ID tokens (exclude from cold start measurement)
+	fmt.Println("\nPre-fetching ID tokens...")
+	tokens := make(map[string]string)
+	for _, svc := range serviceInfos {
+		token, err := gcp.GetIDToken(ctx, svc.URL)
+		if err != nil {
+			return fmt.Errorf("getting ID token for %s: %w", svc.ServiceKey, err)
+		}
+		tokens[svc.ServiceKey] = token
+	}
+	fmt.Printf("Pre-fetched tokens for %d services\n", len(tokens))
+
 	// Wait for scale-to-zero
 	fmt.Println("\nWaiting for all services to scale to zero...")
 	if err := waitForAllScaleToZero(ctx, cfg, serviceInfos); err != nil {
@@ -226,11 +238,11 @@ func cmdAdhoc(ctx context.Context) error {
 		defer loggingClient.Close()
 	}
 
-	coldResults := takeColdStartMeasurements(ctx, cfg, serviceInfos, signer, loggingClient)
+	coldResults := takeColdStartMeasurements(ctx, cfg, serviceInfos, signer, loggingClient, tokens)
 
 	// Run warm request tests (services are now warm)
 	fmt.Println("\nRunning warm request tests...")
-	warmResults := runWarmTests(ctx, cfg, serviceInfos, signer)
+	warmResults := runWarmTests(ctx, cfg, serviceInfos, signer, tokens)
 
 	// Build full benchmark result
 	result := buildBenchmarkResult(cfg, serviceInfos, coldResults, warmResults)
@@ -319,6 +331,18 @@ func cmdMeasure(ctx context.Context) error {
 
 	fmt.Printf("Found %d services\n", len(serviceInfos))
 
+	// Pre-fetch ID tokens (exclude from cold start measurement)
+	fmt.Println("\nPre-fetching ID tokens...")
+	tokens := make(map[string]string)
+	for _, svc := range serviceInfos {
+		token, err := gcp.GetIDToken(ctx, svc.URL)
+		if err != nil {
+			return fmt.Errorf("getting ID token for %s: %w", svc.ServiceKey, err)
+		}
+		tokens[svc.ServiceKey] = token
+	}
+	fmt.Printf("Pre-fetched tokens for %d services\n", len(tokens))
+
 	// Verify services are scaled to zero
 	fmt.Println("\nVerifying services are scaled to zero...")
 	if err := verifyScaledToZero(ctx, cfg, serviceInfos); err != nil {
@@ -339,7 +363,7 @@ func cmdMeasure(ctx context.Context) error {
 		fmt.Printf("  Measuring %s...\n", svc.ServiceKey)
 
 		requestStartTime := time.Now()
-		result, err := benchmark.MeasureColdStart(ctx, svc.URL, signer)
+		result, err := benchmark.MeasureColdStart(ctx, svc.URL, signer, tokens[svc.ServiceKey])
 
 		measurement := &report.ColdStartMeasurement{
 			ServiceName: svc.ServiceName,
@@ -450,10 +474,22 @@ func cmdFinalize(ctx context.Context) error {
 		return fmt.Errorf("getting service URLs: %w", err)
 	}
 
+	// Pre-fetch ID tokens for warm tests
+	fmt.Println("\nPre-fetching ID tokens...")
+	tokens := make(map[string]string)
+	for _, svc := range serviceInfos {
+		token, err := gcp.GetIDToken(ctx, svc.URL)
+		if err != nil {
+			return fmt.Errorf("getting ID token for %s: %w", svc.ServiceKey, err)
+		}
+		tokens[svc.ServiceKey] = token
+	}
+	fmt.Printf("Pre-fetched tokens for %d services\n", len(tokens))
+
 	// Run warm request tests (services are warm from recent cold start tests)
 	fmt.Println("\nRunning warm request tests...")
 	signer := signing.NewSigner()
-	warmResults := runWarmTests(ctx, cfg, serviceInfos, signer)
+	warmResults := runWarmTests(ctx, cfg, serviceInfos, signer, tokens)
 
 	// Consolidate into benchmark result
 	result := consolidateReadings(cfg, readings, serviceInfos, warmResults)
@@ -539,14 +575,14 @@ func verifyScaledToZero(ctx context.Context, cfg *config.Config, services []*gcp
 }
 
 // takeColdStartMeasurements takes cold start measurements for all services.
-func takeColdStartMeasurements(ctx context.Context, cfg *config.Config, services []*gcp.GetServiceInfo, signer *signing.Signer, loggingClient *gcp.LoggingClient) map[string]*benchmark.ColdStartResult {
+func takeColdStartMeasurements(ctx context.Context, cfg *config.Config, services []*gcp.GetServiceInfo, signer *signing.Signer, loggingClient *gcp.LoggingClient, tokens map[string]string) map[string]*benchmark.ColdStartResult {
 	results := make(map[string]*benchmark.ColdStartResult)
 
 	for _, svc := range services {
 		fmt.Printf("  Measuring %s...\n", svc.ServiceKey)
 
 		requestStartTime := time.Now()
-		result, err := benchmark.MeasureColdStart(ctx, svc.URL, signer)
+		result, err := benchmark.MeasureColdStart(ctx, svc.URL, signer, tokens[svc.ServiceKey])
 		if err != nil {
 			fmt.Printf("    Error: %v\n", err)
 		} else {
@@ -569,7 +605,7 @@ func takeColdStartMeasurements(ctx context.Context, cfg *config.Config, services
 }
 
 // runWarmTests runs warm request tests on all services.
-func runWarmTests(ctx context.Context, cfg *config.Config, services []*gcp.GetServiceInfo, signer *signing.Signer) map[string]*benchmark.WarmRequestStats {
+func runWarmTests(ctx context.Context, cfg *config.Config, services []*gcp.GetServiceInfo, signer *signing.Signer, tokens map[string]string) map[string]*benchmark.WarmRequestStats {
 	results := make(map[string]*benchmark.WarmRequestStats)
 
 	for _, svc := range services {
@@ -582,6 +618,7 @@ func runWarmTests(ctx context.Context, cfg *config.Config, services []*gcp.GetSe
 			Concurrency:  cfg.Benchmark.WarmConcurrency,
 			Signer:       signer,
 			RequestType:  benchmark.RequestTypePing,
+			IDToken:      tokens[svc.ServiceKey],
 		}
 
 		stats, err := benchmark.RunWarmRequestBenchmark(ctx, warmCfg)

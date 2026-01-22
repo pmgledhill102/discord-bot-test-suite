@@ -32,16 +32,17 @@ func NewCloudRunClient(ctx context.Context, projectID, region string) (*CloudRun
 
 // DeployConfig contains configuration for deploying a Cloud Run service.
 type DeployConfig struct {
-	ServiceName     string            // Base name, e.g., "go-gin"
-	RunID           string            // Unique run identifier, e.g., "a1b2c3"
-	Image           string            // Full image URI
-	CPU             string            // e.g., "1", "2"
-	Memory          string            // e.g., "512Mi", "1Gi"
-	MaxInstances    int               // Maximum number of instances
-	Concurrency     int               // Max concurrent requests per instance
-	ExecutionEnv    string            // "gen1" or "gen2"
-	StartupCPUBoost bool              // Enable startup CPU boost
-	EnvVars         map[string]string // Environment variables
+	ServiceName           string            // Base name, e.g., "go-gin"
+	RunID                 string            // Unique run identifier, e.g., "a1b2c3"
+	Image                 string            // Full image URI
+	CPU                   string            // e.g., "1", "2"
+	Memory                string            // e.g., "512Mi", "1Gi"
+	MaxInstances          int               // Maximum number of instances
+	Concurrency           int               // Max concurrent requests per instance
+	ExecutionEnv          string            // "gen1" or "gen2"
+	StartupCPUBoost       bool              // Enable startup CPU boost
+	EnvVars               map[string]string // Environment variables
+	InvokerServiceAccount string            // Service account email to grant invoker role (empty = benchmark SA)
 }
 
 // FullServiceName returns the complete service name: discord-{ServiceName}-{RunID}
@@ -134,23 +135,29 @@ func (c *CloudRunClient) Deploy(ctx context.Context, cfg DeployConfig) (string, 
 		return "", err
 	}
 
-	// Make the service publicly accessible (allow unauthenticated)
-	if err := c.allowUnauthenticated(ctx, fullName); err != nil {
+	// Grant the benchmark service account permission to invoke the service
+	invokerSA := cfg.InvokerServiceAccount
+	if invokerSA == "" {
+		// Default to benchmark service account derived from project ID
+		invokerSA = fmt.Sprintf("cloudrun-benchmark@%s.iam.gserviceaccount.com", c.projectID)
+	}
+	if err := c.grantInvokerRole(ctx, fullName, invokerSA); err != nil {
 		return "", fmt.Errorf("setting IAM policy: %w", err)
 	}
 
 	return serviceURL, nil
 }
 
-// allowUnauthenticated sets IAM policy to allow unauthenticated access.
-func (c *CloudRunClient) allowUnauthenticated(ctx context.Context, serviceName string) error {
+// grantInvokerRole grants the specified service account permission to invoke the service.
+// This replaces public access (allUsers) with authenticated access for the benchmark service account.
+func (c *CloudRunClient) grantInvokerRole(ctx context.Context, serviceName, serviceAccountEmail string) error {
 	resource := fmt.Sprintf("projects/%s/locations/%s/services/%s", c.projectID, c.region, serviceName)
 
 	policy := &run.GoogleIamV1Policy{
 		Bindings: []*run.GoogleIamV1Binding{
 			{
 				Role:    "roles/run.invoker",
-				Members: []string{"allUsers"},
+				Members: []string{"serviceAccount:" + serviceAccountEmail},
 			},
 		},
 	}

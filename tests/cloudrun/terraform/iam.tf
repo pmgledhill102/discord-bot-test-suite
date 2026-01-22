@@ -19,6 +19,7 @@ resource "google_service_account" "cloudrun_benchmark" {
 locals {
   benchmark_roles = [
     "roles/run.admin",               # Deploy and manage Cloud Run services
+    "roles/run.invoker",             # Invoke Cloud Run services (IAM-authenticated)
     "roles/artifactregistry.writer", # Push images to AR
     "roles/artifactregistry.reader", # Query/list images in AR
     "roles/pubsub.admin",            # Create test topics/subscriptions

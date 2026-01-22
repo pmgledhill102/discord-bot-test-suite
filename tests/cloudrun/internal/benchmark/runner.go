@@ -41,11 +41,12 @@ type BenchmarkResult struct {
 
 // Runner orchestrates the benchmark execution.
 type Runner struct {
-	config        *config.Config
-	cloudrun      *gcp.CloudRunClient
-	pubsub        *gcp.PubSubClient
-	logging       *gcp.LoggingClient
-	signer        *signing.Signer
+	config   *config.Config
+	cloudrun *gcp.CloudRunClient
+	pubsub   *gcp.PubSubClient
+	logging  *gcp.LoggingClient
+	signer   *signing.Signer
+	tokens   map[string]string // ID tokens per service URL
 }
 
 // NewRunner creates a new benchmark runner.
@@ -71,6 +72,7 @@ func NewRunner(ctx context.Context, cfg *config.Config) (*Runner, error) {
 		pubsub:   pubsub,
 		logging:  logging,
 		signer:   signing.NewSigner(),
+		tokens:   make(map[string]string),
 	}, nil
 }
 
@@ -160,6 +162,16 @@ func (r *Runner) benchmarkService(ctx context.Context, service string) *ServiceR
 	result.ServiceURL = serviceURL
 	fmt.Printf("Deployed to: %s (took %v)\n", serviceURL, result.DeploymentDuration)
 
+	// Fetch ID token for the service
+	fmt.Println("Fetching ID token...")
+	idToken, err := gcp.GetIDToken(ctx, serviceURL)
+	if err != nil {
+		result.BenchmarkError = fmt.Errorf("getting ID token: %w", err)
+		fmt.Printf("Failed to get ID token for %s: %v\n", service, err)
+		return result
+	}
+	r.tokens[serviceURL] = idToken
+
 	// Run cold start benchmark
 	fmt.Printf("Running cold start benchmark (%d iterations)...\n", r.config.Benchmark.ColdStartIterations)
 	coldStartCfg := ColdStartConfig{
@@ -171,6 +183,7 @@ func (r *Runner) benchmarkService(ctx context.Context, service string) *ServiceR
 		ScaleToZeroTimeout: r.config.Benchmark.ScaleToZeroTimeout,
 		Signer:             r.signer,
 		LoggingClient:      r.logging,
+		IDToken:            idToken,
 	}
 
 	coldStartStats, err := RunColdStartBenchmark(ctx, coldStartCfg)
@@ -193,6 +206,7 @@ func (r *Runner) benchmarkService(ctx context.Context, service string) *ServiceR
 		Concurrency:  r.config.Benchmark.WarmConcurrency,
 		Signer:       r.signer,
 		RequestType:  RequestTypePing,
+		IDToken:      idToken,
 	}
 
 	warmStats, err := RunWarmRequestBenchmark(ctx, warmCfg)
