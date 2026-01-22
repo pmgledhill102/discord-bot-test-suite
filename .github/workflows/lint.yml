@@ -114,13 +114,28 @@ jobs:
         working-directory: tests/cloudrun/terraform
         run: terraform validate
 
+  services-yaml:
+    name: Validate Services YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Validate services YAML
+        run: ./tests/validate-services-yaml.sh
+
   # Gatekeeper job that always runs - use this as the single required check
   # in branch protection instead of individual lint jobs
   lint-complete:
     name: Lint Complete
     runs-on: ubuntu-latest
     if: always()
-    needs: [actionlint, markdown, prettier, yaml-lint, cspell, terraform]
+    needs: [actionlint, markdown, prettier, yaml-lint, cspell, terraform, services-yaml]
     steps:
       - name: Check lint results
         run: |
