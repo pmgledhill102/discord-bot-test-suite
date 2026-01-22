@@ -1,0 +1,32 @@
+# debug.yaml - Minimal configuration for debugging deployment issues
+#
+# Single service with short timeouts for fast iteration.
+
+gcp:
+  project_id: '' # Set via environment or override
+  region: 'us-central1'
+
+profiles:
+  default:
+    cpu: '1'
+    memory: '512Mi'
+    max_instances: 1
+    concurrency: 80
+    execution_env: 'gen2'
+    startup_cpu_boost: true
+
+benchmark:
+  # Single cold start iteration
+  cold_start_iterations: 1
+
+  # Short timeout for debugging
+  scale_to_zero_timeout: '30s'
+
+  # Minimal warm requests
+  warm_requests: 5
+  warm_concurrency: 2
+
+# Single service for debugging
+services:
+  enabled:
+    - go-gin

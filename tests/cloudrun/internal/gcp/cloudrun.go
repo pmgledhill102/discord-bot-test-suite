@@ -101,9 +101,10 @@ func (c *CloudRunClient) Deploy(ctx context.Context, cfg DeployConfig) (string, 
 
 	// Check if service already exists
 	existing, err := c.getService(ctx, fullName)
+	var op *run.GoogleLongrunningOperation
 	if err == nil && existing != nil {
 		// Update existing service
-		_, err = c.service.Projects.Locations.Services.Patch(
+		op, err = c.service.Projects.Locations.Services.Patch(
 			fmt.Sprintf("%s/services/%s", parent, fullName),
 			service,
 		).Context(ctx).Do()
@@ -113,7 +114,7 @@ func (c *CloudRunClient) Deploy(ctx context.Context, cfg DeployConfig) (string, 
 	} else {
 		// Create new service
 		// Note: service.Name must be empty for Create - the name is passed via ServiceId()
-		_, err = c.service.Projects.Locations.Services.Create(parent, service).
+		op, err = c.service.Projects.Locations.Services.Create(parent, service).
 			ServiceId(fullName).
 			Context(ctx).
 			Do()
@@ -122,8 +123,13 @@ func (c *CloudRunClient) Deploy(ctx context.Context, cfg DeployConfig) (string, 
 		}
 	}
 
-	// Wait for service to be ready
-	serviceURL, err := c.WaitForReady(ctx, fullName, 5*time.Minute)
+	// Wait for the operation to complete
+	if err := c.waitForOperation(ctx, op.Name, 5*time.Minute); err != nil {
+		return "", fmt.Errorf("waiting for operation: %w", err)
+	}
+
+	// Wait for service to be ready (should be quick after operation completes)
+	serviceURL, err := c.WaitForReady(ctx, fullName, 2*time.Minute)
 	if err != nil {
 		return "", err
 	}
@@ -161,6 +167,35 @@ func (c *CloudRunClient) allowUnauthenticated(ctx context.Context, serviceName s
 func (c *CloudRunClient) getService(ctx context.Context, serviceName string) (*run.GoogleCloudRunV2Service, error) {
 	name := fmt.Sprintf("projects/%s/locations/%s/services/%s", c.projectID, c.region, serviceName)
 	return c.service.Projects.Locations.Services.Get(name).Context(ctx).Do()
+}
+
+// waitForOperation polls a long-running operation until it completes.
+func (c *CloudRunClient) waitForOperation(ctx context.Context, operationName string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		op, err := c.service.Projects.Locations.Operations.Get(operationName).Context(ctx).Do()
+		if err != nil {
+			return fmt.Errorf("getting operation status: %w", err)
+		}
+
+		if op.Done {
+			// Check if the operation failed
+			if op.Error != nil {
+				return fmt.Errorf("operation failed: %s (code %d)", op.Error.Message, op.Error.Code)
+			}
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(3 * time.Second):
+			continue
+		}
+	}
+
+	return fmt.Errorf("timeout waiting for operation %s", operationName)
 }
 
 // WaitForReady waits for a service to be ready and returns its URL.
