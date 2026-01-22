@@ -90,7 +90,7 @@ func (c *CloudRunClient) Deploy(ctx context.Context, cfg DeployConfig) (string, 
 					},
 				},
 			},
-			ExecutionEnvironment: executionEnv,
+			ExecutionEnvironment:          executionEnv,
 			MaxInstanceRequestConcurrency: int64(cfg.Concurrency),
 			Scaling: &run.GoogleCloudRunV2RevisionScaling{
 				MinInstanceCount: 0, // Allow scale to zero for cold start testing
@@ -328,4 +328,57 @@ func (c *CloudRunClient) GetServiceURL(ctx context.Context, serviceName string) 
 		return "", err
 	}
 	return svc.Uri, nil
+}
+
+// StableServiceName returns the stable service name for a service key.
+// The stable name is: discord-{service} (e.g., "discord-go-gin")
+func StableServiceName(serviceKey string) string {
+	return fmt.Sprintf("discord-%s", serviceKey)
+}
+
+// GetServiceURLs returns URLs for multiple services by their stable names.
+// Returns a map of service key to URL (skipping services that don't exist).
+func (c *CloudRunClient) GetServiceURLs(ctx context.Context, serviceKeys []string) (map[string]string, error) {
+	urls := make(map[string]string)
+
+	for _, key := range serviceKeys {
+		serviceName := StableServiceName(key)
+		url, err := c.GetServiceURL(ctx, serviceName)
+		if err != nil {
+			// Service might not exist - skip it
+			continue
+		}
+		urls[key] = url
+	}
+
+	return urls, nil
+}
+
+// GetServiceInfo contains information about a Cloud Run service.
+type GetServiceInfo struct {
+	ServiceKey  string
+	ServiceName string
+	URL         string
+}
+
+// GetAllServicesInfo returns info for all services that exist with the stable naming pattern.
+func (c *CloudRunClient) GetAllServicesInfo(ctx context.Context, serviceKeys []string) ([]*GetServiceInfo, error) {
+	var services []*GetServiceInfo
+
+	for _, key := range serviceKeys {
+		serviceName := StableServiceName(key)
+		svc, err := c.getService(ctx, serviceName)
+		if err != nil {
+			// Service might not exist - skip it
+			continue
+		}
+
+		services = append(services, &GetServiceInfo{
+			ServiceKey:  key,
+			ServiceName: serviceName,
+			URL:         svc.Uri,
+		})
+	}
+
+	return services, nil
 }

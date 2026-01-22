@@ -271,7 +271,7 @@ func (r *Runner) RunBatch(ctx context.Context) (*BenchmarkResult, error) {
 	// Calculate cold start statistics
 	for _, svcResult := range result.Services {
 		if svcResult.ColdStart != nil {
-			svcResult.ColdStart.calculateStats()
+			svcResult.ColdStart.CalculateStats()
 		}
 	}
 

@@ -35,12 +35,12 @@ type ColdStartStats struct {
 	Results []ColdStartResult
 
 	// TTFB statistics
-	TTFBMin    time.Duration
-	TTFBMax    time.Duration
-	TTFBAvg    time.Duration
-	TTFBP50    time.Duration
-	TTFBP95    time.Duration
-	TTFBP99    time.Duration
+	TTFBMin time.Duration
+	TTFBMax time.Duration
+	TTFBAvg time.Duration
+	TTFBP50 time.Duration
+	TTFBP95 time.Duration
+	TTFBP99 time.Duration
 
 	// Container startup statistics (from Cloud Logging)
 	ContainerStartupMin time.Duration
@@ -178,13 +178,13 @@ func RunColdStartBenchmark(ctx context.Context, cfg ColdStartConfig) (*ColdStart
 	}
 
 	// Calculate statistics
-	stats.calculateStats()
+	stats.CalculateStats()
 
 	return stats, nil
 }
 
-// calculateStats computes aggregate statistics from individual results.
-func (s *ColdStartStats) calculateStats() {
+// CalculateStats computes aggregate statistics from individual results.
+func (s *ColdStartStats) CalculateStats() {
 	if len(s.Results) == 0 {
 		return
 	}
