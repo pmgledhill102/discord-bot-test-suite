@@ -143,7 +143,7 @@ jobs:
         run: |
           echo "Executing Cloud Run Job with quick test config..."
           gcloud run jobs execute cloudrun-benchmark \
-            --region $REGION \
+            --region "$REGION" \
             --args="run,--config,/configs/ci-quick.yaml,--batch" \
             --wait \
             --format="json" || {

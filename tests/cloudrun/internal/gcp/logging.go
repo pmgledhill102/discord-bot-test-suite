@@ -61,30 +61,26 @@ func (c *LoggingClient) GetContainerStartupMetrics(ctx context.Context, serviceN
 	metrics := &ContainerStartupMetrics{}
 
 	it := c.client.Entries(ctx, logadmin.Filter(filter))
-	for {
-		entry, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("reading log entries: %w", err)
-		}
+	// Get only the first (most recent) entry
+	entry, err := it.Next()
+	if err == iterator.Done {
+		return metrics, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("reading log entries: %w", err)
+	}
 
-		metrics.Found = true
-		metrics.InstanceStartTime = entry.Timestamp
+	metrics.Found = true
+	metrics.InstanceStartTime = entry.Timestamp
 
-		// Try to extract startup latency from the log payload
-		// Cloud Run logs typically include timing information
-		if payload, ok := entry.Payload.(string); ok {
-			// Parse "Container started in X.XXs" format
-			var seconds float64
-			if _, err := fmt.Sscanf(payload, "Container started in %fs", &seconds); err == nil {
-				metrics.ContainerStartupLatency = time.Duration(seconds * float64(time.Second))
-			}
+	// Try to extract startup latency from the log payload
+	// Cloud Run logs typically include timing information
+	if payload, ok := entry.Payload.(string); ok {
+		// Parse "Container started in X.XXs" format
+		var seconds float64
+		if _, err := fmt.Sscanf(payload, "Container started in %fs", &seconds); err == nil {
+			metrics.ContainerStartupLatency = time.Duration(seconds * float64(time.Second))
 		}
-
-		// We only need the first (most recent) entry
-		break
 	}
 
 	return metrics, nil
@@ -102,22 +98,18 @@ func (c *LoggingClient) GetRequestLatencyFromLogs(ctx context.Context, serviceNa
 	`, serviceName, region, after.Format(time.RFC3339))
 
 	it := c.client.Entries(ctx, logadmin.Filter(filter))
-	for {
-		entry, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return 0, fmt.Errorf("reading log entries: %w", err)
-		}
+	// Get only the first (most recent) entry
+	entry, err := it.Next()
+	if err == iterator.Done {
+		return 0, fmt.Errorf("no request latency found in logs")
+	}
+	if err != nil {
+		return 0, fmt.Errorf("reading log entries: %w", err)
+	}
 
-		// Extract latency from httpRequest if available
-		if entry.HTTPRequest != nil && entry.HTTPRequest.Latency > 0 {
-			return entry.HTTPRequest.Latency, nil
-		}
-
-		// We only need the first entry
-		break
+	// Extract latency from httpRequest if available
+	if entry.HTTPRequest != nil && entry.HTTPRequest.Latency > 0 {
+		return entry.HTTPRequest.Latency, nil
 	}
 
 	return 0, fmt.Errorf("no request latency found in logs")
