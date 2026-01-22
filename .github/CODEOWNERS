@@ -17,4 +17,4 @@
 # Individual service implementations can have specific owners
 # /services/go-gin/ @go-team
 # /services/python-django/ @python-team
-# /services/java-spring/ @java-team
+# /services/java-spring3/ @java-team

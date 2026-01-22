@@ -51,25 +51,25 @@ all implementations behave identically regardless of language.
 
 ## Service Implementations
 
-| Service | Language | Framework | Status |
-|---------|----------|-----------|--------|
-| `go-gin` | Go | Gin | ✅ Complete |
-| `rust-actix` | Rust | Actix-web | ✅ Complete |
-| `cpp-drogon` | C++ | Drogon | ✅ Complete |
-| `java-spring` | Java | Spring Boot | ✅ Complete |
-| `java-spring2` | Java | Spring Boot (v2) | ✅ Complete |
-| `java-quarkus` | Java | Quarkus | ✅ Complete |
-| `java-quarkus-native` | Java | Quarkus (Native) | ✅ Complete |
-| `java-micronaut` | Java | Micronaut | ✅ Complete |
-| `kotlin-ktor` | Kotlin | Ktor | ✅ Complete |
-| `node-express` | Node.js | Express | ✅ Complete |
-| `typescript-fastify` | TypeScript | Fastify | ✅ Complete |
-| `python-django` | Python | Django | ✅ Complete |
-| `python-flask` | Python | Flask | ✅ Complete |
-| `php-laravel` | PHP | Laravel | ✅ Complete |
-| `ruby-rails` | Ruby | Rails | ✅ Complete |
-| `csharp-aspnet` | C# | ASP.NET Core | ✅ Complete |
-| `scala-play` | Scala | Play | ✅ Complete |
+| Service               | Language   | Framework        | Status      |
+| --------------------- | ---------- | ---------------- | ----------- |
+| `go-gin`              | Go         | Gin              | ✅ Complete |
+| `rust-actix`          | Rust       | Actix-web        | ✅ Complete |
+| `cpp-drogon`          | C++        | Drogon           | ✅ Complete |
+| `java-spring3`        | Java       | Spring Boot (v3) | ✅ Complete |
+| `java-spring2`        | Java       | Spring Boot (v2) | ✅ Complete |
+| `java-quarkus`        | Java       | Quarkus          | ✅ Complete |
+| `java-quarkus-native` | Java       | Quarkus (Native) | ✅ Complete |
+| `java-micronaut`      | Java       | Micronaut        | ✅ Complete |
+| `kotlin-ktor`         | Kotlin     | Ktor             | ✅ Complete |
+| `node-express`        | Node.js    | Express          | ✅ Complete |
+| `typescript-fastify`  | TypeScript | Fastify          | ✅ Complete |
+| `python-django`       | Python     | Django           | ✅ Complete |
+| `python-flask`        | Python     | Flask            | ✅ Complete |
+| `php-laravel`         | PHP        | Laravel          | ✅ Complete |
+| `ruby-rails`          | Ruby       | Rails            | ✅ Complete |
+| `csharp-aspnet`       | C#         | ASP.NET Core     | ✅ Complete |
+| `scala-play`          | Scala      | Play             | ✅ Complete |
 
 ## Quick Start
 
@@ -112,7 +112,7 @@ discord-bot-test-suite/
 ├── services/                    # Language/framework implementations
 │   ├── go-gin/
 │   ├── python-flask/
-│   ├── java-spring/
+│   ├── java-spring3/
 │   └── ...
 ├── tests/
 │   ├── contract/               # Black-box contract tests
@@ -180,25 +180,25 @@ Before running Claude Code or any AI assistant with GCP access:
 
 Create a **dedicated GCP project** for benchmarks (e.g., `mycompany-discord-benchmark`):
 
-| Why Isolation Matters |
-|-----------------------|
-| Prevents accidental access to production resources |
+| Why Isolation Matters                                            |
+| ---------------------------------------------------------------- |
+| Prevents accidental access to production resources               |
 | Claude/AI can only affect resources in the authenticated project |
-| Benchmark costs are isolated and easy to track |
-| Easy cleanup without affecting other workloads |
+| Benchmark costs are isolated and easy to track                   |
+| Easy cleanup without affecting other workloads                   |
 
 #### Service Account & Permissions
 
 The setup script creates a service account with minimal required permissions:
 
-| IAM Role | Purpose |
-|----------|---------|
-| `roles/run.admin` | Deploy/manage Cloud Run services |
-| `roles/artifactregistry.writer` | Push container images |
-| `roles/pubsub.admin` | Create topics/subscriptions |
-| `roles/logging.viewer` | Read logs for metrics |
-| `roles/monitoring.viewer` | Read monitoring data |
-| `roles/iam.serviceAccountUser` | Run services as the SA |
+| IAM Role                        | Purpose                          |
+| ------------------------------- | -------------------------------- |
+| `roles/run.admin`               | Deploy/manage Cloud Run services |
+| `roles/artifactregistry.writer` | Push container images            |
+| `roles/pubsub.admin`            | Create topics/subscriptions      |
+| `roles/logging.viewer`          | Read logs for metrics            |
+| `roles/monitoring.viewer`       | Read monitoring data             |
+| `roles/iam.serviceAccountUser`  | Run services as the SA           |
 
 **What Claude CAN do** (with proper scoping):
 
@@ -286,21 +286,21 @@ Configuration files are in `tests/cloudrun/configs/`:
 ```yaml
 # default.yaml
 gcp:
-  project_id: ""        # Set via PROJECT_ID env var
-  region: "us-central1"
+  project_id: '' # Set via PROJECT_ID env var
+  region: 'us-central1'
 
 profiles:
   default:
-    cpu: "1"
-    memory: "512Mi"
+    cpu: '1'
+    memory: '512Mi'
     max_instances: 1
     concurrency: 80
-    execution_env: "gen2"
+    execution_env: 'gen2'
     startup_cpu_boost: true
 
 benchmark:
   cold_start_iterations: 5
-  scale_to_zero_timeout: "15m"
+  scale_to_zero_timeout: '15m'
   warm_requests: 100
   warm_concurrency: 10
 
@@ -346,14 +346,14 @@ gcloud artifacts repositories delete discord-services --location=us-central1 --q
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | HTTP server port (default: 8080) |
-| `DISCORD_PUBLIC_KEY` | Ed25519 public key for signature validation |
-| `PUBSUB_TOPIC` | Pub/Sub topic for publishing slash commands |
-| `PUBSUB_EMULATOR_HOST` | Pub/Sub emulator endpoint (local dev only) |
-| `GOOGLE_CLOUD_PROJECT` | GCP project ID |
-| `PROJECT_ID` | GCP project for benchmark scripts |
+| Variable               | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| `PORT`                 | HTTP server port (default: 8080)            |
+| `DISCORD_PUBLIC_KEY`   | Ed25519 public key for signature validation |
+| `PUBSUB_TOPIC`         | Pub/Sub topic for publishing slash commands |
+| `PUBSUB_EMULATOR_HOST` | Pub/Sub emulator endpoint (local dev only)  |
+| `GOOGLE_CLOUD_PROJECT` | GCP project ID                              |
+| `PROJECT_ID`           | GCP project for benchmark scripts           |
 
 ## Key Constraints
 

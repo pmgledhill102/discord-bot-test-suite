@@ -35,7 +35,7 @@ services:
     - java-quarkus-native
     - java-quarkus
     - java-micronaut
-    - java-spring
+    - java-spring3
     - java-spring2
     - kotlin-ktor
     - node-express

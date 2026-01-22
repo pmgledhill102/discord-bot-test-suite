@@ -10,6 +10,7 @@ COPY pom.xml .
 COPY src ./src
 
 # Download dependencies and build
+# hadolint ignore=DL3018
 RUN apk add --no-cache maven && \
     mvn package -DskipTests -q
 
