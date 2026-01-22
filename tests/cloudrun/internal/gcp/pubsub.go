@@ -249,6 +249,11 @@ func (c *PubSubClient) Cleanup(ctx context.Context, cfg PubSubConfig) error {
 	return nil
 }
 
+// GetTopicName returns just the topic name for use in environment variables.
+func (c *PubSubClient) GetTopicName(cfg PubSubConfig) string {
+	return cfg.TopicName()
+}
+
 // GetTopicPath returns the full topic path for use in environment variables.
 func (c *PubSubClient) GetTopicPath(cfg PubSubConfig) string {
 	return fmt.Sprintf("projects/%s/topics/%s", c.projectID, cfg.TopicName())

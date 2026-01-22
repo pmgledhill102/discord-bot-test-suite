@@ -112,8 +112,9 @@ for service in "${SERVICES[@]}"; do
 
     log_step "Building ${service}..."
 
-    # Build the image
+    # Build the image (always target linux/amd64 for Cloud Run)
     if ! docker build \
+        --platform linux/amd64 \
         -t "${IMAGE_NAME}:${GIT_SHA}" \
         -t "${IMAGE_NAME}:latest" \
         "${SERVICE_DIR}" 2>&1; then
