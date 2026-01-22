@@ -1,0 +1,11 @@
+# Example Terraform variables file
+# Copy to terraform.tfvars and fill in your values
+
+project_id  = "your-gcp-project-id"
+region      = "europe-west1"
+github_org  = "pmgledhill102"
+github_repo = "discord-bot-test-suite"
+
+# Optional: customize cleanup policies
+# ar_cleanup_keep_count    = 5
+# ar_cleanup_untagged_days = 7

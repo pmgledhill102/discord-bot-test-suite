@@ -4,4 +4,6 @@
 self-hosted-runner:
   labels: []
 
-config-variables: []
+config-variables:
+  - GCP_PROJECT_ID
+  - GCP_REGION

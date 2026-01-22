@@ -80,13 +80,35 @@ jobs:
               node_modules/
               vendor/
 
+  terraform:
+    name: Lint Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+
+      - name: Check formatting
+        working-directory: tests/cloudrun/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Initialize Terraform
+        working-directory: tests/cloudrun/terraform
+        run: terraform init -backend=false
+
+      - name: Validate Terraform
+        working-directory: tests/cloudrun/terraform
+        run: terraform validate
+
   # Gatekeeper job that always runs - use this as the single required check
   # in branch protection instead of individual lint jobs
   lint-complete:
     name: Lint Complete
     runs-on: ubuntu-latest
     if: always()
-    needs: [actionlint, markdown, prettier, yaml-lint]
+    needs: [actionlint, markdown, prettier, yaml-lint, terraform]
     steps:
       - name: Check lint results
         run: |

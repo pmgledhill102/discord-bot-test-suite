@@ -23,9 +23,6 @@ on:
         default: ''
         type: string
 
-env:
-  REGION: us-central1
-
 # Only allow one cleanup at a time
 concurrency:
   group: cloudrun-cleanup
@@ -57,7 +54,8 @@ jobs:
       - name: Run cleanup
         working-directory: tests/cloudrun
         env:
-          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ vars.GCP_REGION }}
         run: |
           ARGS=""
 
