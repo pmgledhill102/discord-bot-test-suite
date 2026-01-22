@@ -55,7 +55,7 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write  # Required for Workload Identity Federation
+      id-token: write # Required for Workload Identity Federation
 
     steps:
       - name: Checkout code
@@ -120,8 +120,8 @@ jobs:
             CONFIG="quick.yaml"
             SERVICES=""
           fi
-          echo "config=${CONFIG}" >> $GITHUB_OUTPUT
-          echo "services=${SERVICES}" >> $GITHUB_OUTPUT
+          echo "config=${CONFIG}" >> "${GITHUB_OUTPUT}"
+          echo "services=${SERVICES}" >> "${GITHUB_OUTPUT}"
 
       - name: Build and push test images
         if: github.event_name != 'pull_request'
@@ -133,11 +133,13 @@ jobs:
           SERVICES="${{ steps.params.outputs.services }}"
           if [[ -z "${SERVICES}" ]]; then
             # Extract from config
-            SERVICES=$(grep -A 100 'enabled:' configs/${{ steps.params.outputs.config }} | grep '^\s*-' | sed 's/^\s*-\s*//' | tr '\n' ' ')
+            CONFIG_FILE="configs/${{ steps.params.outputs.config }}"
+            SERVICES=$(grep -A 100 'enabled:' "${CONFIG_FILE}" | \
+              grep '^\s*-' | sed 's/^\s*-\s*//' | tr '\n' ' ')
           fi
 
           echo "Building services: ${SERVICES}"
-          ./scripts/build-push-images.sh ${SERVICES}
+          ./scripts/build-push-images.sh "${SERVICES}"
 
       - name: Run benchmark
         if: github.event_name != 'pull_request'
@@ -146,7 +148,8 @@ jobs:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           # Update config with project ID
-          sed -i "s/project_id: \"\"/project_id: \"${PROJECT_ID}\"/" configs/${{ steps.params.outputs.config }}
+          CONFIG_FILE="configs/${{ steps.params.outputs.config }}"
+          sed -i "s/project_id: \"\"/project_id: \"${PROJECT_ID}\"/" "${CONFIG_FILE}"
 
           # Run benchmark
           SERVICES_ARG=""
@@ -154,8 +157,9 @@ jobs:
             SERVICES_ARG="--services ${{ steps.params.outputs.services }}"
           fi
 
+          # shellcheck disable=SC2086
           ./cloudrun-benchmark run \
-            --config configs/${{ steps.params.outputs.config }} \
+            --config "${CONFIG_FILE}" \
             --output results \
             ${SERVICES_ARG}
 
@@ -179,10 +183,13 @@ jobs:
       - name: Summary
         if: github.event_name != 'pull_request'
         run: |
-          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [[ -f tests/cloudrun/results/*/results.md ]]; then
-            cat tests/cloudrun/results/*/results.md >> $GITHUB_STEP_SUMMARY
-          else
-            echo "No results file found" >> $GITHUB_STEP_SUMMARY
-          fi
+          {
+            echo "## Benchmark Results"
+            echo ""
+            RESULTS_FILE=$(find tests/cloudrun/results -name 'results.md' 2>/dev/null | head -1)
+            if [[ -n "${RESULTS_FILE}" && -f "${RESULTS_FILE}" ]]; then
+              cat "${RESULTS_FILE}"
+            else
+              echo "No results file found"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"

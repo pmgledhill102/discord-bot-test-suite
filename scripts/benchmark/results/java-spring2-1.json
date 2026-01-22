@@ -1,19 +1,19 @@
 {
-    "service": "java-spring2",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 340.36,
-    "ping_test": {
-        "startup_time_seconds": 1.7003788948059082,
-        "avg_ping_time_seconds": 0.03248982429504395,
-        "memory_usage_mb": 211.6
-    },
-    "interaction_test": {
-        "startup_time_seconds": 1.9296610355377197,
-        "interaction_latency_seconds": 0.18649864196777344,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 1.0329217910766602,
-        "memory_usage_mb": 254.6
-    },
-    "timestamp": "2026-01-21T21:22:38+00:00"
+  "service": "java-spring2",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 340.36,
+  "ping_test": {
+    "startup_time_seconds": 1.7003788948059082,
+    "avg_ping_time_seconds": 0.03248982429504395,
+    "memory_usage_mb": 211.6
+  },
+  "interaction_test": {
+    "startup_time_seconds": 1.9296610355377197,
+    "interaction_latency_seconds": 0.18649864196777344,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 1.0329217910766602,
+    "memory_usage_mb": 254.6
+  },
+  "timestamp": "2026-01-21T21:22:38+00:00"
 }

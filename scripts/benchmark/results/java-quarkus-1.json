@@ -1,19 +1,19 @@
 {
-    "service": "java-quarkus",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 363.63,
-    "ping_test": {
-        "startup_time_seconds": 1.110206127166748,
-        "avg_ping_time_seconds": 0.03544797897338867,
-        "memory_usage_mb": 147.1
-    },
-    "interaction_test": {
-        "startup_time_seconds": 1.0963919162750244,
-        "interaction_latency_seconds": 0.24008798599243164,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 1.0996160507202148,
-        "memory_usage_mb": 215.3
-    },
-    "timestamp": "2026-01-21T21:22:48+00:00"
+  "service": "java-quarkus",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 363.63,
+  "ping_test": {
+    "startup_time_seconds": 1.110206127166748,
+    "avg_ping_time_seconds": 0.03544797897338867,
+    "memory_usage_mb": 147.1
+  },
+  "interaction_test": {
+    "startup_time_seconds": 1.0963919162750244,
+    "interaction_latency_seconds": 0.24008798599243164,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 1.0996160507202148,
+    "memory_usage_mb": 215.3
+  },
+  "timestamp": "2026-01-21T21:22:48+00:00"
 }

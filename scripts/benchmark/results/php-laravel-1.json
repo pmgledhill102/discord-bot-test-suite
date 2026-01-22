@@ -1,19 +1,19 @@
 {
-    "service": "php-laravel",
-    "iteration": 1,
-    "status": "success",
-    "image_size_mb": 128.59,
-    "ping_test": {
-        "startup_time_seconds": 0.553779125213623,
-        "avg_ping_time_seconds": 0.050748157501220706,
-        "memory_usage_mb": 75.37
-    },
-    "interaction_test": {
-        "startup_time_seconds": 0.3910667896270752,
-        "interaction_latency_seconds": 0.07174205780029297,
-        "pubsub_received": true,
-        "pubsub_latency_seconds": 0.9479842185974121,
-        "memory_usage_mb": 58.13
-    },
-    "timestamp": "2026-01-21T21:23:55+00:00"
+  "service": "php-laravel",
+  "iteration": 1,
+  "status": "success",
+  "image_size_mb": 128.59,
+  "ping_test": {
+    "startup_time_seconds": 0.553779125213623,
+    "avg_ping_time_seconds": 0.050748157501220706,
+    "memory_usage_mb": 75.37
+  },
+  "interaction_test": {
+    "startup_time_seconds": 0.3910667896270752,
+    "interaction_latency_seconds": 0.07174205780029297,
+    "pubsub_received": true,
+    "pubsub_latency_seconds": 0.9479842185974121,
+    "memory_usage_mb": 58.13
+  },
+  "timestamp": "2026-01-21T21:23:55+00:00"
 }
