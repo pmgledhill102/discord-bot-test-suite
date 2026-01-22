@@ -32,9 +32,18 @@ func WriteMarkdown(result *benchmark.BenchmarkResult, path string) error {
 	sb.WriteString(fmt.Sprintf("| Execution Environment | %s |\n", profile.ExecutionEnv))
 	sb.WriteString(fmt.Sprintf("| Startup CPU Boost | %t |\n", profile.StartupCPUBoost))
 	sb.WriteString(fmt.Sprintf("| Cold Start Iterations | %d |\n", result.Config.Benchmark.ColdStartIterations))
+	sb.WriteString(fmt.Sprintf("| Scale-to-Zero Timeout | %s |\n", result.Config.Benchmark.ScaleToZeroTimeout))
 	sb.WriteString(fmt.Sprintf("| Warm Requests | %d |\n", result.Config.Benchmark.WarmRequests))
 	sb.WriteString(fmt.Sprintf("| Warm Concurrency | %d |\n", result.Config.Benchmark.WarmConcurrency))
+	sb.WriteString(fmt.Sprintf("| Services Tested | %d |\n", len(result.Config.Services.Enabled)))
 	sb.WriteString("\n")
+
+	// Add warning for quick tests
+	if result.Config.Benchmark.ScaleToZeroTimeout < 5*time.Minute {
+		sb.WriteString("> **Note:** This is a quick validation test with a short scale-to-zero timeout. ")
+		sb.WriteString("Results may not reflect true cold start performance. ")
+		sb.WriteString("For accurate measurements, use the scheduled full benchmark with 15-20 minute timeout.\n\n")
+	}
 
 	// Cold Start Results
 	sb.WriteString("## Cold Start Results\n\n")

@@ -26,6 +26,19 @@ type JSONConfigSummary struct {
 	ProjectID string `json:"project_id"`
 	Region    string `json:"region"`
 	Profile   string `json:"profile"`
+
+	// Benchmark settings - important for distinguishing quick tests from full benchmarks
+	ColdStartIterations  int    `json:"cold_start_iterations"`
+	ScaleToZeroTimeout   string `json:"scale_to_zero_timeout"`
+	WarmRequests         int    `json:"warm_requests"`
+	WarmConcurrency      int    `json:"warm_concurrency"`
+	ServicesEnabled      []string `json:"services_enabled"`
+
+	// Profile settings
+	CPU             string `json:"cpu"`
+	Memory          string `json:"memory"`
+	ExecutionEnv    string `json:"execution_env"`
+	StartupCPUBoost bool   `json:"startup_cpu_boost"`
 }
 
 // JSONServiceReport contains benchmark results for a single service.
@@ -94,6 +107,8 @@ func WriteJSON(result *benchmark.BenchmarkResult, path string) error {
 
 // toJSONReport converts benchmark results to JSON report format.
 func toJSONReport(result *benchmark.BenchmarkResult) *JSONReport {
+	profile := result.Config.GetProfile("default")
+
 	report := &JSONReport{
 		RunID:     result.RunID,
 		StartTime: result.StartTime,
@@ -103,6 +118,19 @@ func toJSONReport(result *benchmark.BenchmarkResult) *JSONReport {
 			ProjectID: result.Config.GCP.ProjectID,
 			Region:    result.Config.GCP.Region,
 			Profile:   "default",
+
+			// Benchmark settings
+			ColdStartIterations:  result.Config.Benchmark.ColdStartIterations,
+			ScaleToZeroTimeout:   result.Config.Benchmark.ScaleToZeroTimeout.String(),
+			WarmRequests:         result.Config.Benchmark.WarmRequests,
+			WarmConcurrency:      result.Config.Benchmark.WarmConcurrency,
+			ServicesEnabled:      result.Config.Services.Enabled,
+
+			// Profile settings
+			CPU:             profile.CPU,
+			Memory:          profile.Memory,
+			ExecutionEnv:    profile.ExecutionEnv,
+			StartupCPUBoost: profile.StartupCPUBoost,
 		},
 		Services: make(map[string]JSONServiceReport),
 	}

@@ -29,3 +29,8 @@ output "region" {
   description = "GCP region"
   value       = var.region
 }
+
+output "benchmark_results_bucket" {
+  description = "GCS bucket for benchmark results"
+  value       = google_storage_bucket.benchmark_results.name
+}

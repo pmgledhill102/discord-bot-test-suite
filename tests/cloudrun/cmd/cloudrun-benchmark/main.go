@@ -20,6 +20,7 @@ var (
 	services     = flag.String("services", "", "Comma-separated list of services to benchmark (overrides config)")
 	localResults = flag.String("local-results", "", "Path to local benchmark results for comparison")
 	batchMode    = flag.Bool("batch", false, "Run in batch mode (deploy all → wait → test all, more efficient)")
+	gcsBucket    = flag.String("gcs-bucket", "", "GCS bucket for uploading results (env: GCS_RESULTS_BUCKET)")
 )
 
 func main() {
@@ -181,6 +182,29 @@ func cmdRun(ctx context.Context) error {
 				return fmt.Errorf("writing comparison report: %w", err)
 			}
 			fmt.Printf("Comparison report written to: %s\n", compPath)
+		}
+	}
+
+	// Upload to GCS if bucket specified (flag or env var)
+	bucket := *gcsBucket
+	if bucket == "" {
+		bucket = os.Getenv("GCS_RESULTS_BUCKET")
+	}
+	if bucket != "" {
+		fmt.Printf("\nUploading results to GCS bucket: %s\n", bucket)
+		uploader, err := report.NewGCSUploader(ctx, bucket)
+		if err != nil {
+			fmt.Printf("Warning: could not create GCS uploader: %v\n", err)
+		} else {
+			defer uploader.Close()
+			paths, err := uploader.UploadResults(ctx, result.RunID, result.StartTime, runDir)
+			if err != nil {
+				fmt.Printf("Warning: GCS upload failed: %v\n", err)
+			} else {
+				for _, p := range paths {
+					fmt.Printf("Uploaded: %s\n", p)
+				}
+			}
 		}
 	}
 
