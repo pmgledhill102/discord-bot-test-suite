@@ -1,0 +1,37 @@
+# quick.yaml - Fast iteration configuration for CI smoke tests
+#
+# This configuration runs a quick benchmark with minimal services and iterations
+# to validate the benchmark harness works without waiting for true cold starts.
+#
+# Use case: CI pipeline validation, development testing
+
+gcp:
+  project_id: ""  # Set via environment or override
+  region: "us-central1"
+
+profiles:
+  default:
+    cpu: "1"
+    memory: "512Mi"
+    max_instances: 1
+    concurrency: 80
+    execution_env: "gen2"
+    startup_cpu_boost: true
+
+benchmark:
+  # Reduced iterations for quick validation
+  cold_start_iterations: 2
+
+  # Short timeout - won't be true cold starts but validates mechanics
+  scale_to_zero_timeout: "60s"
+
+  # Minimal warm requests
+  warm_requests: 10
+  warm_concurrency: 5
+
+# Fast-starting services only
+services:
+  enabled:
+    - go-gin
+    - rust-actix
+    - node-express

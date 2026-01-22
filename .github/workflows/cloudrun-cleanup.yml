@@ -1,0 +1,91 @@
+# Cloud Run Scheduled Cleanup
+#
+# Daily cleanup of orphaned benchmark resources in the dedicated GCP project.
+# This is a safety net to catch resources left behind by failed/interrupted runs.
+
+name: 'Cloud Run Cleanup'
+
+on:
+  schedule:
+    # Run daily at 2am UTC
+    - cron: '0 2 * * *'
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (show what would be deleted)'
+        required: false
+        default: false
+        type: boolean
+      older_than:
+        description: 'Only delete resources older than (e.g., "1h", "24h")'
+        required: false
+        default: ''
+        type: string
+
+env:
+  REGION: us-central1
+
+# Only allow one cleanup at a time
+concurrency:
+  group: cloudrun-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Cleanup Resources
+    runs-on: ubuntu-latest
+    if: github.repository == 'pmgledhill102/discord-bot-test-suite'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@ba79af03959ebeac9769e648f473a284504d9193 # v2.1.10
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a # v2.1.4
+
+      - name: Run cleanup
+        working-directory: tests/cloudrun
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          ARGS=""
+
+          # Add dry-run flag if specified
+          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+            ARGS="${ARGS} --dry-run"
+          fi
+
+          # Add older-than flag if specified
+          if [[ -n "${{ github.event.inputs.older_than }}" ]]; then
+            ARGS="${ARGS} --older-than ${{ github.event.inputs.older_than }}"
+          fi
+
+          echo "Running cleanup with args: ${ARGS}"
+          ./scripts/cleanup.sh ${ARGS}
+
+      - name: Report cleanup results
+        if: always()
+        run: |
+          echo "## Cleanup Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run:** ${{ github.event.inputs.dry_run || 'false' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Older Than:** ${{ github.event.inputs.older_than || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Alert on orphaned resources
+        if: success()
+        run: |
+          # Check if any resources were found (indicating a failed run)
+          # This could send a Slack/email alert in a production setup
+          echo "Cleanup completed successfully"

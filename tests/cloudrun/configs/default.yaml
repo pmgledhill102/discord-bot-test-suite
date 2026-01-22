@@ -1,0 +1,63 @@
+# default.yaml - Standard benchmark configuration
+#
+# This configuration runs a full benchmark of all services with production-like settings.
+
+gcp:
+  project_id: ""  # Set via environment or override
+  region: "us-central1"
+
+# Deployment profiles
+# Start with a single "default" profile, structured for future multi-config expansion
+profiles:
+  default:
+    cpu: "1"
+    memory: "512Mi"
+    max_instances: 1
+    concurrency: 80
+    execution_env: "gen2"
+    startup_cpu_boost: true
+
+# Future expansion examples (uncomment to use):
+#  gen1-baseline:
+#    cpu: "1"
+#    memory: "512Mi"
+#    max_instances: 1
+#    concurrency: 80
+#    execution_env: "gen1"
+#    startup_cpu_boost: false
+#
+#  high-memory:
+#    cpu: "2"
+#    memory: "2Gi"
+#    max_instances: 1
+#    concurrency: 80
+#    execution_env: "gen2"
+#    startup_cpu_boost: true
+
+# Benchmark parameters
+benchmark:
+  cold_start_iterations: 5
+  scale_to_zero_timeout: "15m"
+  warm_requests: 100
+  warm_concurrency: 10
+
+# Services to benchmark
+services:
+  enabled:
+    - go-gin
+    - rust-actix
+    - cpp-drogon
+    - java-quarkus-native
+    - java-quarkus
+    - java-micronaut
+    - java-spring
+    - java-spring2
+    - kotlin-ktor
+    - node-express
+    - typescript-fastify
+    - python-django
+    - python-flask
+    - php-laravel
+    - ruby-rails
+    - csharp-aspnet
+    - scala-play

@@ -1,0 +1,188 @@
+# Cloud Run Benchmark CI
+#
+# Runs a quick smoke test of the Cloud Run benchmark harness to validate
+# it works without waiting for true cold starts.
+#
+# Triggers:
+# - Manual (workflow_dispatch) for on-demand testing
+# - Weekly schedule for regular validation
+# - On changes to tests/cloudrun/** (PR only)
+
+name: 'Cloud Run Benchmark'
+
+on:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: 'Configuration file to use'
+        required: false
+        default: 'quick.yaml'
+        type: choice
+        options:
+          - quick.yaml
+          - default.yaml
+      services:
+        description: 'Comma-separated services to test (empty = use config)'
+        required: false
+        default: ''
+        type: string
+
+  schedule:
+    # Run weekly on Sunday at 2am UTC
+    - cron: '0 2 * * 0'
+
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/cloudrun/**'
+      - '.github/workflows/cloudrun-benchmark.yml'
+
+env:
+  REGION: us-central1
+  AR_REPOSITORY: discord-services
+
+# Only allow one benchmark run at a time
+concurrency:
+  group: cloudrun-benchmark
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    name: Run Benchmark
+    runs-on: ubuntu-latest
+    # Only run on schedule/dispatch if secrets are available
+    if: github.event_name == 'pull_request' || github.repository == 'pmgledhill102/discord-bot-test-suite'
+
+    permissions:
+      contents: read
+      id-token: write  # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version: '1.24'
+          cache-dependency-path: tests/cloudrun/go.sum
+
+      # Skip GCP auth for PRs (just validate code compiles)
+      - name: Build benchmark tool
+        working-directory: tests/cloudrun
+        run: |
+          go mod download
+          go build -o cloudrun-benchmark ./cmd/cloudrun-benchmark
+
+      - name: Validate configuration
+        working-directory: tests/cloudrun
+        run: |
+          echo "Validating configuration files..."
+          for config in configs/*.yaml; do
+            echo "Checking $config"
+            # Basic YAML validation
+            python3 -c "import yaml; yaml.safe_load(open('$config'))"
+          done
+
+      # For PRs, just verify the code compiles and configs are valid
+      - name: PR validation complete
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "PR validation complete - skipping GCP deployment"
+          echo "Full benchmark runs on schedule or manual trigger only"
+
+      # For schedule/dispatch, actually run the benchmark
+      - name: Authenticate to GCP
+        if: github.event_name != 'pull_request'
+        uses: google-github-actions/auth@ba79af03959ebeac9769e648f473a284504d9193 # v2.1.10
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        if: github.event_name != 'pull_request'
+        uses: google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a # v2.1.4
+
+      - name: Configure Docker for Artifact Registry
+        if: github.event_name != 'pull_request'
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Determine config and services
+        if: github.event_name != 'pull_request'
+        id: params
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            CONFIG="${{ github.event.inputs.config }}"
+            SERVICES="${{ github.event.inputs.services }}"
+          else
+            # Schedule run uses quick config
+            CONFIG="quick.yaml"
+            SERVICES=""
+          fi
+          echo "config=${CONFIG}" >> $GITHUB_OUTPUT
+          echo "services=${SERVICES}" >> $GITHUB_OUTPUT
+
+      - name: Build and push test images
+        if: github.event_name != 'pull_request'
+        working-directory: tests/cloudrun
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          # Build only the services we need
+          SERVICES="${{ steps.params.outputs.services }}"
+          if [[ -z "${SERVICES}" ]]; then
+            # Extract from config
+            SERVICES=$(grep -A 100 'enabled:' configs/${{ steps.params.outputs.config }} | grep '^\s*-' | sed 's/^\s*-\s*//' | tr '\n' ' ')
+          fi
+
+          echo "Building services: ${SERVICES}"
+          ./scripts/build-push-images.sh ${SERVICES}
+
+      - name: Run benchmark
+        if: github.event_name != 'pull_request'
+        working-directory: tests/cloudrun
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          # Update config with project ID
+          sed -i "s/project_id: \"\"/project_id: \"${PROJECT_ID}\"/" configs/${{ steps.params.outputs.config }}
+
+          # Run benchmark
+          SERVICES_ARG=""
+          if [[ -n "${{ steps.params.outputs.services }}" ]]; then
+            SERVICES_ARG="--services ${{ steps.params.outputs.services }}"
+          fi
+
+          ./cloudrun-benchmark run \
+            --config configs/${{ steps.params.outputs.config }} \
+            --output results \
+            ${SERVICES_ARG}
+
+      - name: Upload results
+        if: github.event_name != 'pull_request' && always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: benchmark-results-${{ github.run_id }}
+          path: tests/cloudrun/results/
+          retention-days: 30
+
+      - name: Cleanup on failure
+        if: github.event_name != 'pull_request' && failure()
+        working-directory: tests/cloudrun
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          echo "Cleaning up resources after failure..."
+          ./scripts/cleanup.sh || true
+
+      - name: Summary
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ -f tests/cloudrun/results/*/results.md ]]; then
+            cat tests/cloudrun/results/*/results.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No results file found" >> $GITHUB_STEP_SUMMARY
+          fi
