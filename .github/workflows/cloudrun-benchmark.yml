@@ -19,6 +19,7 @@ on:
         default: 'quick.yaml'
         type: choice
         options:
+          - debug.yaml
           - quick.yaml
           - default.yaml
       services:
