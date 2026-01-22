@@ -38,7 +38,6 @@ on:
       - '.github/workflows/cloudrun-benchmark.yml'
 
 env:
-  REGION: us-central1
   AR_REPOSITORY: discord-services
 
 # Only allow one benchmark run at a time
@@ -106,7 +105,7 @@ jobs:
       - name: Configure Docker for Artifact Registry
         if: github.event_name != 'pull_request'
         run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+          gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
 
       - name: Determine config and services
         if: github.event_name != 'pull_request'
@@ -127,7 +126,8 @@ jobs:
         if: github.event_name != 'pull_request'
         working-directory: tests/cloudrun
         env:
-          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ vars.GCP_REGION }}
         run: |
           # Build only the services we need
           SERVICES="${{ steps.params.outputs.services }}"
@@ -145,7 +145,8 @@ jobs:
         if: github.event_name != 'pull_request'
         working-directory: tests/cloudrun
         env:
-          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ vars.GCP_REGION }}
         run: |
           # Update config with project ID
           CONFIG_FILE="configs/${{ steps.params.outputs.config }}"
@@ -175,7 +176,8 @@ jobs:
         if: github.event_name != 'pull_request' && failure()
         working-directory: tests/cloudrun
         env:
-          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ vars.GCP_REGION }}
         run: |
           echo "Cleaning up resources after failure..."
           ./scripts/cleanup.sh || true
