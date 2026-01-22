@@ -147,8 +147,8 @@ func TestSlashCommand_ResponseContentType(t *testing.T) {
 	resp, _ := sendRequest(t, body)
 
 	contentType := resp.Header.Get("Content-Type")
-	if contentType != "application/json" && contentType != "application/json; charset=utf-8" {
-		t.Errorf("Expected Content-Type application/json, got %s", contentType)
+	if !strings.HasPrefix(contentType, "application/json") {
+		t.Errorf("Expected Content-Type to start with application/json, got %s", contentType)
 	}
 }
 

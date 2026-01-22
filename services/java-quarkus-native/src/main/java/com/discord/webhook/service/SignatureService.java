@@ -45,6 +45,19 @@ public class SignatureService {
             return false;
         }
 
+        // Validate timestamp is not too old (5 second window per Discord spec)
+        try {
+            long timestampSeconds = Long.parseLong(timestamp);
+            long currentSeconds = System.currentTimeMillis() / 1000;
+            if (currentSeconds - timestampSeconds > 5) {
+                logger.warn("Request timestamp is too old");
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            logger.error("Invalid timestamp format: " + timestamp);
+            return false;
+        }
+
         try {
             byte[] signatureBytes = hexToBytes(signature);
             byte[] messageBytes = (timestamp + body).getBytes();
