@@ -139,7 +139,8 @@ jobs:
           fi
 
           echo "Building services: ${SERVICES}"
-          ./scripts/build-push-images.sh "${SERVICES}"
+          # shellcheck disable=SC2086
+          ./scripts/build-push-images.sh ${SERVICES}
 
       - name: Run benchmark
         if: github.event_name != 'pull_request'
