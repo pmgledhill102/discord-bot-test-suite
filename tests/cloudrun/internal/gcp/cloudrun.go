@@ -112,7 +112,7 @@ func (c *CloudRunClient) Deploy(ctx context.Context, cfg DeployConfig) (string, 
 		}
 	} else {
 		// Create new service
-		service.Name = fullName
+		// Note: service.Name must be empty for Create - the name is passed via ServiceId()
 		_, err = c.service.Projects.Locations.Services.Create(parent, service).
 			ServiceId(fullName).
 			Context(ctx).

@@ -89,6 +89,15 @@ func generateRunID() string {
 
 // applyDefaults sets default values for unset configuration options.
 func (c *Config) applyDefaults() {
+	// Environment variables take precedence over config file values
+	if envProject := os.Getenv("PROJECT_ID"); envProject != "" {
+		c.GCP.ProjectID = envProject
+	}
+	if envRegion := os.Getenv("REGION"); envRegion != "" {
+		c.GCP.Region = envRegion
+	}
+
+	// Fall back to default region if still unset
 	if c.GCP.Region == "" {
 		c.GCP.Region = "us-central1"
 	}

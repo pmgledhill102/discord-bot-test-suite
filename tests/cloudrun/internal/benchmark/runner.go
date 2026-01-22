@@ -142,7 +142,7 @@ func (r *Runner) benchmarkService(ctx context.Context, service string) *ServiceR
 		StartupCPUBoost: profile.StartupCPUBoost,
 		EnvVars: map[string]string{
 			"DISCORD_PUBLIC_KEY":   r.signer.PublicKeyHex(),
-			"PUBSUB_TOPIC":         r.pubsub.GetTopicPath(gcp.PubSubConfig{RunID: r.config.RunID}),
+			"PUBSUB_TOPIC":         r.pubsub.GetTopicName(gcp.PubSubConfig{RunID: r.config.RunID}),
 			"GOOGLE_CLOUD_PROJECT": r.config.GCP.ProjectID,
 		},
 	}
@@ -258,7 +258,7 @@ func (r *Runner) DeployOnly(ctx context.Context) error {
 			StartupCPUBoost: profile.StartupCPUBoost,
 			EnvVars: map[string]string{
 				"DISCORD_PUBLIC_KEY":   r.signer.PublicKeyHex(),
-				"PUBSUB_TOPIC":         r.pubsub.GetTopicPath(gcp.PubSubConfig{RunID: r.config.RunID}),
+				"PUBSUB_TOPIC":         r.pubsub.GetTopicName(gcp.PubSubConfig{RunID: r.config.RunID}),
 				"GOOGLE_CLOUD_PROJECT": r.config.GCP.ProjectID,
 			},
 		}
