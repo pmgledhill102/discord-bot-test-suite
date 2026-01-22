@@ -2,7 +2,7 @@
 # Build all service Docker images for benchmarking
 # Usage: ./scripts/benchmark/build-all-images.sh [--parallel]
 #
-# Builds all 14 service images with consistent naming: discord-{service}:benchmark
+# Builds all service images with consistent naming: discord-{service}:benchmark
 
 set -e
 
@@ -10,26 +10,14 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RESULTS_FILE="$SCRIPT_DIR/build-results.json"
 
-# All services to build
-SERVICES=(
-    "go-gin"
-    "python-flask"
-    "cpp-drogon"
-    "rust-actix"
-    "node-express"
-    "typescript-fastify"
-    "python-django"
-    "java-spring"
-    "java-spring2"
-    "java-quarkus"
-    "java-quarkus-native"
-    "java-micronaut"
-    "kotlin-ktor"
-    "scala-play"
-    "csharp-aspnet"
-    "ruby-rails"
-    "php-laravel"
-)
+# Source the services library
+source "$PROJECT_ROOT/scripts/lib/services.sh"
+
+# Get all services from YAML (bash 3.2 compatible)
+SERVICES=()
+while IFS= read -r service; do
+    SERVICES+=("$service")
+done < <(get_all_services)
 
 PARALLEL=false
 if [[ "$1" == "--parallel" ]]; then

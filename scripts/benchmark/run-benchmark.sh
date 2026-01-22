@@ -12,29 +12,20 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Source the services library
+source "$PROJECT_ROOT/scripts/lib/services.sh"
+
 # Default settings
 ITERATIONS=3
 TARGET="--all"
 RESULTS_DIR="$SCRIPT_DIR/results"
 DISCORD_PUBLIC_KEY="398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159"
 
-# All services
-SERVICES=(
-    "go-gin"
-    "python-flask"
-    "cpp-drogon"
-    "rust-actix"
-    "node-express"
-    "typescript-fastify"
-    "python-django"
-    "java-spring"
-    "java-spring2"
-    "kotlin-ktor"
-    "scala-play"
-    "csharp-aspnet"
-    "ruby-rails"
-    "php-laravel"
-)
+# Get all services from YAML (bash 3.2 compatible)
+SERVICES=()
+while IFS= read -r service; do
+    SERVICES+=("$service")
+done < <(get_all_services)
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do

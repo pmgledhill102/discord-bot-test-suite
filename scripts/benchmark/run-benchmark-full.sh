@@ -15,6 +15,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Source the services library
+source "$PROJECT_ROOT/scripts/lib/services.sh"
+
 # Default settings
 ITERATIONS=1
 TARGET="--all"
@@ -28,26 +31,11 @@ PUBSUB_SUBSCRIPTION="benchmark-sub"
 PUBSUB_CONTAINER_NAME="benchmark-pubsub-emulator"
 PUBSUB_PORT=""
 
-# All services
-SERVICES=(
-    "go-gin"
-    "python-flask"
-    "cpp-drogon"
-    "rust-actix"
-    "node-express"
-    "typescript-fastify"
-    "python-django"
-    "java-spring"
-    "java-spring2"
-    "java-quarkus"
-    "java-quarkus-native"
-    "java-micronaut"
-    "kotlin-ktor"
-    "scala-play"
-    "csharp-aspnet"
-    "ruby-rails"
-    "php-laravel"
-)
+# Get all services from YAML (bash 3.2 compatible)
+SERVICES=()
+while IFS= read -r service; do
+    SERVICES+=("$service")
+done < <(get_all_services)
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
