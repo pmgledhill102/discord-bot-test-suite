@@ -122,25 +122,8 @@ jobs:
           echo "config=${CONFIG}" >> "${GITHUB_OUTPUT}"
           echo "services=${SERVICES}" >> "${GITHUB_OUTPUT}"
 
-      - name: Build and push test images
-        if: github.event_name != 'pull_request'
-        working-directory: tests/cloudrun
-        env:
-          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          REGION: ${{ vars.GCP_REGION }}
-        run: |
-          # Build only the services we need
-          SERVICES="${{ steps.params.outputs.services }}"
-          if [[ -z "${SERVICES}" ]]; then
-            # Extract from config
-            CONFIG_FILE="configs/${{ steps.params.outputs.config }}"
-            SERVICES=$(grep -A 100 'enabled:' "${CONFIG_FILE}" | \
-              grep '^\s*-' | sed 's/^\s*-\s*//' | tr '\n' ' ')
-          fi
-
-          echo "Building services: ${SERVICES}"
-          # shellcheck disable=SC2086
-          ./scripts/build-push-images.sh ${SERVICES}
+      # Images are already in AR from service CI workflows (push to main)
+      # The benchmark tool uses the 'latest' tag from AR
 
       - name: Run benchmark
         if: github.event_name != 'pull_request'
