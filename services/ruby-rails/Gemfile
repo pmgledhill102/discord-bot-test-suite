@@ -6,13 +6,13 @@ source "https://rubygems.org"
 gem "rails", "~> 8.0"
 
 # Web server
-gem "puma", "~> 6.5"
+gem "puma", "~> 7.2"
 
 # Ed25519 signature verification
 gem "ed25519", "~> 1.3"
 
 # Google Cloud Pub/Sub
-gem "google-cloud-pubsub", "~> 2.19"
+gem "google-cloud-pubsub", "~> 3.1"
 
 # JSON parsing (faster than stdlib)
 gem "oj", "~> 3.16"
