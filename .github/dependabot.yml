@@ -78,14 +78,14 @@ updates:
       - 'dependencies'
       - 'javascript'
 
-  # Java service
+  # Java service (Spring Boot 3)
   - package-ecosystem: 'maven'
-    directory: '/services/java-spring'
+    directory: '/services/java-spring3'
     schedule:
       interval: 'weekly'
       day: 'monday'
     commit-message:
-      prefix: 'deps(spring)'
+      prefix: 'deps(spring3)'
     labels:
       - 'dependencies'
       - 'java'

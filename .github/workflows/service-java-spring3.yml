@@ -9,21 +9,21 @@ on:
   push:
     branches: [main]
     paths:
-      - 'services/java-spring/**'
+      - 'services/java-spring3/**'
       - 'tests/contract/**'
       - 'docker-compose.pubsub.yml'
-      - '.github/workflows/service-java-spring.yml'
+      - '.github/workflows/service-java-spring3.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'services/java-spring/**'
+      - 'services/java-spring3/**'
       - 'tests/contract/**'
       - 'docker-compose.pubsub.yml'
-      - '.github/workflows/service-java-spring.yml'
+      - '.github/workflows/service-java-spring3.yml'
 
 env:
   DISCORD_PUBLIC_KEY: 398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159
-  SERVICE_DIR: java-spring
+  SERVICE_DIR: java-spring3
 
 jobs:
   lint:
@@ -41,7 +41,7 @@ jobs:
           cache: maven
 
       - name: Verify with Maven
-        working-directory: services/java-spring
+        working-directory: services/java-spring3
         run: mvn verify -DskipTests -q
 
   build:
@@ -57,9 +57,9 @@ jobs:
       - name: Build service image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          context: ./services/java-spring
+          context: ./services/java-spring3
           push: false
-          tags: service-java-spring:test
+          tags: service-java-spring3:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -88,7 +88,7 @@ jobs:
 
       - name: Build and start service
         run: |
-          docker build -t service-under-test ./services/java-spring
+          docker build -t service-under-test ./services/java-spring3
           docker run -d \
             --name service-under-test \
             --network host \

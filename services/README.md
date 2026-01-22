@@ -20,18 +20,18 @@ Each service directory should contain:
 
 ## Planned Implementations
 
-| Directory        | Language | Framework    |
-| ---------------- | -------- | ------------ |
-| `go-gin/`        | Go       | Gin          |
-| `python-django/` | Python   | Django       |
-| `python-flask/`  | Python   | Flask        |
-| `node-express/`  | Node.js  | Express      |
-| `java-spring/`   | Java     | Spring Boot  |
-| `rust-actix/`    | Rust     | Actix-web    |
-| `csharp-aspnet/` | C#       | ASP.NET Core |
-| `ruby-rails/`    | Ruby     | Rails        |
-| `php-laravel/`   | PHP      | Laravel      |
-| `cpp-drogon/`    | C++      | Drogon       |
+| Directory        | Language | Framework     |
+| ---------------- | -------- | ------------- |
+| `go-gin/`        | Go       | Gin           |
+| `python-django/` | Python   | Django        |
+| `python-flask/`  | Python   | Flask         |
+| `node-express/`  | Node.js  | Express       |
+| `java-spring3/`  | Java     | Spring Boot 3 |
+| `rust-actix/`    | Rust     | Actix-web     |
+| `csharp-aspnet/` | C#       | ASP.NET Core  |
+| `ruby-rails/`    | Ruby     | Rails         |
+| `php-laravel/`   | PHP      | Laravel       |
+| `cpp-drogon/`    | C++      | Drogon        |
 
 ## Federated .gitignore Strategy
 
@@ -93,7 +93,7 @@ build/
 *.tsbuildinfo
 ```
 
-#### Java (`java-spring/`)
+#### Java (`java-spring3/`)
 
 ```gitignore
 # Build output
