@@ -208,10 +208,14 @@ func (c *CloudRunClient) WaitForReady(ctx context.Context, serviceName string, t
 			return "", fmt.Errorf("getting service status: %w", err)
 		}
 
-		// Check if service is ready
-		for _, condition := range svc.Conditions {
-			if condition.Type == "Ready" && condition.State == "CONDITION_SUCCEEDED" {
+		// Check terminalCondition for service readiness
+		if svc.TerminalCondition != nil {
+			if svc.TerminalCondition.State == "CONDITION_SUCCEEDED" {
 				return svc.Uri, nil
+			}
+			// If terminal state is failed, return error immediately
+			if svc.TerminalCondition.State == "CONDITION_FAILED" {
+				return "", fmt.Errorf("service failed: %s", svc.TerminalCondition.Message)
 			}
 		}
 
