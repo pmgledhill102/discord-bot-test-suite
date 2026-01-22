@@ -1,5 +1,5 @@
 # Discord webhook service dependencies
-django==5.1.5
+django==6.0.1
 gunicorn==23.0.0
 pynacl==1.5.0
 google-cloud-pubsub==2.34.0
