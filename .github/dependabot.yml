@@ -89,6 +89,9 @@ updates:
     labels:
       - 'dependencies'
       - 'java'
+    ignore:
+      - dependency-name: 'org.springframework.boot:spring-boot-starter-parent'
+        versions: ['>=4.0.0']
 
   # Java service (Spring Boot 2)
   - package-ecosystem: 'maven'
@@ -101,6 +104,9 @@ updates:
     labels:
       - 'dependencies'
       - 'java'
+    ignore:
+      - dependency-name: 'org.springframework.boot:spring-boot-starter-parent'
+        versions: ['>=3.0.0']
 
   # Rust service
   - package-ecosystem: 'cargo'
