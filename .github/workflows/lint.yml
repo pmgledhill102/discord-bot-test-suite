@@ -8,26 +8,8 @@ name: Lint
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/**'
-      - '**.md'
-      - '**.yml'
-      - '**.yaml'
-      - '**.json'
-      - '.pre-commit-config.yaml'
-      - '.prettierrc'
-      - '.editorconfig'
   pull_request:
     branches: [main]
-    paths:
-      - '.github/**'
-      - '**.md'
-      - '**.yml'
-      - '**.yaml'
-      - '**.json'
-      - '.pre-commit-config.yaml'
-      - '.prettierrc'
-      - '.editorconfig'
 
 jobs:
   actionlint:
@@ -97,3 +79,23 @@ jobs:
               .beads/
               node_modules/
               vendor/
+
+  # Gatekeeper job that always runs - use this as the single required check
+  # in branch protection instead of individual lint jobs
+  lint-complete:
+    name: Lint Complete
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [actionlint, markdown, prettier, yaml-lint]
+    steps:
+      - name: Check lint results
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "One or more lint jobs failed"
+            exit 1
+          fi
+          if [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more lint jobs were cancelled"
+            exit 1
+          fi
+          echo "All lint jobs passed or were skipped"
