@@ -80,6 +80,18 @@ jobs:
               node_modules/
               vendor/
 
+  cspell:
+    name: Spell Check Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Run cspell
+        uses: streetsidesoftware/cspell-action@325bf5b893e67a722e70f8ecb7ec8dc29f8e6381 # v6.10.1
+        with:
+          files: '**/*.md'
+
   terraform:
     name: Lint Terraform
     runs-on: ubuntu-latest
@@ -108,7 +120,7 @@ jobs:
     name: Lint Complete
     runs-on: ubuntu-latest
     if: always()
-    needs: [actionlint, markdown, prettier, yaml-lint, terraform]
+    needs: [actionlint, markdown, prettier, yaml-lint, cspell, terraform]
     steps:
       - name: Check lint results
         run: |

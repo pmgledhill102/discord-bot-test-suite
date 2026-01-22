@@ -51,6 +51,13 @@ repos:
           ]
         exclude: \.beads/
 
+  # Spell check for Markdown
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v8.17.3
+    hooks:
+      - id: cspell
+        files: \.md$
+
   # Go
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
