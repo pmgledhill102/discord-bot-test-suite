@@ -21,9 +21,9 @@ resource "google_storage_bucket" "benchmark_results" {
   # Lifecycle rule: delete old versions after 90 days
   lifecycle_rule {
     condition {
-      age                   = 90
-      num_newer_versions    = 5
-      with_state            = "ARCHIVED"
+      age                = 90
+      num_newer_versions = 5
+      with_state         = "ARCHIVED"
     }
     action {
       type = "Delete"
