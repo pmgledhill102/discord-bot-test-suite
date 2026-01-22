@@ -7,6 +7,7 @@ import com.discord.webhook.model.InteractionResponse;
 import com.discord.webhook.service.PubSubService;
 import com.discord.webhook.service.SignatureService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
@@ -38,8 +39,8 @@ public class InteractionController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public HttpResponse<?> handleInteraction(
-            @Header(HEADER_SIGNATURE) String signature,
-            @Header(HEADER_TIMESTAMP) String timestamp,
+            @Nullable @Header(HEADER_SIGNATURE) String signature,
+            @Nullable @Header(HEADER_TIMESTAMP) String timestamp,
             @Body byte[] body) {
         return processInteraction(signature, timestamp, body);
     }
@@ -48,13 +49,21 @@ public class InteractionController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public HttpResponse<?> handleInteractionAlt(
-            @Header(HEADER_SIGNATURE) String signature,
-            @Header(HEADER_TIMESTAMP) String timestamp,
+            @Nullable @Header(HEADER_SIGNATURE) String signature,
+            @Nullable @Header(HEADER_TIMESTAMP) String timestamp,
             @Body byte[] body) {
         return processInteraction(signature, timestamp, body);
     }
 
     private HttpResponse<?> processInteraction(String signature, String timestamp, byte[] body) {
+        // Check for missing signature headers - must return 401 per Discord spec
+        if (signature == null || signature.isEmpty()) {
+            return HttpResponse.unauthorized().body(new ErrorResponse("missing signature"));
+        }
+        if (timestamp == null || timestamp.isEmpty()) {
+            return HttpResponse.unauthorized().body(new ErrorResponse("missing timestamp"));
+        }
+
         // Validate signature
         if (!signatureService.validateSignature(signature, timestamp, body)) {
             return HttpResponse.unauthorized().body(new ErrorResponse("invalid signature"));
