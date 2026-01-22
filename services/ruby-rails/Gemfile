@@ -6,7 +6,7 @@ source "https://rubygems.org"
 gem "rails", "~> 8.0"
 
 # Web server
-gem "puma", "~> 6.5"
+gem "puma", "~> 7.2"
 
 # Ed25519 signature verification
 gem "ed25519", "~> 1.3"
