@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y \
 
 # Build and install Drogon
 WORKDIR /tmp
-RUN git clone --depth 1 --branch v1.9.8 https://github.com/drogonframework/drogon.git && \
+RUN git clone --depth 1 --branch v1.9.11 https://github.com/drogonframework/drogon.git && \
     cd drogon && \
     git submodule update --init && \
     mkdir build && cd build && \

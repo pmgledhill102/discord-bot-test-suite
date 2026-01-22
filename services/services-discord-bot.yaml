@@ -24,26 +24,26 @@ services:
 
   csharp-aspnet:
     language: csharp
-    language_version: '9.0'
+    language_version: '10.0'
     framework: aspnet
-    framework_version: '9.0'
+    framework_version: '10.0'
     build:
       tool: dotnet
       dependency_file: DiscordWebhook.csproj
-      builder_image: mcr.microsoft.com/dotnet/sdk:9.0-alpine
-      runtime_image: mcr.microsoft.com/dotnet/aspnet:9.0-alpine
+      builder_image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+      runtime_image: mcr.microsoft.com/dotnet/aspnet:10.0-alpine
     dependabot:
       ecosystem: nuget
 
   go-gin:
     language: go
-    language_version: '1.24'
+    language_version: '1.25'
     framework: gin
     framework_version: '1.11'
     build:
       tool: go
       dependency_file: go.mod
-      builder_image: golang:1.24-alpine
+      builder_image: golang:1.25-alpine
       runtime_image: scratch
     dependabot:
       ecosystem: gomod
@@ -52,7 +52,7 @@ services:
     language: java
     language_version: '21'
     framework: micronaut
-    framework_version: '4.7'
+    framework_version: '4.10'
     build:
       tool: maven
       dependency_file: pom.xml
@@ -137,9 +137,9 @@ services:
 
   kotlin-ktor:
     language: kotlin
-    language_version: '2.1'
+    language_version: '2.3'
     framework: ktor
-    framework_version: '3.1'
+    framework_version: '3.3'
     build:
       tool: gradle
       dependency_file: build.gradle.kts
@@ -150,78 +150,78 @@ services:
 
   node-express:
     language: javascript
-    language_version: '22'
+    language_version: '24'
     framework: express
     framework_version: '5.1'
     build:
       tool: npm
       dependency_file: package.json
-      builder_image: node:22-alpine
-      runtime_image: node:22-alpine
+      builder_image: node:24-alpine
+      runtime_image: node:24-alpine
     dependabot:
       ecosystem: npm
 
   php-laravel:
     language: php
-    language_version: '8.4'
+    language_version: '8.5'
     framework: laravel
-    framework_version: '12.0'
+    framework_version: '12.46'
     build:
       tool: composer
       dependency_file: composer.json
       builder_image: composer:2
-      runtime_image: php:8.4-cli-alpine
+      runtime_image: php:8.5-cli-alpine
     dependabot:
       ecosystem: composer
 
   python-django:
     language: python
-    language_version: '3.12'
+    language_version: '3.14'
     framework: django
-    framework_version: '5.1'
+    framework_version: '6.0'
     build:
-      tool: pip
-      dependency_file: requirements.txt
+      tool: uv
+      dependency_file: pyproject.toml
       builder_image: null
-      runtime_image: python:3.12-slim
+      runtime_image: python:3.14-slim
     dependabot:
       ecosystem: pip
 
   python-flask:
     language: python
-    language_version: '3.12'
+    language_version: '3.14'
     framework: flask
     framework_version: '3.1'
     build:
-      tool: pip
-      dependency_file: requirements.txt
+      tool: uv
+      dependency_file: pyproject.toml
       builder_image: null
-      runtime_image: python:3.12-slim
+      runtime_image: python:3.14-slim
     dependabot:
       ecosystem: pip
 
   ruby-rails:
     language: ruby
-    language_version: '3.3'
+    language_version: '4.0'
     framework: rails
-    framework_version: '8.0'
+    framework_version: '8.1'
     build:
       tool: bundler
       dependency_file: Gemfile
-      builder_image: ruby:3.3-slim
-      runtime_image: ruby:3.3-slim
+      builder_image: ruby:4.0-slim
+      runtime_image: ruby:4.0-slim
     dependabot:
       ecosystem: bundler
 
   rust-actix:
     language: rust
-    language_version: '1.86'
+    language_version: '1.93'
     framework: actix-web
     framework_version: '4'
     build:
       tool: cargo
       dependency_file: Cargo.toml
-      builder_image: rust:1.86-slim-bookworm
+      builder_image: rust:1.93-slim-bookworm
       runtime_image: debian:bookworm-slim
     dependabot:
       ecosystem: cargo
@@ -243,7 +243,7 @@ services:
     language: typescript
     language_version: '5.7'
     framework: fastify
-    framework_version: '5.2'
+    framework_version: '5.7'
     build:
       tool: npm
       dependency_file: package.json

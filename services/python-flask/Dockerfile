@@ -1,11 +1,14 @@
 # Python/Flask Discord webhook service
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 # Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml .
+RUN uv pip install --system --no-cache -r pyproject.toml
 
 # Copy application
 COPY app.py .

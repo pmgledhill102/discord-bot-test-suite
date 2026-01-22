@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 
 # Rails framework (API mode)
-gem "rails", "~> 8.0"
+gem "rails", "~> 8.1"
 
 # Web server
 gem "puma", "~> 7.2"
