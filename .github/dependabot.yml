@@ -90,6 +90,18 @@ updates:
       - 'dependencies'
       - 'java'
 
+  # Java service (Spring Boot 2)
+  - package-ecosystem: 'maven'
+    directory: '/services/java-spring2'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(spring2)'
+    labels:
+      - 'dependencies'
+      - 'java'
+
   # Rust service
   - package-ecosystem: 'cargo'
     directory: '/services/rust-actix'

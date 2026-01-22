@@ -3,27 +3,27 @@
 # Runs Java-specific linting and contract tests for the Java/Spring Boot service.
 # Only triggers when the Java/Spring Boot service or contract tests change.
 
-name: 'Service: Java/Spring Boot 3'
+name: 'Service: Java/Spring Boot 2'
 
 on:
   push:
     branches: [main]
     paths:
-      - 'services/java-spring3/**'
+      - 'services/java-spring2/**'
       - 'tests/contract/**'
       - 'docker-compose.pubsub.yml'
-      - '.github/workflows/service-java-spring3.yml'
+      - '.github/workflows/service-java-spring2.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'services/java-spring3/**'
+      - 'services/java-spring2/**'
       - 'tests/contract/**'
       - 'docker-compose.pubsub.yml'
-      - '.github/workflows/service-java-spring3.yml'
+      - '.github/workflows/service-java-spring2.yml'
 
 env:
   DISCORD_PUBLIC_KEY: 398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159
-  SERVICE_DIR: java-spring3
+  SERVICE_DIR: java-spring2
 
 jobs:
   lint:
@@ -33,15 +33,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
           cache: maven
 
       - name: Verify with Maven
-        working-directory: services/java-spring3
+        working-directory: services/java-spring2
         run: mvn verify -DskipTests -q
 
   build:
@@ -57,9 +57,9 @@ jobs:
       - name: Build service image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          context: ./services/java-spring3
+          context: ./services/java-spring2
           push: false
-          tags: service-java-spring3:test
+          tags: service-java-spring2:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -88,7 +88,7 @@ jobs:
 
       - name: Build and start service
         run: |
-          docker build -t service-under-test ./services/java-spring3
+          docker build -t service-under-test ./services/java-spring2
           docker run -d \
             --name service-under-test \
             --network host \
