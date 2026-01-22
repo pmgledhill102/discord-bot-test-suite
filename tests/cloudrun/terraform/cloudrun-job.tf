@@ -51,21 +51,48 @@ resource "google_cloud_run_v2_job" "benchmark" {
 }
 
 # =============================================================================
-# Cloud Scheduler for Daily Benchmark Runs
+# Cloud Scheduler for Distributed Benchmark Runs
 # =============================================================================
 
-resource "google_cloud_scheduler_job" "benchmark_daily" {
-  name        = "benchmark-daily-full"
-  description = "Daily full benchmark run at 01:17 UTC"
+# Benchmark schedule configuration
+# Each measure job runs 20 minutes apart to allow services to scale back to zero
+# Finalize job runs 20 minutes after the last measure to consolidate results
+locals {
+  benchmark_schedules = {
+    measure-1 = { time = "7 2 * * *", args = ["measure", "--iteration", "1"] }
+    measure-2 = { time = "27 2 * * *", args = ["measure", "--iteration", "2"] }
+    measure-3 = { time = "47 2 * * *", args = ["measure", "--iteration", "3"] }
+    measure-4 = { time = "7 3 * * *", args = ["measure", "--iteration", "4"] }
+    measure-5 = { time = "27 3 * * *", args = ["measure", "--iteration", "5"] }
+    measure-6 = { time = "47 3 * * *", args = ["measure", "--iteration", "6"] }
+    finalize  = { time = "7 4 * * *", args = ["finalize"] }
+  }
+}
+
+resource "google_cloud_scheduler_job" "benchmark" {
+  for_each    = local.benchmark_schedules
+  name        = "benchmark-${each.key}"
+  description = "Daily benchmark ${each.key} at ${each.value.time} UTC"
   region      = var.region
 
-  # Run at 01:17 UTC daily (unusual time to avoid contention)
-  schedule  = "17 1 * * *"
+  schedule  = each.value.time
   time_zone = "UTC"
 
   http_target {
     http_method = "POST"
     uri         = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/jobs/${google_cloud_run_v2_job.benchmark.name}:run"
+
+    body = base64encode(jsonencode({
+      overrides = {
+        containerOverrides = [{
+          args = each.value.args
+        }]
+      }
+    }))
+
+    headers = {
+      "Content-Type" = "application/json"
+    }
 
     oauth_token {
       service_account_email = google_service_account.cloudrun_benchmark.email

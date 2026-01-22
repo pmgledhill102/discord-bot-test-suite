@@ -31,5 +31,6 @@ COPY configs/ /configs/
 # Set the entrypoint
 ENTRYPOINT ["/cloudrun-benchmark"]
 
-# Default command runs the benchmark in batch mode
-CMD ["run", "--batch", "--config", "/configs/default.yaml"]
+# Default command runs ad-hoc benchmark (used when clicking "Execute" in Cloud Console)
+# Scheduled jobs override this with specific commands (measure, finalize)
+CMD ["adhoc"]
