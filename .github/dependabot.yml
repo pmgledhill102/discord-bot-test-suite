@@ -93,6 +93,21 @@ updates:
       - dependency-name: 'org.springframework.boot:spring-boot-starter-parent'
         versions: ['>=4.0.0']
 
+  # Java service (Spring Boot 4)
+  - package-ecosystem: 'maven'
+    directory: '/services/java-spring4'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(spring4)'
+    labels:
+      - 'dependencies'
+      - 'java'
+    ignore:
+      - dependency-name: 'org.springframework.boot:spring-boot-starter-parent'
+        versions: ['>=5.0.0']
+
   # Java service (Spring Boot 2)
   - package-ecosystem: 'maven'
     directory: '/services/java-spring2'
