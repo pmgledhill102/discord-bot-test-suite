@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.79</version>
+            <version>1.83</version>
         </dependency>
 
         <!-- Jackson for JSON processing (included in spring-boot-starter-web) -->
