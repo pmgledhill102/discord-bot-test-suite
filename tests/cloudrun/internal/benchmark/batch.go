@@ -11,11 +11,13 @@ import (
 
 // DeployedService holds information about a deployed service for batch testing.
 type DeployedService struct {
-	Name        string
-	FullName    string
-	URL         string
-	DeployTime  time.Duration
-	DeployError error
+	Name           string
+	FullName       string
+	URL            string
+	Image          string
+	ImageSizeBytes int64
+	DeployTime     time.Duration
+	DeployError    error
 }
 
 // BatchResult contains results from a batch benchmark run.
@@ -57,6 +59,7 @@ func (r *Runner) deployAll(ctx context.Context) map[string]*DeployedService {
 		result := &DeployedService{
 			Name:        service,
 			FullName:    deployConfig.FullServiceName(),
+			Image:       deployConfig.Image,
 			DeployTime:  deployTime,
 			DeployError: err,
 		}
@@ -66,6 +69,17 @@ func (r *Runner) deployAll(ctx context.Context) map[string]*DeployedService {
 		} else {
 			result.URL = serviceURL
 			fmt.Printf("  Deployed %s -> %s (took %v)\n", service, serviceURL, deployTime)
+
+			// Fetch image size from Artifact Registry
+			if r.artifactRegistry != nil {
+				imageSize, sizeErr := r.artifactRegistry.GetImageSize(ctx, deployConfig.Image)
+				if sizeErr != nil {
+					fmt.Printf("  Warning: failed to get image size for %s: %v\n", service, sizeErr)
+				} else {
+					result.ImageSizeBytes = imageSize
+					fmt.Printf("  Image size: %s\n", gcp.FormatImageSize(imageSize))
+				}
+			}
 
 			// Fetch ID token for the service
 			idToken, err := gcp.GetIDToken(ctx, serviceURL)
@@ -243,7 +257,8 @@ func (r *Runner) RunBatch(ctx context.Context) (*BenchmarkResult, error) {
 			ServiceURL:         deployed.URL,
 			Profile:            "default",
 			DeploymentDuration: deployed.DeployTime,
-			Image:              r.config.ImageURI(name, "latest"),
+			Image:              deployed.Image,
+			ImageSizeBytes:     deployed.ImageSizeBytes,
 			DeployError:        deployed.DeployError,
 			ColdStart: &ColdStartStats{
 				Results: make([]ColdStartResult, 0, r.config.Benchmark.ColdStartIterations),
