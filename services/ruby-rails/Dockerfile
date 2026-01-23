@@ -2,8 +2,9 @@
 # Multi-stage build for optimized image size
 
 # Build stage
-# Use Ruby 3.3 for pre-built native gems (grpc doesn't have Ruby 4.0 binaries yet)
-FROM ruby:3.3-slim AS builder
+# Use Ruby 3.4 for pre-built native gems (grpc doesn't have Ruby 4.0 binaries yet)
+# See .github/dependabot.yml for version pinning
+FROM ruby:3.4-slim AS builder
 
 WORKDIR /app
 
@@ -20,7 +21,7 @@ RUN bundle config set --local deployment true && \
      bundle install --jobs 4)
 
 # Production stage
-FROM ruby:3.3-slim
+FROM ruby:3.4-slim
 
 WORKDIR /app
 
