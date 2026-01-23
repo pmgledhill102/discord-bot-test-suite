@@ -63,7 +63,7 @@ repos:
     hooks:
       - id: cspell
         name: cspell (agent-only)
-        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || npx cspell --no-progress "**/*.md" --exclude ".beads/**"'
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || npx cspell --config cspell.json --no-progress "**/*.md" --exclude ".beads/**"'
         language: system
         files: \.md$
         pass_filenames: false

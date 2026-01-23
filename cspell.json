@@ -1,0 +1,22 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "distroless",
+    "Distroless",
+    "temurin",
+    "libsodium",
+    "libjsoncpp",
+    "libuuid",
+    "libbrotli",
+    "libyaml",
+    "nonroot",
+    "bootsnap",
+    "Bootsnap",
+    "Xshare",
+    "classlist",
+    "musl"
+  ],
+  "flagWords": [],
+  "ignorePaths": [".beads/**", "node_modules/**"]
+}
