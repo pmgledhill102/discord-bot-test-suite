@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"time"
 
-	"cloud.google.com/go/pubsub/v2"
+	"cloud.google.com/go/pubsub"
 	"github.com/gin-gonic/gin"
 )
 
