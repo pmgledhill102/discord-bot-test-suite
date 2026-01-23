@@ -71,7 +71,21 @@
     "rhysd",
     "markdownlint",
     "ruff",
-    "astral"
+    "astral",
+    "distroless",
+    "Distroless",
+    "temurin",
+    "libsodium",
+    "libjsoncpp",
+    "libuuid",
+    "libbrotli",
+    "libyaml",
+    "nonroot",
+    "bootsnap",
+    "Bootsnap",
+    "Xshare",
+    "classlist",
+    "musl"
   ],
   "flagWords": [],
   "dictionaries": [
