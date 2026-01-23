@@ -35,6 +35,19 @@ services:
     dependabot:
       ecosystem: nuget
 
+  csharp-aspnet-native:
+    language: csharp
+    language_version: '10.0'
+    framework: aspnet-native
+    framework_version: '10.0'
+    build:
+      tool: dotnet
+      dependency_file: DiscordWebhookNative.csproj
+      builder_image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+      runtime_image: mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine
+    dependabot:
+      ecosystem: nuget
+
   go-gin:
     language: go
     language_version: '1.25'
