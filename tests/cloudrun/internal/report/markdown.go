@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pmgledhill102/discord-bot-test-suite/tests/cloudrun/internal/benchmark"
+	"github.com/pmgledhill102/discord-bot-test-suite/tests/cloudrun/internal/gcp"
 )
 
 // WriteMarkdown writes benchmark results to a Markdown file.
@@ -47,8 +48,8 @@ func WriteMarkdown(result *benchmark.BenchmarkResult, path string) error {
 
 	// Cold Start Results
 	sb.WriteString("## Cold Start Results\n\n")
-	sb.WriteString("| Service | P50 | P95 | P99 | Min | Max | Success |\n")
-	sb.WriteString("|---------|-----|-----|-----|-----|-----|--------|\n")
+	sb.WriteString("| Service | Image Size | P50 | P95 | P99 | Min | Max | Success |\n")
+	sb.WriteString("|---------|------------|-----|-----|-----|-----|-----|--------|\n")
 
 	// Sort services by P50 cold start time
 	type serviceStats struct {
@@ -72,10 +73,12 @@ func WriteMarkdown(result *benchmark.BenchmarkResult, path string) error {
 	})
 
 	for _, ss := range sortedServices {
+		imageSize := gcp.FormatImageSize(ss.svc.ImageSizeBytes)
 		if ss.svc.ColdStart != nil {
 			cs := ss.svc.ColdStart
-			sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %d/%d |\n",
+			sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s | %d/%d |\n",
 				ss.name,
+				imageSize,
 				formatDuration(cs.TTFBP50),
 				formatDuration(cs.TTFBP95),
 				formatDuration(cs.TTFBP99),
@@ -85,9 +88,9 @@ func WriteMarkdown(result *benchmark.BenchmarkResult, path string) error {
 				cs.SuccessCount+cs.FailureCount,
 			))
 		} else if ss.svc.DeployError != nil {
-			sb.WriteString(fmt.Sprintf("| %s | - | - | - | - | - | Deploy failed |\n", ss.name))
+			sb.WriteString(fmt.Sprintf("| %s | %s | - | - | - | - | - | Deploy failed |\n", ss.name, imageSize))
 		} else {
-			sb.WriteString(fmt.Sprintf("| %s | - | - | - | - | - | No data |\n", ss.name))
+			sb.WriteString(fmt.Sprintf("| %s | %s | - | - | - | - | - | No data |\n", ss.name, imageSize))
 		}
 	}
 	sb.WriteString("\n")
@@ -212,6 +215,33 @@ func generateFindings(result *benchmark.BenchmarkResult) []string {
 	if fastestColdStartTime > 0 && slowestColdStartTime > 0 {
 		ratio := float64(slowestColdStartTime) / float64(fastestColdStartTime)
 		findings = append(findings, fmt.Sprintf("Cold start variance: %.1fx difference between fastest and slowest", ratio))
+	}
+
+	// Find smallest and largest image
+	var smallestImage, largestImage string
+	var smallestImageSize, largestImageSize int64
+	for name, svc := range result.Services {
+		if svc.ImageSizeBytes == 0 {
+			continue
+		}
+		if smallestImageSize == 0 || svc.ImageSizeBytes < smallestImageSize {
+			smallestImageSize = svc.ImageSizeBytes
+			smallestImage = name
+		}
+		if svc.ImageSizeBytes > largestImageSize {
+			largestImageSize = svc.ImageSizeBytes
+			largestImage = name
+		}
+	}
+
+	if smallestImage != "" {
+		findings = append(findings, fmt.Sprintf("**Smallest image:** %s at %s",
+			smallestImage, gcp.FormatImageSize(smallestImageSize)))
+	}
+
+	if largestImage != "" && largestImage != smallestImage {
+		findings = append(findings, fmt.Sprintf("**Largest image:** %s at %s",
+			largestImage, gcp.FormatImageSize(largestImageSize)))
 	}
 
 	// Find highest throughput

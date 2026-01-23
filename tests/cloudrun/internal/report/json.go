@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pmgledhill102/discord-bot-test-suite/tests/cloudrun/internal/benchmark"
+	"github.com/pmgledhill102/discord-bot-test-suite/tests/cloudrun/internal/gcp"
 )
 
 // JSONReport represents the JSON output format for benchmark results.
@@ -46,6 +47,8 @@ type JSONServiceReport struct {
 	ServiceName        string              `json:"service_name"`
 	ServiceURL         string              `json:"service_url"`
 	Image              string              `json:"image"`
+	ImageSizeBytes     int64               `json:"image_size_bytes,omitempty"`
+	ImageSize          string              `json:"image_size,omitempty"`
 	DeploymentDuration string              `json:"deployment_duration"`
 	ColdStart          *JSONColdStartStats `json:"cold_start,omitempty"`
 	WarmRequest        *JSONWarmStats      `json:"warm_request,omitempty"`
@@ -144,6 +147,8 @@ func toJSONReport(result *benchmark.BenchmarkResult) *JSONReport {
 			ServiceName:        svc.ServiceName,
 			ServiceURL:         svc.ServiceURL,
 			Image:              svc.Image,
+			ImageSizeBytes:     svc.ImageSizeBytes,
+			ImageSize:          gcp.FormatImageSize(svc.ImageSizeBytes),
 			DeploymentDuration: svc.DeploymentDuration.String(),
 		}
 
