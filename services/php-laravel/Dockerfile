@@ -18,14 +18,21 @@ COPY . .
 # Generate optimized autoloader (skip scripts)
 RUN composer dump-autoload --optimize --no-dev --no-scripts
 
+# Cache configuration and routes for faster boot
+RUN php artisan config:cache && php artisan route:cache
+
 # Runtime stage
 FROM php:8.5-cli-alpine
 
 # Install required extensions and CA certificates
+# Note: OPcache is built into PHP and configured via opcache.ini
 RUN apk add --no-cache \
     ca-certificates \
     libsodium \
     && docker-php-ext-enable sodium
+
+# Copy OPcache configuration
+COPY opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # Set working directory
 WORKDIR /app
@@ -33,12 +40,18 @@ WORKDIR /app
 # Copy application from composer stage
 COPY --from=composer /app /app
 
+# Copy preload script
+COPY preload.php /app/preload.php
+
 # Create storage and bootstrap cache directories and set permissions
 RUN mkdir -p bootstrap/cache storage/framework/{cache,sessions,views} storage/logs \
     && chmod -R 777 storage bootstrap/cache
 
 # Expose port
 EXPOSE 8080
+
+# Reduce memory fragmentation in glibc malloc
+ENV MALLOC_ARENA_MAX=2
 
 # Use PHP's built-in server
 ENV PORT=8080
