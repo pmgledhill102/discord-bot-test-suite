@@ -1,4 +1,5 @@
 # golangci-lint configuration for Cloud Run benchmark tool
+version: '2'
 
 linters:
   enable:

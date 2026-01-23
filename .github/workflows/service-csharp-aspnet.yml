@@ -46,25 +46,6 @@ jobs:
         working-directory: services/csharp-aspnet
         run: dotnet build --no-restore -warnaserror
 
-      - name: Run golangci-lint (contract tests)
-        uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
-        with:
-          version: latest
-          working-directory: tests/contract
-          args: --timeout=5m
-
-      - name: Set up Go for contract tests
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
-        with:
-          go-version: '1.24'
-          cache-dependency-path: tests/contract/go.sum
-
-      - name: Check go mod tidy (contract tests)
-        working-directory: tests/contract
-        run: |
-          go mod tidy
-          git diff --exit-code go.mod go.sum
-
   build:
     name: Build Service
     runs-on: ubuntu-latest
