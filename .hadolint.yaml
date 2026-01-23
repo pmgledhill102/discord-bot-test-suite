@@ -1,0 +1,11 @@
+# Hadolint configuration
+# See: https://github.com/hadolint/hadolint#configure
+
+# Treat warnings as non-fatal (only fail on errors)
+failure-threshold: error
+
+# Ignore common warnings that are acceptable in this project
+ignored:
+  # DL3008: Pin versions in apt-get install
+  # We use slim base images with security updates, pinning would cause maintenance burden
+  - DL3008

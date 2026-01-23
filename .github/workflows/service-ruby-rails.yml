@@ -21,6 +21,10 @@ on:
       - 'docker-compose.pubsub.yml'
       - '.github/workflows/service-ruby-rails.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DISCORD_PUBLIC_KEY: 398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159
   SERVICE_DIR: ruby-rails
