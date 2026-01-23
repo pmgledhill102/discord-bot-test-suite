@@ -44,6 +44,10 @@ jobs:
         working-directory: services/node-express
         run: npm install
 
+      - name: Run ESLint
+        working-directory: services/node-express
+        run: npm run lint
+
   build:
     name: Build Service
     runs-on: ubuntu-latest

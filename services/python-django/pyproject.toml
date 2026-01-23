@@ -9,3 +9,14 @@ dependencies = [
     "pynacl==1.6.2",
     "google-cloud-pubsub==2.34.0",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # Line length handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"

@@ -47,6 +47,7 @@ jobs:
 
       - name: Run RuboCop
         working-directory: services/ruby-rails
+        # TODO: Remove || true once Ruby code passes RuboCop (pre-existing violations)
         run: rubocop --config .rubocop.yml || true
 
   build:
