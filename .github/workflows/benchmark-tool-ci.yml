@@ -11,13 +11,15 @@ on:
     branches: [main]
     paths:
       - 'tests/cloudrun/**'
-      - '!tests/cloudrun/configs/**'
+      - '!tests/cloudrun/configs/debug.yaml'
+      - '!tests/cloudrun/configs/quick.yaml'
       - '.github/workflows/benchmark-tool-ci.yml'
   pull_request:
     branches: [main]
     paths:
       - 'tests/cloudrun/**'
-      - '!tests/cloudrun/configs/**'
+      - '!tests/cloudrun/configs/debug.yaml'
+      - '!tests/cloudrun/configs/quick.yaml'
       - '.github/workflows/benchmark-tool-ci.yml'
 
 jobs:
