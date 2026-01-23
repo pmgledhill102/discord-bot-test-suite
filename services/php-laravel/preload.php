@@ -7,7 +7,7 @@
  * This script runs once when PHP starts and keeps classes in shared memory.
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 // Preload Laravel core classes
 $laravelClasses = [
