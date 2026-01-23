@@ -8,6 +8,11 @@ linters:
     - govet
     - ineffassign
   settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write
     staticcheck:
       checks:
         - all
@@ -21,3 +26,8 @@ linters:
         linters:
           - staticcheck
         text: 'SA1019.*pubsub.*deprecated'
+      # Ignore unchecked Close() errors in deferred calls
+      # These are intentional as we can't handle errors in defer
+      - linters:
+          - errcheck
+        text: 'Error return value of .*.Close.* is not checked'
