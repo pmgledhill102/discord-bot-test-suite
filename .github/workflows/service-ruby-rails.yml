@@ -47,7 +47,7 @@ jobs:
 
       - name: Run RuboCop
         working-directory: services/ruby-rails
-        run: rubocop --config .rubocop.yml || true
+        run: rubocop --config .rubocop.yml
 
   build:
     name: Build Service

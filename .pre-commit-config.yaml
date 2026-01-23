@@ -51,40 +51,82 @@ repos:
           ]
         exclude: \.beads/
 
-  # Spell check for Markdown
-  - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v8.17.3
+  # GitHub Actions lint
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+
+  # Markdown linting (agent-only - slower check)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
     hooks:
       - id: cspell
+        name: cspell (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || npx cspell --no-progress "**/*.md" --exclude ".beads/**"'
+        language: system
         files: \.md$
+        pass_filenames: false
+      - id: markdownlint
+        name: markdownlint (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || npx markdownlint-cli2 "**/*.md" "#.beads/**" "#**/node_modules/**"'
+        language: system
+        files: \.md$
+        pass_filenames: false
 
-  # Go - golangci-lint v2
+  # Go - golangci-lint v2 (agent-only - slower check)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  # Note: CI uses golangci-lint v2.8.0 with --timeout=5m (same as .golangci.yml)
   - repo: local
     hooks:
       - id: golangci-lint-go-gin
-        name: golangci-lint (go-gin)
-        entry: bash -c 'cd services/go-gin && golangci-lint run'
+        name: golangci-lint go-gin (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/go-gin && golangci-lint run --timeout=5m'
         language: system
         files: ^services/go-gin/.*\.go$
         pass_filenames: false
       - id: golangci-lint-contract
-        name: golangci-lint (contract tests)
-        entry: bash -c 'cd tests/contract && golangci-lint run'
+        name: golangci-lint contract (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd tests/contract && golangci-lint run --timeout=5m'
         language: system
         files: ^tests/contract/.*\.go$
         pass_filenames: false
 
-  # Python
-  - repo: https://github.com/psf/black
-    rev: 24.1.1
+  # Python - ruff (replaces black + flake8)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.6
     hooks:
-      - id: black
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
 
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+  # Ruby - rubocop (agent-only - slower check)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
     hooks:
-      - id: flake8
-        args: ['--max-line-length=100']
+      - id: rubocop
+        name: rubocop ruby-rails (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/ruby-rails && rubocop --config .rubocop.yml'
+        language: system
+        files: ^services/ruby-rails/.*\.rb$
+        pass_filenames: false
+
+  # TypeScript/JavaScript - ESLint (agent-only - slower check)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: eslint-typescript-fastify
+        name: eslint typescript-fastify (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/typescript-fastify && npm run lint'
+        language: system
+        files: ^services/typescript-fastify/.*\.(ts|js)$
+        pass_filenames: false
+      - id: eslint-node-express
+        name: eslint node-express (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/node-express && npm run lint'
+        language: system
+        files: ^services/node-express/.*\.js$
+        pass_filenames: false
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
