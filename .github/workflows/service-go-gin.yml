@@ -42,14 +42,14 @@ jobs:
       - name: Run golangci-lint (service)
         uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
         with:
-          version: latest
+          version: v2.8.0
           working-directory: services/go-gin
           args: --timeout=5m
 
       - name: Run golangci-lint (contract tests)
         uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
         with:
-          version: latest
+          version: v2.8.0
           working-directory: tests/contract
           args: --timeout=5m
 
