@@ -7,20 +7,19 @@ linters:
     - errcheck
     - govet
     - ineffassign
-    - typecheck
-
-linters-settings:
-  staticcheck:
-    checks:
-      - all
-      # Disable deprecation warning for pubsub v1
-      # TODO: Upgrade to cloud.google.com/go/pubsub/v2 when ready
-      - '-SA1019'
+  settings:
+    staticcheck:
+      checks:
+        - all
+        # Disable deprecation warning for pubsub v1
+        # TODO: Upgrade to cloud.google.com/go/pubsub/v2 when ready
+        - '-SA1019'
 
 issues:
-  exclude-rules:
-    # Allow deprecated pubsub v1 import until we migrate to v2
-    - path: internal/gcp/pubsub.go
-      linters:
-        - staticcheck
-      text: 'SA1019.*pubsub.*deprecated'
+  exclusions:
+    rules:
+      # Allow deprecated pubsub v1 import until we migrate to v2
+      - path: internal/gcp/pubsub.go
+        linters:
+          - staticcheck
+        text: 'SA1019.*pubsub.*deprecated'
