@@ -138,6 +138,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Update Cloud Run Job with new image
+        env:
+          AR_REPO: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/discord-services
+          REGION: ${{ vars.GCP_REGION }}
+        run: |
+          echo "Updating Cloud Run Job to use newly pushed image..."
+          gcloud run jobs update cloudrun-benchmark \
+            --region "$REGION" \
+            --image "$AR_REPO/cloudrun-benchmark:${{ github.sha }}" \
+            --quiet
+
       - name: Execute quick test job
         env:
           PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
