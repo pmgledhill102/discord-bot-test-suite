@@ -14,14 +14,19 @@ COPY src ./src
 # Build TypeScript
 RUN npm run build
 
-# Runtime stage
-FROM node:22-alpine
+# Install production dependencies only
+RUN rm -rf node_modules && npm ci --omit=dev
+
+# Runtime stage - distroless for smaller image and better security
+FROM gcr.io/distroless/nodejs22-debian12
 
 WORKDIR /app
 
-# Copy package files and install production dependencies only
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev && npm cache clean --force
+# Optimize memory allocation for containerized Node.js
+ENV MALLOC_ARENA_MAX=2
+
+# Copy node_modules from builder (production deps only)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built application
 COPY --from=builder /app/dist ./dist
@@ -29,5 +34,5 @@ COPY --from=builder /app/dist ./dist
 # Expose port
 EXPOSE 8080
 
-# Run the server
-CMD ["node", "dist/index.js"]
+# Run the server (exec form required - no shell in distroless)
+CMD ["dist/index.js"]
