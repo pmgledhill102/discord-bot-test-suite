@@ -34,45 +34,89 @@ func NewArtifactRegistryClient(ctx context.Context, projectID, region string) (*
 func (c *ArtifactRegistryClient) GetImageSize(ctx context.Context, imageURI string) (int64, error) {
 	// Parse image URI to extract components
 	// Format: europe-west1-docker.pkg.dev/project-id/discord-services/go-gin:latest
-	name, err := parseImageURIToResourceName(imageURI)
+	region, project, repo, imageName, tag, err := parseImageURI(imageURI)
 	if err != nil {
 		return 0, fmt.Errorf("parsing image URI: %w", err)
 	}
 
-	// Get the docker image metadata
-	img, err := c.service.Projects.Locations.Repositories.DockerImages.Get(name).Context(ctx).Do()
+	// Build parent path for listing docker images
+	parent := fmt.Sprintf("projects/%s/locations/%s/repositories/%s", project, region, repo)
+
+	// List docker images and find the one with our tag
+	// We need to iterate because the API uses sha256 digests as the primary identifier
+	var totalSize int64
+	err = c.service.Projects.Locations.Repositories.DockerImages.List(parent).
+		Context(ctx).
+		Pages(ctx, func(resp *artifactregistry.ListDockerImagesResponse) error {
+			for _, img := range resp.DockerImages {
+				// Check if this image has our tag
+				for _, imgTag := range img.Tags {
+					if imgTag == tag {
+						// Found the tagged image - now we need to get the actual size
+						// The tagged image might be a manifest list (multi-arch)
+						// Try to get size from this image or its referenced images
+						if img.ImageSizeBytes > 0 {
+							totalSize = img.ImageSizeBytes
+							return nil
+						}
+						// For manifest lists, we need to find the amd64 image
+						// Look for images with same base name
+						break
+					}
+				}
+				// Also check if this is a platform-specific image under the same name
+				// These have the actual size
+				if img.ImageSizeBytes > 0 && strings.Contains(img.Name, "/"+imageName+"@") {
+					// Check if this is a linux/amd64 image (most common for Cloud Run)
+					// The name format is: .../dockerImages/IMAGE@sha256:...
+					totalSize = img.ImageSizeBytes
+					// Don't return yet - keep looking for a better match
+				}
+			}
+			return nil
+		})
+
 	if err != nil {
-		return 0, fmt.Errorf("getting image metadata: %w", err)
+		return 0, fmt.Errorf("listing docker images: %w", err)
 	}
 
-	return img.ImageSizeBytes, nil
+	if totalSize == 0 {
+		return 0, fmt.Errorf("image not found or size not available: %s", imageURI)
+	}
+
+	return totalSize, nil
 }
 
-// parseImageURIToResourceName converts an image URI to an Artifact Registry resource name.
+// parseImageURI extracts components from an image URI.
 // Input:  europe-west1-docker.pkg.dev/project-id/discord-services/go-gin:latest
-// Output: projects/project-id/locations/europe-west1/repositories/discord-services/dockerImages/go-gin:latest
-func parseImageURIToResourceName(imageURI string) (string, error) {
-	// Remove the docker.pkg.dev suffix from region
-	// europe-west1-docker.pkg.dev -> europe-west1
+// Returns: region, project, repo, image, tag
+func parseImageURI(imageURI string) (region, project, repo, image, tag string, err error) {
 	parts := strings.SplitN(imageURI, "/", 4)
 	if len(parts) < 4 {
-		return "", fmt.Errorf("invalid image URI format: %s", imageURI)
+		return "", "", "", "", "", fmt.Errorf("invalid image URI format: %s", imageURI)
 	}
 
+	// Parse host to extract region
+	// europe-west1-docker.pkg.dev -> europe-west1
 	hostParts := strings.Split(parts[0], "-docker.pkg.dev")
 	if len(hostParts) != 2 {
-		return "", fmt.Errorf("invalid host format: %s", parts[0])
+		return "", "", "", "", "", fmt.Errorf("invalid host format: %s", parts[0])
 	}
-	region := hostParts[0]
+	region = hostParts[0]
+	project = parts[1]
+	repo = parts[2]
 
-	project := parts[1]
-	repo := parts[2]
+	// Parse image:tag
 	imageAndTag := parts[3]
+	if idx := strings.LastIndex(imageAndTag, ":"); idx != -1 {
+		image = imageAndTag[:idx]
+		tag = imageAndTag[idx+1:]
+	} else {
+		image = imageAndTag
+		tag = "latest"
+	}
 
-	// The resource name format for dockerImages uses the image path with tag
-	// Note: The API expects the image name to be URL-encoded, but the Go client handles this
-	return fmt.Sprintf("projects/%s/locations/%s/repositories/%s/dockerImages/%s",
-		project, region, repo, imageAndTag), nil
+	return region, project, repo, image, tag, nil
 }
 
 // FormatImageSize formats image size in bytes to a human-readable string.
