@@ -2,25 +2,26 @@
 # Multi-stage build for optimized image size
 
 # Build stage
-FROM ruby:3.3-slim AS builder
+# Use Ruby 3.4 for pre-built native gems (grpc doesn't have Ruby 4.0 binaries yet)
+# See .github/dependabot.yml for version pinning
+FROM ruby:3.4-slim AS builder
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    libyaml-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install gems
+# Install gems FIRST without build tools - forces use of pre-built native gems
+# This avoids compiling grpc from source (which takes 10+ minutes)
 COPY Gemfile Gemfile.lock ./
 RUN bundle config set --local deployment true && \
     bundle config set --local without 'development test' && \
-    bundle install --jobs 4
+    bundle install --jobs 4 || \
+    (echo "Pre-built gems failed, installing build tools..." && \
+     apt-get update && \
+     apt-get install -y --no-install-recommends build-essential libyaml-dev && \
+     rm -rf /var/lib/apt/lists/* && \
+     bundle install --jobs 4)
 
 # Production stage
-FROM ruby:3.3-slim
+FROM ruby:3.4-slim
 
 WORKDIR /app
 

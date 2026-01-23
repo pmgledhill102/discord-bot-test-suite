@@ -58,13 +58,21 @@ repos:
       - id: cspell
         files: \.md$
 
-  # Go
-  - repo: https://github.com/dnephin/pre-commit-golang
-    rev: v0.5.1
+  # Go - golangci-lint v2
+  - repo: local
     hooks:
-      - id: go-fmt
-      - id: go-vet
-      - id: go-imports
+      - id: golangci-lint-go-gin
+        name: golangci-lint (go-gin)
+        entry: bash -c 'cd services/go-gin && golangci-lint run'
+        language: system
+        files: ^services/go-gin/.*\.go$
+        pass_filenames: false
+      - id: golangci-lint-contract
+        name: golangci-lint (contract tests)
+        entry: bash -c 'cd tests/contract && golangci-lint run'
+        language: system
+        files: ^tests/contract/.*\.go$
+        pass_filenames: false
 
   # Python
   - repo: https://github.com/psf/black

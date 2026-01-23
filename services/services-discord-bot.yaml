@@ -1,0 +1,253 @@
+# Service definitions for Discord webhook benchmark services
+#
+# This file is the source of truth for all Discord bot service metadata.
+# Scripts in scripts/benchmark/ and tests/cloudrun/scripts/ read from this file.
+#
+# Future: This pattern supports multi-repo architecture where each workload type
+# has its own services-{workload}.yaml file that can be consolidated.
+
+schema_version: '1.0'
+
+services:
+  cpp-drogon:
+    language: cpp
+    language_version: '20'
+    framework: drogon
+    framework_version: '1.9'
+    build:
+      tool: cmake
+      dependency_file: CMakeLists.txt
+      builder_image: ubuntu:24.04
+      runtime_image: ubuntu:24.04
+    dependabot:
+      ecosystem: null
+
+  csharp-aspnet:
+    language: csharp
+    language_version: '10.0'
+    framework: aspnet
+    framework_version: '10.0'
+    build:
+      tool: dotnet
+      dependency_file: DiscordWebhook.csproj
+      builder_image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+      runtime_image: mcr.microsoft.com/dotnet/aspnet:10.0-alpine
+    dependabot:
+      ecosystem: nuget
+
+  go-gin:
+    language: go
+    language_version: '1.25'
+    framework: gin
+    framework_version: '1.11'
+    build:
+      tool: go
+      dependency_file: go.mod
+      builder_image: golang:1.25-alpine
+      runtime_image: scratch
+    dependabot:
+      ecosystem: gomod
+
+  java-micronaut:
+    language: java
+    language_version: '21'
+    framework: micronaut
+    framework_version: '4.10'
+    build:
+      tool: maven
+      dependency_file: pom.xml
+      builder_image: maven:3.9-eclipse-temurin-21
+      runtime_image: eclipse-temurin:21-jre
+    dependabot:
+      ecosystem: maven
+
+  java-quarkus:
+    language: java
+    language_version: '21'
+    framework: quarkus
+    framework_version: '3.30'
+    build:
+      tool: maven
+      dependency_file: pom.xml
+      builder_image: maven:3.9-eclipse-temurin-21
+      runtime_image: eclipse-temurin:21-jre
+    dependabot:
+      ecosystem: maven
+
+  java-quarkus-native:
+    language: java
+    language_version: '21'
+    framework: quarkus-native
+    framework_version: '3.30'
+    build:
+      tool: maven
+      dependency_file: pom.xml
+      builder_image: quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21
+      runtime_image: quay.io/quarkus/quarkus-micro-image:2.0
+    dependabot:
+      ecosystem: maven
+
+  java-spring2:
+    language: java
+    language_version: '17'
+    framework: spring-boot
+    framework_version: '2.7'
+    build:
+      tool: maven
+      dependency_file: pom.xml
+      builder_image: maven:3.9-eclipse-temurin-17
+      runtime_image: eclipse-temurin:17-jre
+    dependabot:
+      ecosystem: maven
+      ignore:
+        - dependency_name: 'org.springframework.boot:spring-boot-starter-parent'
+          versions: ['>=3.0.0']
+
+  java-spring3:
+    language: java
+    language_version: '21'
+    framework: spring-boot
+    framework_version: '3.5'
+    build:
+      tool: maven
+      dependency_file: pom.xml
+      builder_image: eclipse-temurin:21-jdk-alpine
+      runtime_image: eclipse-temurin:21-jre-alpine
+    dependabot:
+      ecosystem: maven
+      ignore:
+        - dependency_name: 'org.springframework.boot:spring-boot-starter-parent'
+          versions: ['>=4.0.0']
+
+  java-spring4:
+    language: java
+    language_version: '21'
+    framework: spring-boot
+    framework_version: '4.0'
+    build:
+      tool: maven
+      dependency_file: pom.xml
+      builder_image: eclipse-temurin:21-jdk-alpine
+      runtime_image: eclipse-temurin:21-jre-alpine
+    dependabot:
+      ecosystem: maven
+      ignore:
+        - dependency_name: 'org.springframework.boot:spring-boot-starter-parent'
+          versions: ['>=5.0.0']
+
+  kotlin-ktor:
+    language: kotlin
+    language_version: '2.3'
+    framework: ktor
+    framework_version: '3.3'
+    build:
+      tool: gradle
+      dependency_file: build.gradle.kts
+      builder_image: gradle:8.12-jdk21
+      runtime_image: eclipse-temurin:21-jre-alpine
+    dependabot:
+      ecosystem: gradle
+
+  node-express:
+    language: javascript
+    language_version: '24'
+    framework: express
+    framework_version: '5.1'
+    build:
+      tool: npm
+      dependency_file: package.json
+      builder_image: node:24-alpine
+      runtime_image: node:24-alpine
+    dependabot:
+      ecosystem: npm
+
+  php-laravel:
+    language: php
+    language_version: '8.5'
+    framework: laravel
+    framework_version: '12.46'
+    build:
+      tool: composer
+      dependency_file: composer.json
+      builder_image: composer:2
+      runtime_image: php:8.5-cli-alpine
+    dependabot:
+      ecosystem: composer
+
+  python-django:
+    language: python
+    language_version: '3.14'
+    framework: django
+    framework_version: '6.0'
+    build:
+      tool: uv
+      dependency_file: pyproject.toml
+      builder_image: null
+      runtime_image: python:3.14-slim
+    dependabot:
+      ecosystem: pip
+
+  python-flask:
+    language: python
+    language_version: '3.14'
+    framework: flask
+    framework_version: '3.1'
+    build:
+      tool: uv
+      dependency_file: pyproject.toml
+      builder_image: null
+      runtime_image: python:3.14-slim
+    dependabot:
+      ecosystem: pip
+
+  ruby-rails:
+    language: ruby
+    language_version: '4.0'
+    framework: rails
+    framework_version: '8.1'
+    build:
+      tool: bundler
+      dependency_file: Gemfile
+      builder_image: ruby:4.0-slim
+      runtime_image: ruby:4.0-slim
+    dependabot:
+      ecosystem: bundler
+
+  rust-actix:
+    language: rust
+    language_version: '1.93'
+    framework: actix-web
+    framework_version: '4'
+    build:
+      tool: cargo
+      dependency_file: Cargo.toml
+      builder_image: rust:1.93-slim-bookworm
+      runtime_image: debian:bookworm-slim
+    dependabot:
+      ecosystem: cargo
+
+  scala-play:
+    language: scala
+    language_version: '3.3'
+    framework: play
+    framework_version: '3.0'
+    build:
+      tool: sbt
+      dependency_file: build.sbt
+      builder_image: eclipse-temurin:21-jdk
+      runtime_image: eclipse-temurin:21-jre-alpine
+    dependabot:
+      ecosystem: null
+
+  typescript-fastify:
+    language: typescript
+    language_version: '5.7'
+    framework: fastify
+    framework_version: '5.7'
+    build:
+      tool: npm
+      dependency_file: package.json
+      builder_image: node:22-alpine
+      runtime_image: node:22-alpine
+    dependabot:
+      ecosystem: npm

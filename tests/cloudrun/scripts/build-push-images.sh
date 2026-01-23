@@ -19,26 +19,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 SERVICES_DIR="${REPO_ROOT}/services"
 
-# All available services
-ALL_SERVICES=(
-    "cpp-drogon"
-    "csharp-aspnet"
-    "go-gin"
-    "java-micronaut"
-    "java-quarkus"
-    "java-quarkus-native"
-    "java-spring"
-    "java-spring2"
-    "kotlin-ktor"
-    "node-express"
-    "php-laravel"
-    "python-django"
-    "python-flask"
-    "ruby-rails"
-    "rust-actix"
-    "scala-play"
-    "typescript-fastify"
-)
+# Source the services library
+export PROJECT_ROOT="${REPO_ROOT}"
+source "${REPO_ROOT}/scripts/lib/services.sh"
+
+# Get all available services from YAML (bash 3.2 compatible)
+ALL_SERVICES=()
+while IFS= read -r service; do
+    ALL_SERVICES+=("$service")
+done < <(get_all_services)
 
 # Colors for output
 RED='\033[0;31m'

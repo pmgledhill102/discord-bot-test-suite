@@ -7,11 +7,11 @@
     "start": "node src/index.js"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "dependencies": {
     "express": "^5.1.0",
-    "@google-cloud/pubsub": "^5.0.0",
+    "@google-cloud/pubsub": "^5.2.2",
     "tweetnacl": "^1.0.3"
   }
 }

@@ -9,8 +9,8 @@
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
-    "@google-cloud/pubsub": "^4.9.0",
-    "fastify": "^5.2.1",
+    "@google-cloud/pubsub": "^5.2.2",
+    "fastify": "^5.7.1",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {

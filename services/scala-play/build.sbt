@@ -9,7 +9,7 @@
 name := "discord-webhook-service"
 organization := "com.example"
 version := "1.0.0"
-scalaVersion := "3.3.4"
+scalaVersion := "3.3.7"
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala)
@@ -22,9 +22,9 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       guice,
       // Ed25519 signature verification
-      "org.bouncycastle" % "bcprov-jdk18on" % "1.79",
+      "org.bouncycastle" % "bcprov-jdk18on" % "1.83",
       // Google Cloud Pub/Sub
-      "com.google.cloud" % "google-cloud-pubsub" % "1.135.0",
+      "com.google.cloud" % "google-cloud-pubsub" % "1.145.0",
       // JSON handling (Play JSON is included)
       "org.playframework" %% "play-json" % "3.0.4"
     ),
