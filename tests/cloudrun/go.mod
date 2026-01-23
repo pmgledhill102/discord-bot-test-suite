@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/logging v1.13.0
 	cloud.google.com/go/pubsub v1.50.1
 	cloud.google.com/go/storage v1.56.0
+	golang.org/x/oauth2 v0.30.0
 	google.golang.org/api v0.247.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -50,7 +51,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
