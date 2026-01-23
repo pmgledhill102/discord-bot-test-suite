@@ -13,40 +13,42 @@ linters:
     - staticcheck
     - unused
     - gosimple
-    - gofmt
-    - goimports
     - misspell
     - unconvert
     - bodyclose
     - noctx
     - gosec
     - prealloc
+  settings:
+    errcheck:
+      check-blank: true
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment # Optimization, not a correctness issue
+    misspell:
+      locale: US
+    gosec:
+      excludes:
+        - G104 # Unhandled errors (we handle these explicitly where needed)
+    staticcheck:
+      checks:
+        - all
+        - '-SA1019' # Ignore deprecation warnings (pubsub v1 -> v2 migration pending)
+  exclusions:
+    rules:
+      # Allow log.Fatal in main
+      - path: main\.go
+        linters:
+          - gocritic
+        text: 'exitAfterDefer'
 
-linters-settings:
-  errcheck:
-    check-blank: true
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment # Optimization, not a correctness issue
-  gofmt:
-    simplify: true
-  goimports:
-    local-prefixes: github.com/pmgledhill102/discord-bot-test-suite
-  misspell:
-    locale: US
-  gosec:
-    excludes:
-      - G104 # Unhandled errors (we handle these explicitly where needed)
-  staticcheck:
-    checks:
-      - all
-      - '-SA1019' # Ignore deprecation warnings (pubsub v1 → v2 migration pending)
-
-issues:
-  exclude-rules:
-    # Allow log.Fatal in main
-    - path: main\.go
-      linters:
-        - gocritic
-      text: 'exitAfterDefer'
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes: github.com/pmgledhill102/discord-bot-test-suite

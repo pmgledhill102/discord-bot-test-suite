@@ -14,35 +14,37 @@ linters:
     - staticcheck
     - unused
     - gosimple
-    - gofmt
-    - goimports
     - misspell
     - unconvert
+  settings:
+    errcheck:
+      check-blank: true
+      exclude-functions:
+        - (io.Closer).Close
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment # Optimization, not a correctness issue
+    misspell:
+      locale: US
+    staticcheck:
+      checks:
+        - all
+        - '-SA1019' # Ignore deprecation warnings (pubsub v2 migration pending)
+  exclusions:
+    rules:
+      # Test files can have some relaxed rules
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gosec
 
-linters-settings:
-  errcheck:
-    check-blank: true
-    exclude-functions:
-      - (io.Closer).Close
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment # Optimization, not a correctness issue
-  gofmt:
-    simplify: true
-  goimports:
-    local-prefixes: github.com/pmgledhill102/discord-bot-test-suite
-  misspell:
-    locale: US
-  staticcheck:
-    checks:
-      - all
-      - '-SA1019' # Ignore deprecation warnings (pubsub v2 migration pending)
-
-issues:
-  exclude-rules:
-    # Test files can have some relaxed rules
-    - path: _test\.go
-      linters:
-        - errcheck
-        - gosec
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes: github.com/pmgledhill102/discord-bot-test-suite
