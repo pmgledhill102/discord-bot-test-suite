@@ -50,6 +50,7 @@ services:
     - java-quarkus-native
     - java-quarkus
     - java-micronaut
+    - java-spring4
     - java-spring3
     - java-spring2
     - kotlin-ktor
@@ -60,4 +61,5 @@ services:
     - php-laravel
     - ruby-rails
     - csharp-aspnet
+    - csharp-aspnet-native
     - scala-play
