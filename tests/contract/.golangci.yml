@@ -1,4 +1,5 @@
 # golangci-lint configuration for contract tests
+version: '2'
 
 run:
   timeout: 5m

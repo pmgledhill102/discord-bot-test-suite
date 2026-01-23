@@ -1,4 +1,5 @@
 # golangci-lint configuration for Go/Gin service
+version: '2'
 
 run:
   timeout: 5m
