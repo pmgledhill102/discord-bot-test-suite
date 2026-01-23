@@ -2,9 +2,9 @@
 name = "discord-webhook-django"
 version = "1.0.0"
 description = "Discord webhook service using Django"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
-    "django==6.0.1",
+    "django>=5.1,<6.0",
     "gunicorn==24.0.0",
     "pynacl==1.6.2",
     "google-cloud-pubsub==2.34.0",
