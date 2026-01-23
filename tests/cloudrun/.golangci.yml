@@ -14,8 +14,6 @@ linters:
         # Disable deprecation warning for pubsub v1
         # TODO: Upgrade to cloud.google.com/go/pubsub/v2 when ready
         - '-SA1019'
-
-issues:
   exclusions:
     rules:
       # Allow deprecated pubsub v1 import until we migrate to v2
