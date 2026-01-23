@@ -19,6 +19,7 @@ type ServiceResult struct {
 	// Deployment info
 	DeploymentDuration time.Duration
 	Image              string
+	ImageSizeBytes     int64
 
 	// Benchmark results
 	ColdStart   *ColdStartStats
@@ -41,12 +42,13 @@ type BenchmarkResult struct {
 
 // Runner orchestrates the benchmark execution.
 type Runner struct {
-	config   *config.Config
-	cloudrun *gcp.CloudRunClient
-	pubsub   *gcp.PubSubClient
-	logging  *gcp.LoggingClient
-	signer   *signing.Signer
-	tokens   map[string]string // ID tokens per service URL
+	config           *config.Config
+	cloudrun         *gcp.CloudRunClient
+	pubsub           *gcp.PubSubClient
+	logging          *gcp.LoggingClient
+	artifactRegistry *gcp.ArtifactRegistryClient
+	signer           *signing.Signer
+	tokens           map[string]string // ID tokens per service URL
 }
 
 // NewRunner creates a new benchmark runner.
@@ -66,13 +68,19 @@ func NewRunner(ctx context.Context, cfg *config.Config) (*Runner, error) {
 		return nil, fmt.Errorf("creating logging client: %w", err)
 	}
 
+	artifactRegistry, err := gcp.NewArtifactRegistryClient(ctx, cfg.GCP.ProjectID, cfg.GCP.Region)
+	if err != nil {
+		return nil, fmt.Errorf("creating Artifact Registry client: %w", err)
+	}
+
 	return &Runner{
-		config:   cfg,
-		cloudrun: cloudrun,
-		pubsub:   pubsub,
-		logging:  logging,
-		signer:   signing.NewSigner(),
-		tokens:   make(map[string]string),
+		config:           cfg,
+		cloudrun:         cloudrun,
+		pubsub:           pubsub,
+		logging:          logging,
+		artifactRegistry: artifactRegistry,
+		signer:           signing.NewSigner(),
+		tokens:           make(map[string]string),
 	}, nil
 }
 
@@ -152,6 +160,15 @@ func (r *Runner) benchmarkService(ctx context.Context, service string) *ServiceR
 	serviceURL, err := r.cloudrun.Deploy(ctx, deployConfig)
 	result.DeploymentDuration = time.Since(deployStart)
 	result.Image = deployConfig.Image
+
+	// Fetch image size from Artifact Registry
+	imageSize, sizeErr := r.artifactRegistry.GetImageSize(ctx, deployConfig.Image)
+	if sizeErr != nil {
+		fmt.Printf("Warning: failed to get image size for %s: %v\n", service, sizeErr)
+	} else {
+		result.ImageSizeBytes = imageSize
+		fmt.Printf("Image size: %s\n", gcp.FormatImageSize(imageSize))
+	}
 
 	if err != nil {
 		result.DeployError = err
