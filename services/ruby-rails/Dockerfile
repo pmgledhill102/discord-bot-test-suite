@@ -2,7 +2,7 @@
 # Multi-stage build for optimized image size
 
 # Build stage
-FROM ruby:3.3-slim AS builder
+FROM ruby:4.0-slim AS builder
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ RUN bundle config set --local deployment true && \
     bundle install --jobs 4
 
 # Production stage
-FROM ruby:3.3-slim
+FROM ruby:4.0-slim
 
 WORKDIR /app
 

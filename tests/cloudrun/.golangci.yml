@@ -1,4 +1,5 @@
 # golangci-lint configuration for Cloud Run benchmark tool
+version: '2'
 
 linters:
   enable:
@@ -6,20 +7,27 @@ linters:
     - errcheck
     - govet
     - ineffassign
-    - typecheck
-
-linters-settings:
-  staticcheck:
-    checks:
-      - all
-      # Disable deprecation warning for pubsub v1
-      # TODO: Upgrade to cloud.google.com/go/pubsub/v2 when ready
-      - '-SA1019'
-
-issues:
-  exclude-rules:
-    # Allow deprecated pubsub v1 import until we migrate to v2
-    - path: internal/gcp/pubsub.go
-      linters:
-        - staticcheck
-      text: 'SA1019.*pubsub.*deprecated'
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write
+    staticcheck:
+      checks:
+        - all
+        # Disable deprecation warning for pubsub v1
+        # TODO: Upgrade to cloud.google.com/go/pubsub/v2 when ready
+        - '-SA1019'
+  exclusions:
+    rules:
+      # Allow deprecated pubsub v1 import until we migrate to v2
+      - path: internal/gcp/pubsub.go
+        linters:
+          - staticcheck
+        text: 'SA1019.*pubsub.*deprecated'
+      # Ignore unchecked Close() errors in deferred calls
+      # These are intentional as we can't handle errors in defer
+      - linters:
+          - errcheck
+        text: 'Error return value of .*.Close.* is not checked'

@@ -343,7 +343,7 @@ DEPENDENCIES
   google-cloud-pubsub (~> 3.1)
   oj (~> 3.16)
   puma (~> 7.2)
-  rails (~> 8.0)
+  rails (~> 8.1)
 
 BUNDLED WITH
-   2.5.22
+  4.0.3

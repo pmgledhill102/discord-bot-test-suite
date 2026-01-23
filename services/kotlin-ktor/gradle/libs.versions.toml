@@ -1,9 +1,9 @@
 [versions]
-kotlin = "2.1.0"
-ktor = "3.0.3"
+kotlin = "2.3.0"
+ktor = "3.3.0"
 logback = "1.5.15"
-bouncycastle = "1.79"
-google-cloud-pubsub = "1.134.1"
+bouncycastle = "1.83"
+google-cloud-pubsub = "1.145.0"
 
 [libraries]
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }

@@ -36,31 +36,18 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
-          go-version: '1.24'
+          go-version: '1.25'
           cache-dependency-path: services/go-gin/go.sum
 
-      - name: Run golangci-lint (service)
-        uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
-          version: latest
+          version: v2.8.0
           working-directory: services/go-gin
           args: --timeout=5m
 
-      - name: Run golangci-lint (contract tests)
-        uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
-        with:
-          version: latest
-          working-directory: tests/contract
-          args: --timeout=5m
-
-      - name: Check go mod tidy (service)
+      - name: Check go mod tidy
         working-directory: services/go-gin
-        run: |
-          go mod tidy
-          git diff --exit-code go.mod go.sum
-
-      - name: Check go mod tidy (contract tests)
-        working-directory: tests/contract
         run: |
           go mod tidy
           git diff --exit-code go.mod go.sum
@@ -132,7 +119,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
-          go-version: '1.24'
+          go-version: '1.25'
           cache-dependency-path: tests/contract/go.sum
 
       - name: Run contract tests

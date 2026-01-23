@@ -19,7 +19,7 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 # Runtime stage
-FROM php:8.4-cli-alpine
+FROM php:8.5-cli-alpine
 
 # Install required extensions and CA certificates
 RUN apk add --no-cache \
