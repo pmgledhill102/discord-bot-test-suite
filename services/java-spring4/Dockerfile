@@ -1,9 +1,12 @@
+# Java/Spring Boot 4 Discord webhook service
+# Multi-stage build with distroless runtime
+
 # Build stage
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml for dependency caching
+# Copy pom.xml for dependency caching
 COPY pom.xml .
 
 # Copy source code
@@ -14,17 +17,16 @@ COPY src ./src
 RUN apk add --no-cache maven && \
     mvn package -DskipTests -q
 
-# Runtime stage
-FROM eclipse-temurin:21-jre-alpine
+# Runtime stage - optimized distroless image
+FROM gcr.io/distroless/java21-debian12
 
 WORKDIR /app
 
 # Copy the built JAR
 COPY --from=builder /app/target/*.jar app.jar
 
-# Run as non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
+# Environment variable for memory optimization
+ENV MALLOC_ARENA_MAX=2
 
 # Expose port
 EXPOSE 8080
