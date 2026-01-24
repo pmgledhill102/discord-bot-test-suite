@@ -23,8 +23,10 @@ class PubSubService @Inject() (config: Configuration) extends Logging:
 
   private val projectId: Option[String] =
     config.getOptional[String]("gcp.projectId")
+
   private val topicName: Option[String] =
     config.getOptional[String]("pubsub.topic")
+
   private val emulatorHost: Option[String] =
     sys.env.get("PUBSUB_EMULATOR_HOST")
 
@@ -55,16 +57,16 @@ class PubSubService @Inject() (config: Configuration) extends Logging:
         ensureTopicExists(project, topic, channelProvider, credentialsProvider)
 
       case None =>
-        // Use default credentials for production
+      // Use default credentials for production
 
     logger.info(s"Pub/Sub configured: $topicNameObj")
     builder.build()
 
   private def ensureTopicExists(
-      project: String,
-      topic: String,
-      channelProvider: TransportChannelProvider,
-      credentialsProvider: CredentialsProvider
+    project: String,
+    topic: String,
+    channelProvider: TransportChannelProvider,
+    credentialsProvider: CredentialsProvider
   ): Unit =
     Try {
       val settings = TopicAdminSettings

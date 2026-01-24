@@ -6,14 +6,19 @@ import io.micronaut.serde.annotation.Serdeable;
 @Serdeable
 @Introspected
 public class ErrorResponse {
-    private String error;
+  private String error;
 
-    public ErrorResponse() {}
+  public ErrorResponse() {}
 
-    public ErrorResponse(String error) {
-        this.error = error;
-    }
+  public ErrorResponse(String error) {
+    this.error = error;
+  }
 
-    public String getError() { return error; }
-    public void setError(String error) { this.error = error; }
+  public String getError() {
+    return error;
+  }
+
+  public void setError(String error) {
+    this.error = error;
+  }
 }

@@ -19,9 +19,9 @@ import scala.util.{Failure, Success, Try}
   */
 @Singleton
 class InteractionController @Inject() (
-    val controllerComponents: ControllerComponents,
-    signatureService: SignatureService,
-    pubSubService: PubSubService
+  val controllerComponents: ControllerComponents,
+  signatureService: SignatureService,
+  pubSubService: PubSubService
 )(implicit ec: ExecutionContext)
     extends BaseController:
 
