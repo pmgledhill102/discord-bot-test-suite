@@ -167,6 +167,23 @@ repos:
         files: ^services/php-laravel/.*\.php$
         pass_filenames: false
 
+  # C# - dotnet format (agent-only - requires .NET SDK)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: dotnet-format-csharp-aspnet
+        name: dotnet format csharp-aspnet (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/csharp-aspnet && dotnet format --verify-no-changes'
+        language: system
+        files: ^services/csharp-aspnet/.*\.cs$
+        pass_filenames: false
+      - id: dotnet-format-csharp-aspnet-native
+        name: dotnet format csharp-aspnet-native (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/csharp-aspnet-native && dotnet format --verify-no-changes'
+        language: system
+        files: ^services/csharp-aspnet-native/.*\.cs$
+        pass_filenames: false
+
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.6

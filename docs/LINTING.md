@@ -37,6 +37,7 @@ HUMAN_HERE=1 pre-commit run --all-files
 | rustfmt             | Rust formatter    | Requires Rust toolchain  |
 | clippy              | Rust linter       | Slower, requires Rust    |
 | pint                | PHP formatter     | Requires composer        |
+| dotnet format       | C# formatter      | Requires .NET SDK        |
 
 ### Checks that always run
 
@@ -126,6 +127,13 @@ pre-commit run --all-files
 - **Config**: Default Pint settings (Laravel preset)
 - **CI**: `vendor/bin/pint --test`
 - **Pre-commit**: Local hook with HUMAN_HERE wrapper
+
+### C# (csharp-aspnet, csharp-aspnet-native)
+
+- **Tool**: dotnet format
+- **Config**: Default .NET formatting settings
+- **CI**: `dotnet format --verify-no-changes`
+- **Pre-commit**: Local hooks with HUMAN_HERE wrapper
 
 ### Shell Scripts
 
@@ -240,6 +248,7 @@ Use **whole-directory** (`pass_filenames: false`) when:
 | rustfmt          | Whole-directory | Cargo needs project context                   |
 | clippy           | Whole-directory | Cargo needs project context                   |
 | pint             | Whole-directory | Requires composer autoload                    |
+| dotnet format    | Whole-directory | Requires .NET project context                 |
 
 ### HUMAN_HERE Hook Templates
 
