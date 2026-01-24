@@ -1,0 +1,124 @@
+# Dependabot Auto-Merge Workflow
+#
+# Two-tier strategy:
+# - Tier 1 (auto-merge): Patch and minor updates for application dependencies
+# - Tier 2 (manual review): Major versions, Docker base images, GitHub Actions
+#
+# This workflow automatically merges Dependabot PRs that meet Tier 1 criteria.
+
+name: Dependabot Auto-Merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check auto-merge eligibility
+        id: check
+        run: |
+          echo "Update type: ${{ steps.metadata.outputs.update-type }}"
+          echo "Package ecosystem: ${{ steps.metadata.outputs.package-ecosystem }}"
+          echo "Dependency names: ${{ steps.metadata.outputs.dependency-names }}"
+
+          # Tier 2: Manual review required
+          # - Major version updates (any ecosystem)
+          # - GitHub Actions updates (infrastructure)
+          # - Docker updates (base images)
+
+          if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-major" ]]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "reason=Major version update requires manual review" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ steps.metadata.outputs.package-ecosystem }}" == "github_actions" ]]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "reason=GitHub Actions updates require manual review" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ steps.metadata.outputs.package-ecosystem }}" == "docker" ]]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "reason=Docker base image updates require manual review" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Tier 1: Auto-merge eligible
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+          echo "reason=Patch/minor update eligible for auto-merge" >> "$GITHUB_OUTPUT"
+
+      - name: Log decision
+        run: |
+          echo "Auto-merge eligible: ${{ steps.check.outputs.eligible }}"
+          echo "Reason: ${{ steps.check.outputs.reason }}"
+
+      - name: Wait for CI to pass
+        if: steps.check.outputs.eligible == 'true'
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30
+          running-workflow-name: Dependabot Auto-Merge
+          allowed-conclusions: success,skipped
+
+      - name: Enable auto-merge
+        if: steps.check.outputs.eligible == 'true'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add comment for manual review
+        if: steps.check.outputs.eligible == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const reason = '${{ steps.check.outputs.reason }}';
+            const body = `### Manual Review Required
+
+            **Reason:** ${reason}
+
+            This PR was not auto-merged because it falls into Tier 2 of our Dependabot strategy.
+
+            **Tier 2 criteria (manual review):**
+            - Major version updates
+            - GitHub Actions updates
+            - Docker base image updates
+
+            Please review and merge manually if the changes are acceptable.`;
+
+            // Check if we already commented
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Manual Review Required')
+            );
+
+            if (!botComment) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
