@@ -139,6 +139,23 @@ repos:
         language: system
         files: ^services/cpp-drogon/.*\.(cc|cpp|h|hpp)$
 
+  # Rust - rustfmt and clippy (agent-only - requires Rust toolchain)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: rustfmt-rust-actix
+        name: rustfmt rust-actix (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/rust-actix && cargo fmt --check'
+        language: system
+        files: ^services/rust-actix/.*\.rs$
+        pass_filenames: false
+      - id: clippy-rust-actix
+        name: clippy rust-actix (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/rust-actix && cargo clippy -- -D warnings'
+        language: system
+        files: ^services/rust-actix/.*\.rs$
+        pass_filenames: false
+
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.6
