@@ -139,6 +139,114 @@ repos:
         language: system
         files: ^services/cpp-drogon/.*\.(cc|cpp|h|hpp)$
 
+  # Rust - rustfmt and clippy (agent-only - requires Rust toolchain)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: rustfmt-rust-actix
+        name: rustfmt rust-actix (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/rust-actix && cargo fmt --check'
+        language: system
+        files: ^services/rust-actix/.*\.rs$
+        pass_filenames: false
+      - id: clippy-rust-actix
+        name: clippy rust-actix (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/rust-actix && cargo clippy -- -D warnings'
+        language: system
+        files: ^services/rust-actix/.*\.rs$
+        pass_filenames: false
+
+  # PHP - Laravel Pint (agent-only - requires composer install)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: pint-php-laravel
+        name: pint php-laravel (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/php-laravel && vendor/bin/pint --test'
+        language: system
+        files: ^services/php-laravel/.*\.php$
+        pass_filenames: false
+
+  # C# - dotnet format (agent-only - requires .NET SDK)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: dotnet-format-csharp-aspnet
+        name: dotnet format csharp-aspnet (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/csharp-aspnet && dotnet format whitespace --verify-no-changes'
+        language: system
+        files: ^services/csharp-aspnet/.*\.cs$
+        pass_filenames: false
+      - id: dotnet-format-csharp-aspnet-native
+        name: dotnet format csharp-aspnet-native (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/csharp-aspnet-native && dotnet format whitespace --verify-no-changes'
+        language: system
+        files: ^services/csharp-aspnet-native/.*\.cs$
+        pass_filenames: false
+
+  # Kotlin - ktlint (agent-only - requires Gradle)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: ktlint-kotlin-ktor
+        name: ktlint kotlin-ktor (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/kotlin-ktor && gradle ktlintCheck --no-daemon'
+        language: system
+        files: ^services/kotlin-ktor/.*\.kt$
+        pass_filenames: false
+
+  # Scala - scalafmt (agent-only - requires sbt)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: scalafmt-scala-play
+        name: scalafmt scala-play (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/scala-play && sbt scalafmtCheckAll'
+        language: system
+        files: ^services/scala-play/.*\.scala$
+        pass_filenames: false
+
+  # Java - Spotless (agent-only - requires Maven)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: spotless-java-spring4
+        name: spotless java-spring4 (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/java-spring4 && mvn spotless:check -q'
+        language: system
+        files: ^services/java-spring4/.*\.java$
+        pass_filenames: false
+      - id: spotless-java-spring3
+        name: spotless java-spring3 (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/java-spring3 && mvn spotless:check -q'
+        language: system
+        files: ^services/java-spring3/.*\.java$
+        pass_filenames: false
+      - id: spotless-java-spring2
+        name: spotless java-spring2 (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/java-spring2 && mvn spotless:check -q'
+        language: system
+        files: ^services/java-spring2/.*\.java$
+        pass_filenames: false
+      - id: spotless-java-micronaut
+        name: spotless java-micronaut (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/java-micronaut && mvn spotless:check -q'
+        language: system
+        files: ^services/java-micronaut/.*\.java$
+        pass_filenames: false
+      - id: spotless-java-quarkus
+        name: spotless java-quarkus (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/java-quarkus && mvn spotless:check -q'
+        language: system
+        files: ^services/java-quarkus/.*\.java$
+        pass_filenames: false
+      - id: spotless-java-quarkus-native
+        name: spotless java-quarkus-native (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/java-quarkus-native && mvn spotless:check -q'
+        language: system
+        files: ^services/java-quarkus-native/.*\.java$
+        pass_filenames: false
+
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.6

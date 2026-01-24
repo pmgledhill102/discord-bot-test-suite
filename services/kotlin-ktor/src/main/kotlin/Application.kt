@@ -54,12 +54,13 @@ private val publisher: Publisher? by lazy {
 
             // Configure for emulator if specified
             if (emulatorHost.isNotEmpty()) {
-                val channel = ManagedChannelBuilder.forTarget(emulatorHost)
-                    .usePlaintext()
-                    .build()
+                val channel =
+                    ManagedChannelBuilder.forTarget(emulatorHost)
+                        .usePlaintext()
+                        .build()
 
                 builder.setChannelProvider(
-                    FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel))
+                    FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel)),
                 )
                 builder.setCredentialsProvider(NoCredentialsProvider.create())
 
@@ -154,30 +155,31 @@ private suspend fun handleInteraction(call: ApplicationCall) {
 
     // Get interaction type
     val typeElement = interaction["type"]
-    val type = when {
-        typeElement == null -> {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "missing type field"))
-            return
-        }
-        typeElement is JsonNull -> {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "invalid type"))
-            return
-        }
-        typeElement is JsonPrimitive && typeElement.isString -> {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "invalid type"))
-            return
-        }
-        typeElement is JsonPrimitive -> {
-            typeElement.intOrNull ?: run {
+    val type =
+        when {
+            typeElement == null -> {
+                call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "missing type field"))
+                return
+            }
+            typeElement is JsonNull -> {
+                call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "invalid type"))
+                return
+            }
+            typeElement is JsonPrimitive && typeElement.isString -> {
+                call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "invalid type"))
+                return
+            }
+            typeElement is JsonPrimitive -> {
+                typeElement.intOrNull ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "invalid type"))
+                    return
+                }
+            }
+            else -> {
                 call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "invalid type"))
                 return
             }
         }
-        else -> {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(error = "invalid type"))
-            return
-        }
-    }
 
     // Handle by type
     when (type) {
@@ -193,16 +195,20 @@ private suspend fun handleInteraction(call: ApplicationCall) {
     }
 }
 
-private fun validateSignature(call: ApplicationCall, body: String): Boolean {
+private fun validateSignature(
+    call: ApplicationCall,
+    body: String,
+): Boolean {
     val signature = call.request.header("X-Signature-Ed25519") ?: return false
     val timestamp = call.request.header("X-Signature-Timestamp") ?: return false
 
     // Decode signature
-    val sigBytes = try {
-        signature.hexToByteArray()
-    } catch (e: Exception) {
-        return false
-    }
+    val sigBytes =
+        try {
+            signature.hexToByteArray()
+        } catch (e: Exception) {
+            return false
+        }
 
     // Check timestamp (must be within 5 seconds)
     val ts = timestamp.toLongOrNull() ?: return false
@@ -230,7 +236,10 @@ private suspend fun handlePing(call: ApplicationCall) {
     call.respond(InteractionResponse(type = RESPONSE_TYPE_PONG))
 }
 
-private suspend fun handleApplicationCommand(call: ApplicationCall, interaction: JsonObject) {
+private suspend fun handleApplicationCommand(
+    call: ApplicationCall,
+    interaction: JsonObject,
+) {
     // Publish to Pub/Sub in background (if configured)
     publisher?.let { pub ->
         call.application.launch(Dispatchers.IO) {
@@ -242,16 +251,20 @@ private suspend fun handleApplicationCommand(call: ApplicationCall, interaction:
     call.respond(InteractionResponse(type = RESPONSE_TYPE_DEFERRED_CHANNEL_MESSAGE))
 }
 
-private fun publishToPubSub(publisher: Publisher, interaction: JsonObject) {
+private fun publishToPubSub(
+    publisher: Publisher,
+    interaction: JsonObject,
+) {
     try {
         // Create sanitized copy (remove token field)
-        val sanitized = buildJsonObject {
-            interaction.forEach { (key, value) ->
-                if (key != "token") {
-                    put(key, value)
+        val sanitized =
+            buildJsonObject {
+                interaction.forEach { (key, value) ->
+                    if (key != "token") {
+                        put(key, value)
+                    }
                 }
             }
-        }
 
         val data = json.encodeToString(sanitized)
 
@@ -269,10 +282,11 @@ private fun publishToPubSub(publisher: Publisher, interaction: JsonObject) {
             attributes["command_name"] = it
         }
 
-        val message = PubsubMessage.newBuilder()
-            .setData(ByteString.copyFromUtf8(data))
-            .putAllAttributes(attributes)
-            .build()
+        val message =
+            PubsubMessage.newBuilder()
+                .setData(ByteString.copyFromUtf8(data))
+                .putAllAttributes(attributes)
+                .build()
 
         val future: ApiFuture<String> = publisher.publish(message)
         future.get() // Wait for publish to complete

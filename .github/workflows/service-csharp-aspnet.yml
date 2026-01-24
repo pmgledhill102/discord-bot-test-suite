@@ -48,6 +48,10 @@ jobs:
         working-directory: services/csharp-aspnet
         run: dotnet restore
 
+      - name: Check code formatting
+        working-directory: services/csharp-aspnet
+        run: dotnet format whitespace --verify-no-changes
+
       - name: Build (check for compilation errors)
         working-directory: services/csharp-aspnet
         run: dotnet build --no-restore -warnaserror

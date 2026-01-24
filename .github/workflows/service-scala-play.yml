@@ -51,9 +51,11 @@ jobs:
 
       - name: Check Scala formatting
         working-directory: services/scala-play
-        run: |
-          # Compile to check for errors (scalafmt would be added separately)
-          sbt compile
+        run: sbt scalafmtCheckAll
+
+      - name: Compile
+        working-directory: services/scala-play
+        run: sbt compile
 
   build:
     name: Build Service

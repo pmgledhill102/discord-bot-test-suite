@@ -20,8 +20,7 @@ class SignatureService @Inject() (config: Configuration) extends Logging:
       }.toOption
     }
 
-  if publicKey.isEmpty then
-    logger.error("DISCORD_PUBLIC_KEY environment variable is required")
+  if publicKey.isEmpty then logger.error("DISCORD_PUBLIC_KEY environment variable is required")
 
   /** Validate Discord Ed25519 signature.
     *
@@ -35,9 +34,9 @@ class SignatureService @Inject() (config: Configuration) extends Logging:
     *   true if signature is valid, false otherwise
     */
   def validateSignature(
-      signatureHex: String,
-      timestamp: String,
-      body: String
+    signatureHex: String,
+    timestamp: String,
+    body: String
   ): Boolean =
     publicKey match
       case None => false
@@ -55,10 +54,10 @@ class SignatureService @Inject() (config: Configuration) extends Logging:
           else verifySignature(key, signatureHex, timestamp, body)
 
   private def verifySignature(
-      key: Ed25519PublicKeyParameters,
-      signatureHex: String,
-      timestamp: String,
-      body: String
+    key: Ed25519PublicKeyParameters,
+    signatureHex: String,
+    timestamp: String,
+    body: String
   ): Boolean =
     Try {
       val signatureBytes = hexToBytes(signatureHex)

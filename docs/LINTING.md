@@ -34,6 +34,13 @@ HUMAN_HERE=1 pre-commit run --all-files
 | eslint (TypeScript) | TypeScript linter | Requires npm install     |
 | eslint (Node.js)    | JavaScript linter | Requires npm install     |
 | clang-format        | C++ formatter     | Requires clang installed |
+| rustfmt             | Rust formatter    | Requires Rust toolchain  |
+| clippy              | Rust linter       | Slower, requires Rust    |
+| pint                | PHP formatter     | Requires composer        |
+| dotnet format       | C# formatter      | Requires .NET SDK        |
+| ktlint              | Kotlin linter     | Requires Gradle          |
+| scalafmt            | Scala formatter   | Requires sbt             |
+| spotless            | Java formatter    | Requires Maven           |
 
 ### Checks that always run
 
@@ -109,6 +116,50 @@ pre-commit run --all-files
 - **Static analysis config**: `services/cpp-drogon/.clang-tidy` (for future use)
 - **CI**: `clang-format --dry-run --Werror` <!-- cspell:disable-line -->
 - **Pre-commit**: Local hook with HUMAN_HERE wrapper
+
+### Rust (rust-actix)
+
+- **Tool**: rustfmt (formatting), clippy (linting)
+- **Config**: Default Rust toolchain settings
+- **CI**: `cargo fmt --check` and `cargo clippy -- -D warnings`
+- **Pre-commit**: Local hooks with HUMAN_HERE wrapper
+
+### PHP (php-laravel)
+
+- **Tool**: Laravel Pint
+- **Config**: Default Pint settings (Laravel preset)
+- **CI**: `vendor/bin/pint --test`
+- **Pre-commit**: Local hook with HUMAN_HERE wrapper
+
+### C# (csharp-aspnet, csharp-aspnet-native)
+
+- **Tool**: dotnet format whitespace
+- **Config**: Default .NET formatting settings
+- **CI**: `dotnet format whitespace --verify-no-changes`
+- **Pre-commit**: Local hooks with HUMAN_HERE wrapper
+- **Note**: Uses `whitespace` subcommand to avoid false positives from analyzer warnings (e.g., AOT IL2026/IL3050)
+
+### Kotlin (kotlin-ktor)
+
+- **Tool**: ktlint (via Gradle plugin)
+- **Config**: `gradle/libs.versions.toml` version catalog
+- **CI**: `gradle ktlintCheck --no-daemon`
+- **Pre-commit**: Local hook with HUMAN_HERE wrapper
+
+### Scala (scala-play)
+
+- **Tool**: scalafmt (via sbt plugin)
+- **Config**: `services/scala-play/.scalafmt.conf`
+- **CI**: `sbt scalafmtCheckAll`
+- **Pre-commit**: Local hook with HUMAN_HERE wrapper
+
+### Java (6 services)
+
+- **Services**: java-spring4, java-spring3, java-spring2, java-micronaut, java-quarkus, java-quarkus-native
+- **Tool**: Spotless (via Maven plugin) with Google Java Format
+- **Config**: `pom.xml` in each service directory
+- **CI**: `mvn spotless:check -q`
+- **Pre-commit**: Local hooks with HUMAN_HERE wrapper
 
 ### Shell Scripts
 
@@ -220,6 +271,13 @@ Use **whole-directory** (`pass_filenames: false`) when:
 | rubocop          | Incremental     | Ruby linting works per-file                   |
 | golangci-lint    | Whole-directory | Go needs package context for type checking    |
 | eslint (node/ts) | Whole-directory | Only 1 source file, no benefit to incremental |
+| rustfmt          | Whole-directory | Cargo needs project context                   |
+| clippy           | Whole-directory | Cargo needs project context                   |
+| pint             | Whole-directory | Requires composer autoload                    |
+| dotnet format    | Whole-directory | Requires .NET project context                 |
+| ktlint           | Whole-directory | Gradle plugin needs project context           |
+| scalafmt         | Whole-directory | sbt plugin needs project context              |
+| spotless         | Whole-directory | Maven plugin needs project context            |
 
 ### HUMAN_HERE Hook Templates
 
