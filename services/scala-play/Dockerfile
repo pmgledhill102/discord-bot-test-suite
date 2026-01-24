@@ -1,5 +1,5 @@
 # Scala/Play Discord webhook service
-# Multi-stage build for smaller final image
+# Multi-stage build with distroless runtime
 
 # Build stage
 FROM eclipse-temurin:21-jdk AS builder
@@ -23,22 +23,22 @@ RUN sbt update
 COPY app ./app
 COPY conf ./conf
 
-# Build the application
-RUN sbt stage
+# Build fat JAR using sbt-assembly (works with distroless - no shell needed)
+RUN sbt assembly
 
-# Runtime stage
-FROM eclipse-temurin:21-jre-alpine
-
-# Install ca-certificates and bash (required by Play startup script)
-RUN apk add --no-cache ca-certificates bash
+# Runtime stage - optimized distroless image
+FROM gcr.io/distroless/java21-debian12
 
 WORKDIR /app
 
-# Copy the staged application
-COPY --from=builder /app/target/universal/stage /app
+# Copy the fat JAR
+COPY --from=builder /app/target/scala-3.3.7/discord-webhook-service-assembly-1.0.0.jar app.jar
+
+# Environment variable for memory optimization
+ENV MALLOC_ARENA_MAX=2
 
 # Expose port
 EXPOSE 8080
 
-# Run the server
-ENTRYPOINT ["/app/bin/discord-webhook-service", "-Dplay.server.http.address=0.0.0.0"]
+# Run the application
+ENTRYPOINT ["java", "-Dplay.server.http.address=0.0.0.0", "-jar", "app.jar"]

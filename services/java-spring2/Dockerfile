@@ -12,17 +12,16 @@ COPY src ./src
 # Download dependencies and build
 RUN mvn package -DskipTests -q
 
-# Runtime stage
-FROM eclipse-temurin:17-jre
+# Runtime stage - optimized distroless image
+FROM gcr.io/distroless/java17-debian12
 
 WORKDIR /app
 
 # Copy the built JAR
 COPY --from=builder /app/target/*.jar app.jar
 
-# Run as non-root user
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-USER appuser
+# Environment variable for memory optimization
+ENV MALLOC_ARENA_MAX=2
 
 # Expose port
 EXPOSE 8080
