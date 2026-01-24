@@ -2,22 +2,43 @@
 
 ## Quick Reference for Multi-Repository Restructuring
 
----
-
-## The Question
-
-**Should we split this monorepo into multiple repositories as we scale from 1 service type to 5-6 service types?**
+**Revision 2:** Delegated Agent Pattern
 
 ---
 
-## The Answer
+## The Core Design
 
-**Yes, with caveats.**
-
-Multi-repository is the right choice for this scale (100+ implementations), but the approach requires:
-1. Strong contract discipline
-2. Investment in automation
-3. Phased migration with validation at each step
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        PERF MANAGER                              │
+│                                                                  │
+│  • Discovers agents from GCS registry                           │
+│  • Invokes agents via standard API                              │
+│  • Aggregates results, generates reports                        │
+│  • Knows NOTHING about Discord, gRPC, REST, etc.                │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                   Standard Agent API
+                   (protocol-agnostic)
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+        ▼                     ▼                     ▼
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+│    DISCORD    │     │   REST CRUD   │     │     gRPC      │
+│  PERF AGENT   │     │  PERF AGENT   │     │  PERF AGENT   │
+│               │     │               │     │               │
+│ Knows Ed25519 │     │ Knows SQL     │     │ Knows Protobuf│
+│ Knows Discord │     │ Knows REST    │     │ Knows gRPC    │
+│               │     │               │     │               │
+│ Lives in      │     │ Lives in      │     │ Lives in      │
+│ service repo  │     │ service repo  │     │ service repo  │
+└───────────────┘     └───────────────┘     └───────────────┘
+        │                     │                     │
+        ▼                     ▼                     ▼
+   19 services           19 services           19 services
+```
 
 ---
 
@@ -27,127 +48,182 @@ Multi-repository is the right choice for this scale (100+ implementations), but 
 |---------------|--------------|
 | 1 service type | 5-6 service types |
 | 19 implementations | ~100-120 implementations |
-| 24 CI workflows | Would need ~120+ in monorepo |
 | 1 repository | 7 repositories |
+| Benchmark tool knows Discord | Perf Manager knows nothing service-specific |
 
 ---
 
-## Repository Structure Summary
+## 7 Key Decisions
+
+| # | Decision | Rationale |
+|---|----------|-----------|
+| 1 | **Multi-repository** | Scalability at 100+ services |
+| 2 | **Delegated Agent pattern** | No service-specific code in Manager |
+| 3 | **GCS-based registry** | Pluggable, no Manager changes for new types |
+| 4 | **Service account auth** | Native GCP, no secrets to manage |
+| 5 | **Manifest schema validation** | Catch errors early in CI |
+| 6 | **Always-deployed Agents** | Only 5-6 agents, immediate availability |
+| 7 | **Pre-deployed services (scaled to zero)** | Zero idle cost, true cold starts |
+
+---
+
+## Discovery Flow
 
 ```
-cloudrun-perf-manager/          ← Orchestration, benchmarking, contracts
-cloudrun-service-discord/       ← 19 Discord webhook implementations
-cloudrun-service-rest-crud/     ← 19 REST CRUD implementations
-cloudrun-service-grpc-unary/    ← 19 gRPC implementations
-cloudrun-service-queue-worker/  ← 19 Pub/Sub worker implementations
-cloudrun-service-websocket/     ← 19 WebSocket implementations
-cloudrun-service-graphql/       ← 19 GraphQL implementations
+                                    ┌─────────────────────────┐
+                                    │   GCS Bucket            │
+                                    │   perf-agent-registry   │
+                                    │                         │
+Service Repo CI                     │   agents/               │
+deploys Agent   ──────────────────► │   ├── discord.yaml     │
+uploads manifest                    │   ├── rest-crud.yaml   │
+                                    │   └── grpc.yaml        │
+                                    └───────────┬─────────────┘
+                                                │
+                                    Perf Manager reads
+                                    discovers endpoints
+                                                │
+                                                ▼
+                                    ┌─────────────────────────┐
+                                    │   Invokes each Agent    │
+                                    │   via standard API      │
+                                    └─────────────────────────┘
 ```
 
----
-
-## 5 Key Decisions Made
-
-### 1. Multi-Repo over Monorepo
-**Why:** Cognitive load, CI complexity, and independent release cycles justify the split at this scale.
-
-### 2. Contract-First Design
-**Why:** The Performance Test Manager defines contracts; service repos implement them. This decouples changes.
-
-### 3. Standard Service Repository Structure
-**Why:** Predictable `manifest.yaml` + `implementations/` structure enables automation and tooling.
-
-### 4. Semantic Versioning for Contracts
-**Why:** Allows services to upgrade on their own timeline with clear compatibility windows.
-
-### 5. Centralized Results Storage
-**Why:** Single source of truth enables cross-service-type comparisons and trend analysis.
+**Adding a new service type:**
+1. Create service repository with Agent
+2. Deploy Agent to Cloud Run
+3. Upload manifest YAML to GCS
+4. Done - no Perf Manager changes needed!
 
 ---
 
-## Honest Assessment
+## Agent Hosting Analysis
 
-### This approach IS good for:
-- Scaling to many service types
-- Independent team ownership
-- Focused CI pipelines
-- Clean versioning
+### The Scale-to-Zero Challenge
 
-### This approach is NOT good for:
-- Solo developer wanting quick iteration
-- Frequent cross-cutting changes
-- Simple projects that won't grow
+Cloud Run services take ~15 minutes to scale to zero after deployment. Cold start benchmarks require services at zero.
 
-### The hardest part will be:
-- **Contract evolution** - Coordinating changes across repos
-- **Initial migration** - Moving from monorepo without disruption
-- **Duplication** - Keeping CI/CD patterns consistent
+### Solution
 
----
+| Component | Strategy | Why |
+|-----------|----------|-----|
+| **Perf Agents** (5-6) | Always deployed | Few in number, need immediate availability |
+| **Services under test** (100+) | Deployed via CI, scaled to zero | Zero idle cost, already at zero when benchmark runs |
+| **Perf Manager** | Cloud Run Job | Triggered on schedule, no idle cost |
 
-## Migration Recommendation
+### Cost Impact
 
-**Don't create all 7 repos at once.**
-
-1. **First:** Create Manager + migrate Discord services (2 repos)
-2. **Validate:** Run benchmarks, confirm workflow works
-3. **Then:** Add one new service type
-4. **Repeat:** Add remaining types incrementally
-
-This validates the pattern before full commitment.
+| Component | Idle Cost |
+|-----------|-----------|
+| 6 Perf Agents | ~$30-60/month |
+| 114 Services (at zero) | $0/month |
+| Per benchmark run | ~$5-15 |
 
 ---
 
-## Performance Test Manager: Core Capabilities
+## Standard Agent Interface
 
-| Capability | Description |
-|------------|-------------|
-| **Discover** | Find services from configured Git repositories |
-| **Build** | Build container images from Dockerfiles |
-| **Deploy** | Deploy to Cloud Run with configurable profiles |
-| **Validate** | Run contract tests against deployed services |
-| **Benchmark** | Measure cold start, warm requests, scale-to-zero |
-| **Report** | Generate Markdown/JSON reports with comparisons |
-| **Clean** | Remove deployed resources |
+**Request (Manager → Agent):**
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "implementations": ["go-gin", "rust-actix"],
+  "config": {
+    "cold_start_iterations": 10,
+    "warm_request_count": 100
+  }
+}
+```
+
+**Response (Agent → Manager):**
+```json
+{
+  "service_type": "discord-webhook",
+  "results": [
+    {
+      "implementation": "go-gin",
+      "status": "success",
+      "cold_start": { "p50_ms": 145, "p99_ms": 220 },
+      "warm_requests": { "p50_ms": 3, "throughput_rps": 238 }
+    }
+  ]
+}
+```
+
+The Manager doesn't know or care what "discord-webhook" means internally.
+
+---
+
+## Repository Structure
+
+```
+cloudrun-perf-manager/              ← Orchestration only
+├── internal/
+│   ├── discovery/                  # Read GCS registry
+│   ├── orchestrator/               # Invoke agents
+│   └── reporter/                   # Generate reports
+└── schemas/                        # Manifest validation
+
+cloudrun-service-discord/           ← Discord services + Agent
+├── agent/                          # THE PERF AGENT
+│   ├── internal/
+│   │   └── signing/                # Ed25519 (service-specific)
+│   └── manifest.yaml               # Registration
+├── implementations/
+│   ├── go-gin/
+│   └── ... (18 more)
+└── contract/
+
+cloudrun-service-rest-crud/         ← REST services + Agent
+cloudrun-service-grpc-unary/        ← gRPC services + Agent
+...
+```
 
 ---
 
 ## What We Gain
 
-1. **Manageable complexity** at scale
-2. **Independent releases** for each service type
-3. **Focused testing** per repository
-4. **Clear ownership** boundaries
-5. **Reusable contracts** as formal specifications
+1. **Zero Manager changes** for new service types
+2. **Clean separation** - no leaky abstractions
+3. **Service-specific logic** co-located with services
+4. **Pluggable architecture** via GCS registry
+5. **Cost efficiency** at scale (zero idle for 100+ services)
 
-## What We Lose
+## What Requires Care
 
-1. **Atomic cross-repo changes** (need coordination)
-2. **Single-clone simplicity** (multiple repos to manage)
-3. **Some duplication** in CI/CD patterns
-
----
-
-## Next Steps (If Proceeding)
-
-1. [ ] Review and approve this architecture
-2. [ ] Create `cloudrun-perf-manager` repository
-3. [ ] Define Discord webhook contract formally (OpenAPI)
-4. [ ] Migrate current services to `cloudrun-service-discord`
-5. [ ] Validate end-to-end workflow
-6. [ ] Document contributor workflow
-7. [ ] Plan next service type
+1. **Agent interface stability** - schema validation helps
+2. **Cross-repo coordination** for interface changes
+3. **Manifest correctness** - validated in CI
 
 ---
 
-## Open Questions for Discussion
+## Migration Path
 
-1. **Naming convention** - Is `cloudrun-service-{type}` the right pattern?
-2. **Organization** - Single GitHub org or multiple?
-3. **Shared code** - Library repo for common utilities across implementations?
-4. **Feature parity** - Must all 19 implementations exist for every service type?
-5. **Automation** - Centralized CI/CD templates or per-repo?
+1. **Phase 1:** Create Perf Manager + GCS registry
+2. **Phase 2:** Migrate Discord services + create Discord Agent
+3. **Phase 3:** Validate end-to-end
+4. **Phase 4:** Add new service types incrementally
+5. **Phase 5:** Archive monorepo
 
 ---
 
-*Full details in [MULTI-REPO-PROPOSAL.md](./MULTI-REPO-PROPOSAL.md)*
+## Open Questions
+
+1. **Shared utilities** - Common library for Agent implementations?
+2. **Feature parity** - Must all 19 implementations exist for every type?
+3. **Warm detection** - Best way to verify service is truly at zero?
+
+---
+
+## Documents
+
+| Document | Purpose |
+|----------|---------|
+| [MULTI-REPO-PROPOSAL.md](./MULTI-REPO-PROPOSAL.md) | Full architecture + ADRs |
+| [PERF-MANAGER-SPEC.md](./PERF-MANAGER-SPEC.md) | Manager specification |
+| [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md) | Agent specification |
+
+---
+
+*Last updated: 2026-01-24 (Revision 2 - Delegated Agent Pattern)*

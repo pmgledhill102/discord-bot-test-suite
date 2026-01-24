@@ -2,9 +2,10 @@
 
 ## Performance Test Suite Restructuring
 
-**Status:** Draft
+**Status:** Draft (Revised)
 **Author:** Architecture Review
 **Date:** 2026-01-24
+**Revision:** 2 - Agent-based architecture
 
 ---
 
@@ -14,8 +15,8 @@
 2. [Current State Analysis](#current-state-analysis)
 3. [Proposed Architecture](#proposed-architecture)
 4. [Architectural Decision Records](#architectural-decision-records)
-5. [Critical Analysis: Is This the Right Approach?](#critical-analysis-is-this-the-right-approach)
-6. [Performance Test Manager Specification](#performance-test-manager-specification)
+5. [Agent Hosting: Options and Trade-offs](#agent-hosting-options-and-trade-offs)
+6. [Critical Analysis: Is This the Right Approach?](#critical-analysis-is-this-the-right-approach)
 7. [Migration Strategy](#migration-strategy)
 8. [Risk Assessment](#risk-assessment)
 
@@ -23,12 +24,17 @@
 
 ## Executive Summary
 
-This document proposes restructuring the current monolithic Cloud Run benchmarking repository into a multi-repository architecture consisting of:
+This document proposes restructuring the current monolithic Cloud Run benchmarking repository into a multi-repository architecture with a **delegated agent pattern**:
 
-- **1 Performance Test Manager repository** - Orchestration, benchmarking, and reporting
-- **5-6 Service Type repositories** - Each containing ~20 language/framework implementations
+- **1 Perf Manager repository** - Generic orchestration, result aggregation, and reporting
+- **5-6 Service Type repositories** - Each containing ~20 language/framework implementations **plus a Perf Agent**
 
-The goal is to scale from 1 service type (Discord webhook) to 5-6 service types while maintaining testability, enabling independent evolution, and reducing coupling between the test harness and service implementations.
+**Key architectural principle:** The Perf Manager has no knowledge of service-type-specific testing. It discovers Perf Agents via a GCS registry, invokes them through a standard interface, and collects standardized results. All service-specific testing logic lives in the Perf Agent within each service repository.
+
+This enables:
+- Adding new service types without any Perf Manager code changes
+- Co-location of test logic with the services being tested
+- Clean separation of orchestration from execution
 
 ---
 
@@ -45,7 +51,7 @@ discord-bot-test-suite/
 │   └── ... (16 more)
 ├── tests/
 │   ├── contract/               # Go-based black-box tests
-│   └── cloudrun/               # Benchmark CLI tool
+│   └── cloudrun/               # Benchmark CLI tool (knows about Discord)
 ├── terraform/                  # GCP infrastructure
 ├── scripts/                    # Build and benchmark scripts
 └── .github/workflows/          # 24 CI/CD pipelines
@@ -61,95 +67,154 @@ discord-bot-test-suite/
 | CI/CD workflows | 24 |
 | Service types | 1 (Discord webhook) |
 
-### Current Strengths
+### Current Limitations for Scaling
 
-1. **Single source of truth** - Contract tests, services, and infrastructure co-located
-2. **Atomic changes** - Contract changes and service updates can be committed together
-3. **Unified CI/CD** - All workflows in one place, consistent patterns
-4. **Easy local development** - Clone once, test everything
-
-### Current Limitations
-
-1. **Scaling burden** - Adding 4-5 more service types would mean:
-   - 19 implementations × 5 types = ~95 service directories
-   - ~95+ CI/CD workflows in a single repository
-   - Unmanageable complexity
-2. **Tight coupling** - Benchmark tool changes affect all services
-3. **Monolithic releases** - No independent versioning of components
-4. **Long CI times** - Any change triggers extensive validation
+1. **Benchmark tool knows service specifics** - The CLI contains Discord-specific signature generation, payload structures, and validation logic
+2. **Scaling means leaky abstractions** - Adding gRPC, GraphQL, etc. would require the benchmark tool to understand each protocol
+3. **100+ always-deployed services** - Current "keep deployed" model doesn't scale economically
+4. **Monolithic coupling** - Changes to any service type's testing require benchmark tool releases
 
 ---
 
 ## Proposed Architecture
 
+### High-Level Design: Delegated Agent Pattern
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         PERF MANAGER                                 │
+│                                                                      │
+│  Responsibilities:                                                   │
+│  • Discover Perf Agents from GCS registry                           │
+│  • Invoke Agents via standard interface                             │
+│  • Aggregate results from all Agents                                │
+│  • Store results, generate reports, compare baselines               │
+│                                                                      │
+│  Does NOT know:                                                      │
+│  • How to test Discord webhooks                                     │
+│  • How to test gRPC services                                        │
+│  • Any service-specific protocols or payloads                       │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │   STANDARD AGENT API      │
+                    │   (protocol-agnostic)     │
+                    │                           │
+                    │   Input: which impls,     │
+                    │          iterations,      │
+                    │          profile          │
+                    │                           │
+                    │   Output: cold_start_ms,  │
+                    │           warm_req_ms,    │
+                    │           throughput,     │
+                    │           compliance      │
+                    └─────────────┬─────────────┘
+                                  │
+        ┌─────────────────────────┼─────────────────────────┐
+        │                         │                         │
+        ▼                         ▼                         ▼
+┌───────────────┐         ┌───────────────┐         ┌───────────────┐
+│    DISCORD    │         │   REST CRUD   │         │     gRPC      │
+│  PERF AGENT   │         │  PERF AGENT   │         │  PERF AGENT   │
+│               │         │               │         │               │
+│ Knows:        │         │ Knows:        │         │ Knows:        │
+│ • Ed25519     │         │ • REST verbs  │         │ • Protobuf    │
+│ • Signatures  │         │ • CRUD ops    │         │ • gRPC calls  │
+│ • Discord API │         │ • SQL setup   │         │ • Streaming   │
+│               │         │               │         │               │
+│ Lives in:     │         │ Lives in:     │         │ Lives in:     │
+│ service repo  │         │ service repo  │         │ service repo  │
+└───────┬───────┘         └───────┬───────┘         └───────┬───────┘
+        │                         │                         │
+        ▼                         ▼                         ▼
+┌───────────────┐         ┌───────────────┐         ┌───────────────┐
+│  go-gin       │         │  go-gin       │         │  go-gin       │
+│  rust-actix   │         │  rust-actix   │         │  rust-actix   │
+│  python-flask │         │  python-flask │         │  python-flask │
+│  ... (19)     │         │  ... (19)     │         │  ... (19)     │
+└───────────────┘         └───────────────┘         └───────────────┘
+```
+
 ### Repository Structure
 
 ```
 Organizations/Repositories:
-├── cloudrun-perf-manager/           # Performance Test Manager (orchestration)
-│   ├── cmd/                         # CLI entrypoints
-│   ├── internal/                    # Core benchmark logic
-│   ├── contracts/                   # JSON Schema / OpenAPI definitions
-│   ├── terraform/                   # Shared infrastructure
-│   └── docs/                        # Specifications
-│
-├── cloudrun-service-discord/        # Discord webhook service implementations
+
+cloudrun-perf-manager/               # Central orchestrator
+├── cmd/perf-manager/                # CLI entrypoint
+├── internal/
+│   ├── discovery/                   # GCS registry reader
+│   ├── orchestrator/                # Agent invocation
+│   ├── results/                     # Aggregation & storage
+│   └── reporting/                   # Report generation
+├── schemas/
+│   ├── agent-manifest.schema.json   # Manifest validation schema
+│   └── results.schema.json          # Results format schema
+├── terraform/                       # Shared infrastructure
+└── docs/
+
+cloudrun-service-discord/            # Discord service type
+├── agent/                           # THE PERF AGENT
+│   ├── Dockerfile
+│   ├── main.go
+│   ├── internal/
+│   │   ├── signing/                 # Ed25519 signature generation
+│   │   ├── payloads/                # Discord-specific payloads
+│   │   ├── validation/              # Contract test logic
+│   │   └── benchmark/               # Cold start measurement
+│   └── manifest.yaml                # Agent registration manifest
+├── implementations/
 │   ├── go-gin/
 │   ├── rust-actix/
 │   └── ... (17 more)
-│
-├── cloudrun-service-rest-crud/      # REST CRUD API implementations
-│   ├── go-gin/
-│   └── ...
-│
-├── cloudrun-service-grpc-unary/     # gRPC unary call implementations
-│   ├── go-gin/
-│   └── ...
-│
-├── cloudrun-service-queue-worker/   # Pub/Sub queue worker implementations
-│   ├── go-gin/
-│   └── ...
-│
-├── cloudrun-service-websocket/      # WebSocket service implementations
-│   ├── go-gin/
-│   └── ...
-│
-└── cloudrun-service-graphql/        # GraphQL API implementations
-    ├── go-gin/
-    └── ...
+├── contract/
+│   ├── openapi.yaml                 # Discord webhook contract
+│   └── test-vectors/
+└── README.md
+
+cloudrun-service-rest-crud/          # REST CRUD service type
+├── agent/                           # Different Perf Agent
+│   └── ...                          # Knows REST/SQL, not Discord
+├── implementations/
+└── contract/
+
+# ... similar structure for other service types
 ```
 
-### Conceptual Relationships
+### Discovery: GCS-Based Agent Registry
+
+The Perf Manager discovers available Agents by reading manifests from a GCS bucket:
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Performance Test Manager                          │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐   │
-│  │ Orchestrator│ │  Deployer   │ │ Benchmarker │ │  Reporter   │   │
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘   │
-│                              │                                       │
-│                    ┌─────────┴─────────┐                            │
-│                    │  SERVICE CONTRACT │                            │
-│                    │  (JSON Schema)    │                            │
-│                    └─────────┬─────────┘                            │
-└─────────────────────────────────────────────────────────────────────┘
-                              │
-         ┌────────────────────┼────────────────────┐
-         │                    │                    │
-         ▼                    ▼                    ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ Discord Service │ │  REST CRUD Svc  │ │   gRPC Service  │
-│   Repository    │ │   Repository    │ │   Repository    │
-│ ┌─────────────┐ │ │ ┌─────────────┐ │ │ ┌─────────────┐ │
-│ │  go-gin     │ │ │ │  go-gin     │ │ │ │  go-gin     │ │
-│ │  rust-actix │ │ │ │  rust-actix │ │ │ │  rust-actix │ │
-│ │  python-... │ │ │ │  python-... │ │ │ │  python-... │ │
-│ │  (19 total) │ │ │ │  (19 total) │ │ │ │  (19 total) │ │
-│ └─────────────┘ │ │ └─────────────┘ │ │ └─────────────┘ │
-│  contract.json  │ │  contract.json  │ │  contract.json  │
-│  (implements)   │ │  (implements)   │ │  (implements)   │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
+gs://perf-agent-registry/
+├── agents/
+│   ├── discord-webhook.yaml         # Deployed by Discord repo CI
+│   ├── rest-crud.yaml               # Deployed by REST CRUD repo CI
+│   ├── grpc-unary.yaml              # Deployed by gRPC repo CI
+│   └── ...
+└── schema/
+    └── manifest.schema.json         # For validation
 ```
+
+**Flow:**
+
+1. Service repository CI builds and deploys its Perf Agent
+2. Service repository CI uploads/updates its manifest to GCS
+3. Perf Manager lists `gs://perf-agent-registry/agents/*.yaml`
+4. Perf Manager validates each manifest against schema
+5. Perf Manager invokes each Agent's endpoint
+6. Results flow back through standard interface
+
+**Benefits:**
+
+| Aspect | Benefit |
+|--------|---------|
+| Adding service type | Deploy Agent + upload YAML. No Perf Manager changes. |
+| Removing service type | Delete YAML file. |
+| Disabling temporarily | Set `enabled: false` in manifest. |
+| Versioning | GCS object versioning tracks changes. |
+| Debugging | `gsutil cat gs://perf-agent-registry/agents/*.yaml` |
 
 ---
 
@@ -157,600 +222,543 @@ Organizations/Repositories:
 
 ### ADR-001: Multi-Repository vs Monorepo
 
-**Status:** Proposed
+**Status:** Accepted
+
+**Decision:** Multi-Repository
+
+**Rationale:** At 5-6 service types with 20 implementations each (~100+ services), a monorepo becomes unmanageable. Each service type has distinct concerns that map well to repository boundaries.
+
+*See full analysis in Critical Analysis section.*
+
+---
+
+### ADR-002: Delegated Agent Pattern
+
+**Status:** Accepted
 
 **Context:**
-We need to scale from 1 service type (19 implementations) to 5-6 service types (~100+ implementations). The current monorepo structure will become unmanageable.
+The Perf Manager needs to benchmark multiple service types (Discord, REST, gRPC, etc.). Each has different protocols, payloads, and validation requirements.
 
 **Options Considered:**
 
 | Option | Description |
 |--------|-------------|
-| A. Keep Monorepo | Scale within current structure using directories |
-| B. Multi-Repository | Split into separate repositories per service type |
-| C. Hybrid Monorepo | Use tools like Nx, Turborepo, or Pants for monorepo at scale |
+| A. Manager knows all protocols | Manager contains Discord, gRPC, REST specific code |
+| B. Plugin architecture | Manager loads plugins at runtime |
+| C. Delegated Agents | Each service repo provides its own test executor |
 
-**Analysis:**
-
-| Criteria | Monorepo (A) | Multi-Repo (B) | Hybrid (C) |
-|----------|--------------|----------------|------------|
-| Cognitive load | High (95+ services in one view) | Low (focused repos) | Medium |
-| CI/CD complexity | High (100+ workflows) | Distributed (manageable per repo) | Medium (requires tooling) |
-| Independent releases | Not possible | Yes | Partially |
-| Cross-repo changes | Atomic | Requires coordination | Atomic within, coordinated across |
-| Discoverability | Good (single clone) | Requires documentation | Good |
-| Code reuse | Easy | Requires packaging | Easy |
-| Language diversity | Works | Works | Varies by tool |
-
-**Decision:** Option B - Multi-Repository
+**Decision:** Option C - Delegated Agents
 
 **Rationale:**
-1. **Natural service boundaries** - Each service type has distinct contracts and concerns
-2. **Team scalability** - Different teams can own different service repos
-3. **Focused testing** - Each repo tests only its implementations
-4. **Clean versioning** - Manager and services version independently
-5. **Familiar workflow** - No specialized tooling required
+
+1. **No leaky abstractions** - Perf Manager interface is purely about results, not test mechanics
+2. **Co-location** - Test logic lives with the code it tests
+3. **Independent evolution** - Agents evolve with their service type, no Manager release needed
+4. **Simpler Manager** - Manager is just orchestration + reporting
+5. **Natural ownership** - Service repo owns everything about that service type
 
 **Consequences:**
-- (+) Clear separation of concerns
-- (+) Independent release cycles
-- (+) Smaller, more focused CI pipelines
-- (-) Cross-repository coordination required for contract changes
-- (-) Duplication of CI/CD patterns across repos
-- (-) Need robust contract versioning strategy
+- (+) Adding new service types requires zero Manager changes
+- (+) Each Agent can use the most appropriate tools for its service type
+- (+) Service-specific expertise stays in service repo
+- (-) Duplication of some benchmark infrastructure in each Agent
+- (-) Agents must conform to standard interface
 
 ---
 
-### ADR-002: Contract Definition Format
+### ADR-003: GCS-Based Agent Registry
 
-**Status:** Proposed
-
-**Context:**
-The Performance Test Manager needs a formal contract that services must implement. This contract must be:
-- Language-agnostic
-- Versionable
-- Machine-readable for validation
-- Human-readable for implementers
-
-**Options Considered:**
-
-| Option | Format |
-|--------|--------|
-| A | OpenAPI 3.1 (HTTP APIs) |
-| B | JSON Schema (generic) |
-| C | Protocol Buffers (gRPC) |
-| D | AsyncAPI (event-driven) |
-| E | Custom Markdown specification |
-
-**Decision:** Combination approach by service type
-
-| Service Type | Primary Contract Format |
-|--------------|------------------------|
-| Discord Webhook | OpenAPI 3.1 + JSON Schema |
-| REST CRUD | OpenAPI 3.1 |
-| gRPC Unary | Protocol Buffers |
-| Queue Worker | AsyncAPI 2.6 + JSON Schema |
-| WebSocket | AsyncAPI 2.6 |
-| GraphQL | GraphQL SDL |
-
-**Rationale:**
-- Use the natural contract format for each service type
-- All formats support code generation and validation
-- Semantic versioning applied to contracts
-
-**Consequences:**
-- (+) Idiomatic contracts per service type
-- (+) Tooling ecosystem for each format
-- (-) Multiple contract formats to maintain
-- (-) Requires understanding different specifications
-
----
-
-### ADR-003: Service Repository Structure Convention
-
-**Status:** Proposed
+**Status:** Accepted
 
 **Context:**
-Each service repository will contain ~20 implementations. We need a consistent structure that the Performance Test Manager can rely on.
+The Perf Manager needs to discover which Agents exist and how to invoke them. Options include hardcoded configuration, GitHub API scanning, or external registry.
 
-**Decision:** Standardized structure
+**Decision:** GCS bucket with YAML manifests
 
-```
-cloudrun-service-{type}/
-├── .github/
-│   └── workflows/
-│       └── ci.yml                    # Unified workflow for all implementations
-├── contract/
-│   ├── openapi.yaml                  # Contract definition (format varies by type)
-│   ├── test-vectors/                 # Canonical test cases
-│   │   ├── happy-path.json
-│   │   ├── error-cases.json
-│   │   └── edge-cases.json
-│   └── README.md                     # Contract documentation
-├── implementations/
-│   ├── go-gin/
-│   │   ├── Dockerfile
-│   │   ├── main.go
-│   │   └── README.md
-│   ├── rust-actix/
-│   ├── python-flask/
-│   └── ...
-├── manifest.yaml                     # Service registry for manager
-├── CONTRIBUTING.md
-└── README.md
-```
-
-**manifest.yaml format:**
+**Manifest Schema:**
 ```yaml
+# gs://perf-agent-registry/agents/discord-webhook.yaml
+schema_version: "1.0"
 service_type: discord-webhook
-contract_version: 1.2.0
+enabled: true
+description: "Discord interaction webhook handlers"
+
+agent:
+  endpoint: https://discord-perf-agent-xxxxx-uc.a.run.app
+  type: cloud_run_service  # See ADR-004 for hosting options
+
+  # For on-demand invocation (Cloud Run Job)
+  # job_name: discord-perf-agent-job
+  # type: cloud_run_job
+
+repository:
+  url: https://github.com/org/cloudrun-service-discord
+  ref: main
+
 implementations:
   - name: go-gin
-    path: implementations/go-gin
-    dockerfile: Dockerfile
-    build_args: {}
-    supported_features: [signature-validation, pubsub-publish]
+    status: active
   - name: rust-actix
-    path: implementations/rust-actix
-    dockerfile: Dockerfile
-    supported_features: [signature-validation, pubsub-publish]
+    status: active
+  - name: java-spring3
+    status: disabled  # Temporarily excluded from benchmarks
+  # ...
+
+metadata:
+  owner: platform-team
+  contact: platform@example.com
+  last_updated: 2026-01-24T14:30:00Z
+  version: "1.2.0"
 ```
 
-**Rationale:**
-- Consistent structure enables automation
-- Manifest provides machine-readable registry
-- Test vectors enable contract testing without manager dependency
+**Schema Validation:**
+- JSON Schema defines required fields and formats
+- CI pipelines validate manifests before upload
+- Perf Manager validates on discovery
+- Invalid manifests are logged and skipped (not fatal)
 
-**Consequences:**
-- (+) Predictable structure for tooling
-- (+) Self-contained testing within repo
-- (-) Migration effort from current structure
+**Rationale:**
+- Simple, file-based discovery
+- No database or API server required
+- Self-service: repos manage their own manifests
+- Auditable via GCS versioning
+- Cheap and reliable
 
 ---
 
-### ADR-004: Contract Versioning Strategy
+### ADR-004: Agent Hosting Strategy
 
-**Status:** Proposed
+**Status:** Requires Decision - See detailed analysis below
 
 **Context:**
-Contracts will evolve. We need a strategy that allows:
-- Breaking changes with clear migration paths
-- Backwards compatibility testing
-- Independent evolution of manager and services
+Perf Agents need to be available when the Perf Manager runs. With 100+ services under test, the hosting model significantly impacts cost, complexity, and benchmark accuracy.
 
-**Decision:** Semantic versioning with compatibility windows
+**Key Constraint:** Cloud Run services take ~15 minutes to scale to zero after deployment. Cold start benchmarks require services to be at zero instances.
 
-**Version Format:** `MAJOR.MINOR.PATCH`
-
-| Change Type | Version Bump | Example |
-|-------------|--------------|---------|
-| Breaking change | MAJOR | Required field added |
-| New optional feature | MINOR | Optional header support |
-| Bug fix/clarification | PATCH | Documentation update |
-
-**Compatibility Policy:**
-- Manager supports `CURRENT` and `CURRENT-1` major versions
-- Services declare minimum supported contract version
-- Deprecation notices 6 months before MAJOR bump
-
-**Contract URL Convention:**
-```
-https://raw.githubusercontent.com/org/cloudrun-perf-manager/main/contracts/v2/discord-webhook.yaml
-```
-
-**Consequences:**
-- (+) Clear upgrade path
-- (+) Time for service repos to catch up
-- (-) Complexity of maintaining multiple versions
-- (-) Testing matrix grows with version support
+*See detailed analysis in next section.*
 
 ---
 
-### ADR-005: Benchmark Result Storage and Comparison
+### ADR-005: Service Account Authentication
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Context:**
-Benchmark results need to be stored, compared over time, and shared across repositories.
+Perf Manager needs to invoke Perf Agents securely.
 
-**Decision:** Centralized results in Performance Test Manager with GCS backend
+**Decision:** GCP Service Account with IAM
 
-**Storage Structure:**
-```
-gs://cloudrun-benchmark-results/
-├── runs/
-│   └── {run-id}/
-│       ├── metadata.json
-│       ├── discord-webhook/
-│       │   └── results.json
-│       ├── rest-crud/
-│       │   └── results.json
-│       └── report.md
-├── baselines/
-│   └── {date}/
-│       └── baseline.json
-└── comparisons/
-    └── {date}/
-        └── comparison.md
+**Implementation:**
+1. Perf Manager runs under a dedicated service account: `perf-manager@project.iam.gserviceaccount.com`
+2. Each Perf Agent grants Cloud Run Invoker role to this service account
+3. No shared secrets, API keys, or tokens
+
+**Terraform example for Agent:**
+```hcl
+resource "google_cloud_run_service_iam_member" "perf_manager_invoker" {
+  service  = google_cloud_run_service.perf_agent.name
+  location = google_cloud_run_service.perf_agent.location
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:perf-manager@${var.project_id}.iam.gserviceaccount.com"
+}
 ```
 
 **Rationale:**
-- Single source of truth for performance data
-- Enables cross-service-type comparisons
-- Historical trend analysis
+- Native GCP authentication
+- No secrets to manage or rotate
+- Auditable via Cloud Audit Logs
+- Principle of least privilege
 
-**Consequences:**
-- (+) Unified reporting
-- (+) Trend analysis possible
-- (-) GCS costs (minimal)
-- (-) Single point of failure for results
+---
+
+### ADR-006: Manifest Schema Validation
+
+**Status:** Accepted
+
+**Context:**
+Agent manifests in GCS need to be valid to ensure reliable discovery and invocation.
+
+**Decision:** JSON Schema validation at multiple points
+
+**Validation Points:**
+
+| Point | When | Action on Failure |
+|-------|------|-------------------|
+| Pre-commit hook | Before commit | Block commit |
+| CI pipeline | On PR/push | Fail build |
+| Pre-upload | Before GCS upload | Fail deployment |
+| Discovery | When Perf Manager reads | Log warning, skip agent |
+
+**Schema Location:**
+- Canonical schema in Perf Manager repo: `schemas/agent-manifest.schema.json`
+- Copied/referenced by service repos for local validation
+
+**Tooling:**
+- `ajv` (Node.js) or `jsonschema` (Python) for CI validation
+- Pre-commit hooks using `check-jsonschema`
+
+---
+
+### ADR-007: Contract Definition Ownership
+
+**Status:** Accepted
+
+**Context:**
+Previously proposed that Perf Manager define contracts. With delegated agents, this changes.
+
+**Decision:** Each service repository owns its contract
+
+**Rationale:**
+- Perf Manager doesn't need to understand contracts - Agents validate compliance
+- Contract evolution is service-type-specific
+- Co-location improves maintainability
+
+**Contract Location:**
+```
+cloudrun-service-discord/
+└── contract/
+    ├── openapi.yaml           # The contract
+    ├── test-vectors/          # Test cases
+    └── README.md              # Documentation
+```
+
+The Agent uses these to validate services. Perf Manager only sees pass/fail compliance scores in results.
+
+---
+
+## Agent Hosting: Options and Trade-offs
+
+This section analyzes hosting strategies for Perf Agents, given the constraint that Cloud Run services take approximately 15 minutes to scale to zero after deployment.
+
+### The Core Challenge
+
+```
+Timeline for cold start measurement:
+
+Deploy Service ──────────────────────────────────► Scale to Zero ────► Measure Cold Start
+     │                                                   │                    │
+     │◄──────────── ~15 minutes ────────────────────────►│                    │
+     │              (minimum wait)                        │                    │
+                                                                               │
+                                                         Actual cold start ◄──┘
+                                                         (what we measure)
+```
+
+For 100+ services, if we deploy on-demand and wait for scale-to-zero each time, the benchmark run becomes extremely long and the orchestration complex.
+
+### Option A: Always-Deployed Agents (Current Pattern)
+
+**Description:** Perf Agents are deployed once and remain running. They're available immediately when the Perf Manager needs them.
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Discord   │     │  REST CRUD  │     │    gRPC     │
+│ Perf Agent  │     │ Perf Agent  │     │ Perf Agent  │
+│  (running)  │     │  (running)  │     │  (running)  │
+└─────────────┘     └─────────────┘     └─────────────┘
+      │                   │                   │
+      └───────────────────┴───────────────────┘
+                          │
+                    Always available
+                    for invocation
+```
+
+**Manifest configuration:**
+```yaml
+agent:
+  type: cloud_run_service
+  endpoint: https://discord-perf-agent-xxxxx-uc.a.run.app
+```
+
+| Aspect | Assessment |
+|--------|------------|
+| **Simplicity** | ✅ Very simple. Call endpoint, get results. |
+| **Latency** | ✅ Immediate response (no deployment wait). |
+| **Cost at 19 services** | ✅ Acceptable (~$20-50/month for idle services). |
+| **Cost at 100+ services** | ❌ Problematic (~$100-300/month for idle services). |
+| **Services under test** | Note: These are the Agents, not the 100+ services being tested. Agents deploy services on-demand. |
+
+**Scaling Analysis:**
+
+With 5-6 Agents (one per service type), always-deployed is reasonable:
+- 6 Cloud Run services with minimum instances
+- Cost: ~$30-60/month idle
+- Complexity: Minimal
+
+**Verdict:** ✅ **Recommended for Agents** (not the services under test)
+
+The Agents themselves are few in number (5-6), not 100+. Each Agent then handles deploying/benchmarking its ~20 implementations.
+
+---
+
+### Option B: On-Demand Agent with Long-Running Job
+
+**Description:** Perf Manager triggers a Cloud Run Job for each Agent. The job runs until all that Agent's benchmarks complete (including 15-min scale-to-zero waits).
+
+```
+Perf Manager
+     │
+     ├──► Invoke Discord Agent Job ──► Deploys 19 services
+     │                                 Waits 15 min
+     │                                 Runs cold start tests
+     │                                 Returns results
+     │                                 (Job runs ~2-3 hours)
+     │
+     ├──► Invoke REST CRUD Agent Job ──► Similar...
+     │
+     └──► ...
+```
+
+**Manifest configuration:**
+```yaml
+agent:
+  type: cloud_run_job
+  job_name: discord-perf-agent-job
+  region: us-central1
+```
+
+| Aspect | Assessment |
+|--------|------------|
+| **Cost** | ✅ Pay only when running. |
+| **Simplicity** | ⚠️ Moderate. Jobs need monitoring. |
+| **Total runtime** | ❌ Very long. Sequential = hours. Parallel = resource contention. |
+| **Job timeout** | ⚠️ Cloud Run Jobs have 1-hour default timeout (max 24h). |
+| **Parallelization** | ⚠️ Can run Agent jobs in parallel, but each Agent still has internal waits. |
+
+**Runtime estimate (sequential Agents):**
+- 6 Agents × (15 min wait + 30 min benchmarks) = ~4.5 hours minimum
+
+**Runtime estimate (parallel Agents):**
+- 45 min per Agent, but resource contention and quota limits may extend this
+
+**Verdict:** ⚠️ **Viable but slow**
+
+---
+
+### Option C: Scheduled Deferred Execution
+
+**Description:** Separate the deployment phase from the measurement phase. Deploy all services, wait for scale-to-zero, then measure.
+
+```
+Phase 1: Deploy (t=0)
+┌─────────────┐
+│ Deploy all  │
+│ 100+ svcs   │──────────────────────────────────────────►
+└─────────────┘
+
+Phase 2: Wait (t=0 to t=15min)
+                    ┌─────────────┐
+                    │ Services    │
+                    │ scale to 0  │
+                    └─────────────┘
+
+Phase 3: Measure (t=15min+)
+                                        ┌─────────────┐
+                                        │ Cold start  │
+                                        │ measurements│
+                                        └─────────────┘
+```
+
+**Implementation approaches:**
+
+**C1: Single long-running job with internal phases**
+```
+Agent Job:
+  1. Deploy all 19 implementations
+  2. Sleep 15 minutes
+  3. Measure cold starts for all 19
+  4. Return results
+```
+
+**C2: Two-phase scheduled execution**
+```
+Perf Manager:
+  1. Invoke Agent "deploy" endpoint
+  2. Schedule measurement for T+20 minutes (Cloud Scheduler)
+  3. Agent "measure" endpoint called at scheduled time
+  4. Results written to GCS
+  5. Perf Manager polls for completion
+```
+
+**C3: Event-driven with Pub/Sub**
+```
+1. Agent deploys services, publishes "ready-for-measurement" event
+2. Cloud Scheduler or delayed Pub/Sub triggers measurement
+3. Agent measures and publishes results
+4. Perf Manager aggregates
+```
+
+| Aspect | C1: Internal phases | C2: Scheduled | C3: Event-driven |
+|--------|---------------------|---------------|------------------|
+| **Complexity** | Low | Medium | High |
+| **Job duration** | Long (includes wait) | Short (split) | Short (split) |
+| **Coordination** | Simple | Scheduler setup | Pub/Sub setup |
+| **Failure handling** | Simple | Need idempotency | Need idempotency |
+| **Observability** | Good | Split across jobs | Split, needs tracing |
+
+**Verdict:** ⚠️ **C1 is simplest if job timeout allows**
+
+---
+
+### Option D: Hybrid - Pre-deployed Services with On-Demand Measurement
+
+**Description:** Keep services deployed (but scaled to zero), only invoke the Agent for measurement.
+
+```
+Services: Always deployed, scaled to zero (no cost when idle)
+Agent: Invoked on-demand, measures cold start, returns results
+```
+
+This is essentially the current model, but with recognition that Cloud Run's scale-to-zero means "deployed" services cost nothing when idle.
+
+**Key insight:** The 15-minute wait is only needed after *deployment* or *last request*. If services are deployed but haven't received traffic for >15 minutes, they're already at zero.
+
+**Workflow:**
+1. Services deployed once (via CI on merge)
+2. Benchmark run starts
+3. Services are already at zero (deployed hours/days ago)
+4. Agent measures cold start immediately
+5. No 15-minute wait needed!
+
+| Aspect | Assessment |
+|--------|------------|
+| **Cost** | ✅ Zero for idle services (Gen2 Cloud Run). |
+| **Cold start accuracy** | ✅ True cold start (services at zero for extended time). |
+| **Complexity** | ✅ Simple orchestration. |
+| **Freshness** | ⚠️ Must redeploy when code changes (handled by CI). |
+
+**Verdict:** ✅ **Recommended approach**
+
+---
+
+### Recommended Strategy
+
+**For Perf Agents (5-6 total):**
+- **Always-deployed Cloud Run services**
+- Minimal cost for a small number of agents
+- Immediate availability
+- Simple invocation
+
+**For Services Under Test (100+ total):**
+- **Deployed via CI, remain deployed, scaled to zero**
+- Cloud Run Gen2 has no minimum instance charge
+- Services naturally at zero between benchmark runs
+- Cold start measurement begins immediately
+
+**For Benchmark Orchestration:**
+- Perf Manager invokes Agent
+- Agent doesn't deploy services (already deployed)
+- Agent calls service endpoint, measures response time
+- If service was recently active (not at zero), Agent waits or flags the measurement
+
+**Scale-to-Zero Detection:**
+```go
+// Agent can check if service is at zero via Cloud Run Admin API
+instances := getActiveInstances(serviceName)
+if instances > 0 {
+    // Service is warm - either wait or skip/flag this measurement
+    log.Warn("Service not at zero, measurement may not reflect cold start")
+}
+```
+
+---
+
+### Cost Analysis
+
+**Always-deployed Agents (recommended):**
+
+| Component | Count | Monthly Cost (idle) |
+|-----------|-------|---------------------|
+| Perf Agents | 6 | ~$30-60 |
+| **Total Agents** | | **~$30-60/month** |
+
+**Services under test (deployed, scaled to zero):**
+
+| Component | Count | Monthly Cost (idle) |
+|-----------|-------|---------------------|
+| Discord implementations | 19 | $0 (at zero) |
+| REST CRUD implementations | 19 | $0 (at zero) |
+| ... (4 more types) | 76 | $0 (at zero) |
+| **Total Services** | ~114 | **$0/month (idle)** |
+
+**Benchmark run cost (when actively testing):**
+- ~114 services × 10 cold starts × ~1 second = ~19 minutes of compute
+- Plus warm request testing
+- Estimated: $5-15 per full benchmark run
+
+---
+
+### Decision Summary
+
+| Component | Hosting Strategy | Rationale |
+|-----------|------------------|-----------|
+| Perf Agents | Always-deployed Cloud Run services | Few in number, need immediate availability |
+| Services under test | Deployed via CI, scaled to zero | Cost-free when idle, true cold starts |
+| Perf Manager | Cloud Run Job (triggered) | Runs periodically, no idle cost |
 
 ---
 
 ## Critical Analysis: Is This the Right Approach?
 
-### Arguments FOR Multi-Repository Split
+### Arguments FOR Delegated Agent + Multi-Repo
 
-#### 1. Scalability
-**Strong argument.** At 5-6 service types with 20 implementations each, a monorepo would contain:
-- 100+ Dockerfiles
-- 100+ CI workflows
-- Thousands of source files
+1. **Clean separation** - Perf Manager truly doesn't know service specifics
+2. **Scalability** - New service types require zero Manager changes
+3. **Ownership** - Service teams own their testing logic
+4. **Flexibility** - Each Agent can use best tools for its domain
 
-This becomes genuinely difficult to navigate and maintain.
+### Arguments AGAINST
 
-#### 2. Independence
-**Moderate argument.** Service implementations can evolve without coordination. A Python/Flask fix doesn't require touching Rust code.
+1. **Duplication** - Some benchmark infrastructure duplicated per Agent
+2. **Coordination** - More moving parts to synchronize
+3. **Complexity** - GCS registry adds indirection
 
-#### 3. Clear Ownership
-**Strong argument for teams.** If different people/teams specialize in different service types, separate repos provide natural boundaries.
+### Mitigation
 
-#### 4. Focused CI/CD
-**Strong argument.** A change to `go-gin` in the Discord repo only triggers Discord-related tests, not all 100+ services.
+- **Duplication:** Shared library/module for common benchmark utilities
+- **Coordination:** Strong contracts, version pinning, CI validation
+- **Complexity:** Comprehensive documentation, proven patterns
 
-### Arguments AGAINST Multi-Repository Split
+### Verdict
 
-#### 1. Cross-Repository Coordination Complexity
-**Significant concern.** Contract changes require:
-1. Update contract in Manager
-2. Update all N service repositories
-3. Coordinate release timing
-
-This is genuinely harder than atomic commits in a monorepo.
-
-**Mitigation:** Strong versioning discipline, compatibility windows, automated contract validation in CI.
-
-#### 2. Duplication of Patterns
-**Moderate concern.** Each service repo will duplicate:
-- CI/CD workflow structure
-- Testing infrastructure patterns
-- Documentation templates
-
-**Mitigation:** Template repository, shared CI actions, documentation generators.
-
-#### 3. Discoverability
-**Moderate concern.** New contributors must understand the multi-repo structure.
-
-**Mitigation:** Strong README documentation, central catalog in Manager repo.
-
-#### 4. Local Development Experience
-**Minor concern.** Developers working across repos need multiple clones.
-
-**Mitigation:** Workspace/dev container configurations, clear setup documentation.
-
-### Alternative Considered: Enhanced Monorepo with Better Tooling
-
-**Could we stay monorepo with better organization?**
-
-```
-discord-bot-test-suite/
-├── manager/                    # Performance Test Manager
-├── services/
-│   ├── discord-webhook/
-│   │   ├── contract/
-│   │   └── implementations/
-│   ├── rest-crud/
-│   │   ├── contract/
-│   │   └── implementations/
-│   └── ...
-└── infra/
-```
-
-**Pros:**
-- Atomic cross-service changes
-- Single clone for everything
-- Unified tooling
-
-**Cons:**
-- CI/CD still complex (needs path-based filtering)
-- No independent release cycles
-- Cognitive overhead of large repo remains
-- Git history becomes noisy
-
-### Verdict: Multi-Repository is Appropriate BUT...
-
-**The multi-repo approach is justified** when:
-1. You're genuinely scaling to 5-6 service types
-2. You want independent versioning/releases
-3. Different teams will own different services
-
-**Consider staying monorepo** if:
-1. It's just you or a small team
-2. Service types are highly coupled
-3. Atomic cross-cutting changes are frequent
-
-### Recommendation
-
-**Proceed with multi-repository**, but:
-1. **Start with 2 repos** - Manager + one service type (migrate Discord)
-2. **Prove the pattern** before creating all 6 repos
-3. **Invest heavily** in contract testing and CI templates
-4. **Document the workflow** for cross-repo changes
-
----
-
-## Performance Test Manager Specification
-
-### Functional Requirements
-
-#### FR-001: Service Discovery and Registration
-- **SHALL** discover services from configured Git repositories
-- **SHALL** parse `manifest.yaml` from each service repository
-- **SHALL** validate service metadata against expected schema
-- **SHALL** support filtering services by type, language, or framework
-- **SHALL** cache service metadata with configurable TTL
-
-#### FR-002: Container Image Management
-- **SHALL** build container images from service Dockerfiles
-- **SHALL** push images to Artifact Registry with consistent tagging
-- **SHALL** support build arguments and multi-stage builds
-- **SHALL** validate image build success before proceeding
-- **MAY** support pre-built images from external registries
-
-#### FR-003: Cloud Run Deployment
-- **SHALL** deploy services to Cloud Run with configurable profiles
-- **SHALL** support deployment profiles (CPU, memory, concurrency, etc.)
-- **SHALL** wait for service readiness before benchmarking
-- **SHALL** support parallel deployment for efficiency
-- **SHALL** clean up deployed services after benchmarking
-
-#### FR-004: Contract Validation
-- **SHALL** validate deployed services against their contracts
-- **SHALL** execute test vectors from contract repository
-- **SHALL** report contract validation failures clearly
-- **SHALL** support partial contract compliance (feature flags)
-
-#### FR-005: Benchmark Execution
-- **SHALL** measure cold start latency (scale-from-zero)
-- **SHALL** measure warm request throughput
-- **SHALL** measure scale-to-zero timing
-- **SHALL** support configurable iteration counts
-- **SHALL** calculate statistical metrics (p50, p90, p99, mean, stddev)
-- **SHALL** tag measurements with service metadata
-
-#### FR-006: Result Storage
-- **SHALL** store results in GCS with structured format
-- **SHALL** generate unique run identifiers
-- **SHALL** preserve full measurement data for analysis
-- **SHALL** support result comparison against baselines
-
-#### FR-007: Reporting
-- **SHALL** generate Markdown reports for human consumption
-- **SHALL** generate JSON reports for programmatic consumption
-- **SHALL** support comparison reports (before/after)
-- **SHALL** generate performance ranking tables
-- **SHALL** highlight regressions against baselines
-
-#### FR-008: CI/CD Integration
-- **SHALL** support execution via Cloud Run Jobs
-- **SHALL** support execution from GitHub Actions
-- **SHALL** provide exit codes indicating success/failure/regression
-- **SHALL** support webhook notifications (optional)
-
-### Non-Functional Requirements
-
-#### NFR-001: Reliability
-- **SHALL** handle service deployment failures gracefully
-- **SHALL** retry transient failures with exponential backoff
-- **SHALL** continue benchmarking other services after individual failures
-- **SHALL** report all failures in final summary
-
-#### NFR-002: Observability
-- **SHALL** emit structured logs
-- **SHALL** report progress during long-running operations
-- **SHALL** provide detailed error context for debugging
-
-#### NFR-003: Security
-- **SHALL NOT** expose credentials in logs or reports
-- **SHALL** use Workload Identity for GCP authentication
-- **SHALL** validate input configurations
-
-#### NFR-004: Performance
-- **SHOULD** complete full benchmark suite within 2 hours
-- **SHOULD** parallelize operations where possible
-- **SHOULD** minimize GCP resource consumption
-
-### CLI Interface Specification
-
-```
-cloudrun-perf [global-flags] <command> [command-flags]
-
-Global Flags:
-  --config <path>       Configuration file path
-  --project <id>        GCP project ID
-  --region <region>     GCP region (default: us-central1)
-  --verbose             Enable verbose logging
-  --dry-run             Show what would be done without executing
-
-Commands:
-  discover              Discover services from configured repositories
-  validate              Validate services against their contracts
-  benchmark             Run benchmarks
-  report                Generate reports from stored results
-  deploy                Deploy services without benchmarking
-  cleanup               Remove deployed resources
-  compare               Compare two benchmark runs
-
-Examples:
-  # Discover and list all services
-  cloudrun-perf discover --format table
-
-  # Run full benchmark suite
-  cloudrun-perf benchmark --suite full
-
-  # Benchmark specific service type
-  cloudrun-perf benchmark --type discord-webhook
-
-  # Benchmark specific implementation
-  cloudrun-perf benchmark --type discord-webhook --impl go-gin
-
-  # Compare runs
-  cloudrun-perf compare --baseline run-abc123 --current run-def456
-
-  # Generate report from last run
-  cloudrun-perf report --run latest --format markdown
-```
-
-### Configuration Schema
-
-```yaml
-# cloudrun-perf.yaml
-
-version: "1.0"
-
-gcp:
-  project_id: ${GCP_PROJECT_ID}
-  region: us-central1
-  artifact_registry: ${REGION}-docker.pkg.dev/${PROJECT_ID}/services
-
-service_repositories:
-  - url: https://github.com/org/cloudrun-service-discord
-    ref: main
-    type: discord-webhook
-  - url: https://github.com/org/cloudrun-service-rest-crud
-    ref: main
-    type: rest-crud
-  # ... more service repositories
-
-deployment_profiles:
-  default:
-    cpu: "1"
-    memory: "512Mi"
-    max_instances: 1
-    concurrency: 80
-    execution_env: gen2
-    startup_cpu_boost: true
-
-  constrained:
-    cpu: "0.5"
-    memory: "256Mi"
-    max_instances: 1
-    concurrency: 40
-
-benchmark:
-  cold_start:
-    iterations: 10
-    scale_to_zero_timeout: 15m
-  warm_requests:
-    count: 100
-    concurrency: 10
-
-  # Optional: subset of services to benchmark
-  filter:
-    types: []          # Empty = all types
-    implementations: [] # Empty = all implementations
-
-storage:
-  results_bucket: gs://cloudrun-benchmark-results
-  baseline_path: baselines/latest.json
-
-notifications:
-  slack_webhook: ${SLACK_WEBHOOK_URL}
-  on_regression: true
-  on_completion: true
-```
-
-### Service Contract Interface
-
-Each service type defines its contract. The Manager interacts with services through:
-
-#### Required Endpoints (All Service Types)
-
-```yaml
-# Universal endpoints
-/health:
-  GET:
-    description: Health check endpoint
-    responses:
-      200:
-        description: Service is healthy
-
-/_benchmark/ready:
-  GET:
-    description: Benchmark readiness check
-    responses:
-      200:
-        description: Service is ready for benchmarking
-```
-
-#### Service-Type-Specific Contracts
-
-**Discord Webhook:**
-```yaml
-/interactions:
-  POST:
-    description: Handle Discord interaction
-    headers:
-      X-Signature-Ed25519: required
-      X-Signature-Timestamp: required
-    request:
-      $ref: "#/components/schemas/DiscordInteraction"
-    responses:
-      200:
-        $ref: "#/components/schemas/InteractionResponse"
-      401:
-        description: Invalid signature
-```
-
-**REST CRUD:**
-```yaml
-/items:
-  GET: List items
-  POST: Create item
-/items/{id}:
-  GET: Get item
-  PUT: Update item
-  DELETE: Delete item
-```
-
-*Additional service types would have their own contracts.*
+The delegated agent pattern is appropriate for this use case. The alternative (Perf Manager knowing all protocols) would create a monolithic, tightly-coupled system that's hard to extend.
 
 ---
 
 ## Migration Strategy
 
-### Phase 1: Extract Performance Test Manager
+### Phase 1: Infrastructure Setup
+1. Create GCS bucket for agent registry
+2. Define and publish manifest schema
+3. Set up Perf Manager service account
+4. Create Terraform modules for common infrastructure
+
+### Phase 2: Extract Perf Manager
 1. Create `cloudrun-perf-manager` repository
-2. Move `tests/cloudrun/` content
-3. Adapt to read from external service repositories
-4. Publish v1.0.0
+2. Implement discovery from GCS registry
+3. Implement standard agent invocation
+4. Implement result aggregation and reporting
+5. Initially, register one "fake" agent for testing
 
-### Phase 2: Migrate Discord Webhook Services
+### Phase 3: Create Discord Perf Agent
 1. Create `cloudrun-service-discord` repository
-2. Move `services/*` implementations
-3. Create `manifest.yaml` and contract definition
-4. Validate with Manager
+2. Move services from current repo
+3. Implement Perf Agent with current benchmark logic
+4. Deploy Agent, publish manifest to registry
+5. Validate end-to-end flow
 
-### Phase 3: Create New Service Types
-1. Create repositories for additional service types
-2. Implement contract tests using test vectors
-3. Implement first reference implementation (Go recommended)
-4. Gradually add other language implementations
+### Phase 4: Add Service Types Incrementally
+1. For each new service type:
+   - Create repository
+   - Implement reference implementation (Go recommended)
+   - Implement Perf Agent
+   - Deploy and register
+2. Validate with Perf Manager
 
-### Phase 4: Deprecate Monorepo
+### Phase 5: Deprecate Monorepo
 1. Archive original repository
-2. Update documentation references
-3. Redirect traffic
+2. Update documentation
+3. Redirect references
 
 ---
 
@@ -758,38 +766,34 @@ Each service type defines its contract. The Manager interacts with services thro
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Cross-repo coordination complexity | High | Medium | Strong versioning, CI validation |
-| Duplicated CI/CD maintenance | Medium | Low | Shared GitHub Actions, templates |
-| Contract drift between repos | Medium | High | Automated contract validation |
-| Increased onboarding complexity | Medium | Medium | Comprehensive documentation |
-| Migration disruption | Medium | Medium | Phased approach, parallel operation |
+| Agent interface drift | Medium | High | Schema validation, versioning |
+| GCS registry corruption | Low | High | Object versioning, backups |
+| Complex debugging across repos | Medium | Medium | Distributed tracing, clear logs |
+| Duplicate maintenance burden | Medium | Low | Shared libraries, templates |
+| Scale-to-zero timing issues | Medium | Medium | Detection logic, flagged measurements |
 
 ---
 
-## Appendix A: Proposed Service Types
+## Appendices
 
-| Service Type | Purpose | Key Benchmark Focus |
-|--------------|---------|---------------------|
-| Discord Webhook | Signature validation + Pub/Sub | Cold start, crypto performance |
-| REST CRUD | Database CRUD operations | Connection pooling, ORM overhead |
-| gRPC Unary | Binary protocol handling | Protobuf serialization |
-| Queue Worker | Pub/Sub consumption | Message throughput |
-| WebSocket | Persistent connections | Connection establishment |
-| GraphQL | Query parsing + execution | Query complexity handling |
+### Appendix A: Standard Agent Interface
 
----
+See [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md) for complete specification.
 
-## Appendix B: Estimated Repository Sizes
+### Appendix B: Perf Manager Specification
 
-| Repository | Implementations | Est. LOC | Est. Files |
-|------------|-----------------|----------|------------|
-| Performance Test Manager | 1 | ~8,000 | ~100 |
-| Discord Webhook Services | 19 | ~6,000 | ~150 |
-| REST CRUD Services | 19 | ~8,000 | ~180 |
-| gRPC Services | 19 | ~7,000 | ~170 |
-| Queue Worker Services | 19 | ~5,000 | ~130 |
-| WebSocket Services | 19 | ~6,000 | ~150 |
-| GraphQL Services | 19 | ~9,000 | ~200 |
+See [PERF-MANAGER-SPEC.md](./PERF-MANAGER-SPEC.md) for complete specification.
+
+### Appendix C: Proposed Service Types
+
+| Service Type | Purpose | Agent Complexity |
+|--------------|---------|------------------|
+| Discord Webhook | Signature validation + Pub/Sub | Medium (Ed25519) |
+| REST CRUD | Database CRUD operations | Medium (SQL setup) |
+| gRPC Unary | Binary protocol handling | Medium (Protobuf) |
+| Queue Worker | Pub/Sub consumption | Low |
+| WebSocket | Persistent connections | High (stateful) |
+| GraphQL | Query parsing + execution | Medium |
 
 ---
 
@@ -798,3 +802,4 @@ Each service type defines its contract. The Manager interacts with services thro
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 0.1 | 2026-01-24 | Architecture Review | Initial draft |
+| 0.2 | 2026-01-24 | Architecture Review | Revised to delegated agent pattern, GCS registry, hosting analysis |

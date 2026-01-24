@@ -1,48 +1,39 @@
-# Performance Test Manager Specification
+# Perf Manager Specification
 
-## Detailed Functional Design
+## Central Orchestration Component
+
+**Status:** Draft (Revised)
+**Date:** 2026-01-24
+**Revision:** 2 - Simplified for delegated agent pattern
 
 ---
 
 ## Overview
 
-The Performance Test Manager is the central orchestration component that:
-- Discovers service implementations from external repositories
-- Deploys services to Cloud Run
-- Validates services against their contracts
-- Executes benchmarks
-- Stores and reports results
+The Perf Manager is the central orchestration component that:
 
-It operates independently from service implementations, connected only by well-defined contracts.
+- **Discovers** Perf Agents from a GCS registry
+- **Invokes** Agents through a standard interface
+- **Aggregates** results from all Agents
+- **Stores** results in GCS
+- **Reports** on performance with comparisons to baselines
+
+**Critical design principle:** The Perf Manager has **zero knowledge** of service-specific testing. It doesn't know how to test Discord webhooks, gRPC services, or REST APIs. That knowledge lives entirely in the Perf Agents.
 
 ---
 
-## Core Concepts
+## What Perf Manager Does NOT Do
 
-### Service Types
+| Responsibility | Owner |
+|---------------|-------|
+| Ed25519 signature generation | Discord Perf Agent |
+| Protobuf serialization | gRPC Perf Agent |
+| SQL database setup | REST CRUD Perf Agent |
+| Contract validation | Each respective Agent |
+| Service-specific payloads | Each respective Agent |
+| Cold start measurement logic | Each respective Agent |
 
-A **Service Type** represents a category of workload (e.g., Discord webhook, REST CRUD, gRPC). Each service type has:
-
-- A formal **contract** defining expected behavior
-- A **test vector** set for validation
-- Multiple **implementations** across languages/frameworks
-
-### Implementations
-
-An **Implementation** is a specific language/framework version of a service type:
-
-- Lives in a service repository
-- Contains Dockerfile and source code
-- Declares capabilities in manifest
-
-### Benchmark Run
-
-A **Benchmark Run** is a single execution of the performance test suite:
-
-- Has unique identifier
-- Targets one or more service types
-- Produces measurements and reports
-- Can be compared to other runs
+The Perf Manager only sees standardized results.
 
 ---
 
@@ -50,684 +41,538 @@ A **Benchmark Run** is a single execution of the performance test suite:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Performance Test Manager                      │
-├─────────────────────────────────────────────────────────────────┤
+│                        PERF MANAGER                              │
 │                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │   Service    │  │   Contract   │  │   Benchmark  │          │
-│  │  Discovery   │  │  Validator   │  │   Executor   │          │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
-│         │                 │                 │                   │
-│  ┌──────┴─────────────────┴─────────────────┴───────┐          │
-│  │              Orchestration Engine                 │          │
-│  └──────────────────────┬───────────────────────────┘          │
-│                         │                                       │
-│  ┌──────────────┐  ┌────┴─────────┐  ┌──────────────┐          │
-│  │    Image     │  │   Cloud Run  │  │    Result    │          │
-│  │   Builder    │  │   Deployer   │  │    Store     │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│  ┌──────────────┐                                               │
+│  │   Discovery  │──► Read gs://perf-agent-registry/agents/*.yaml│
+│  └──────────────┘                                               │
+│         │                                                        │
+│         ▼                                                        │
+│  ┌──────────────┐                                               │
+│  │ Orchestrator │──► For each Agent: invoke standard endpoint   │
+│  └──────────────┘                                               │
+│         │                                                        │
+│         ▼                                                        │
+│  ┌──────────────┐                                               │
+│  │  Aggregator  │──► Combine results from all Agents            │
+│  └──────────────┘                                               │
+│         │                                                        │
+│         ▼                                                        │
+│  ┌──────────────┐                                               │
+│  │   Storage    │──► Write to gs://perf-results/runs/{run-id}/  │
+│  └──────────────┘                                               │
+│         │                                                        │
+│         ▼                                                        │
+│  ┌──────────────┐                                               │
+│  │  Reporter    │──► Generate Markdown/JSON reports             │
+│  └──────────────┘                                               │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      External Systems                            │
-├─────────────┬─────────────┬─────────────┬───────────────────────┤
-│   GitHub    │  Artifact   │  Cloud Run  │  Cloud Storage        │
-│   Repos     │  Registry   │             │  (Results)            │
-└─────────────┴─────────────┴─────────────┴───────────────────────┘
 ```
 
 ---
 
-## Component Specifications
+## Components
 
-### 1. Service Discovery
+### 1. Discovery
 
-**Purpose:** Find and catalog service implementations from configured repositories.
-
-**Inputs:**
-- List of service repository URLs
-- Git refs (branches/tags) to examine
-- Cache invalidation settings
+**Purpose:** Find and validate Perf Agents from the GCS registry.
 
 **Process:**
-1. Clone/fetch configured repositories
-2. Parse `manifest.yaml` from each repo
-3. Validate manifest against schema
-4. Build service catalog with metadata
+1. List objects in `gs://perf-agent-registry/agents/`
+2. Download each `.yaml` manifest
+3. Validate against JSON Schema
+4. Build in-memory agent catalog
+5. Filter by enabled status
 
-**Outputs:**
-- Service catalog (in-memory + cached)
-- Validation warnings/errors
-
-**Service Catalog Entry:**
+**Agent Catalog Entry:**
 ```go
-type ServiceEntry struct {
-    Type           string            // e.g., "discord-webhook"
-    Name           string            // e.g., "go-gin"
-    Repository     string            // GitHub URL
-    Path           string            // Path within repo
-    Dockerfile     string            // Relative Dockerfile path
-    BuildArgs      map[string]string // Build arguments
-    Features       []string          // Supported features
-    ContractVersion string           // Contract version implemented
+type AgentEntry struct {
+    ServiceType     string   // e.g., "discord-webhook"
+    Enabled         bool
+    Endpoint        string   // Cloud Run URL
+    Type            string   // "cloud_run_service" or "cloud_run_job"
+    Implementations []Implementation
+    Metadata        AgentMetadata
+}
+
+type Implementation struct {
+    Name   string // e.g., "go-gin"
+    Status string // "active" or "disabled"
 }
 ```
 
 **API:**
 ```go
-type ServiceDiscovery interface {
-    // Refresh service catalog from repositories
+type Discovery interface {
+    // Refresh agent catalog from GCS
     Refresh(ctx context.Context) error
 
-    // List all discovered services
-    List(ctx context.Context, filter ServiceFilter) ([]ServiceEntry, error)
+    // List all discovered agents
+    List(ctx context.Context) ([]AgentEntry, error)
 
-    // Get specific service
-    Get(ctx context.Context, serviceType, name string) (*ServiceEntry, error)
+    // List enabled agents only
+    ListEnabled(ctx context.Context) ([]AgentEntry, error)
 
-    // Get services by type
-    ByType(ctx context.Context, serviceType string) ([]ServiceEntry, error)
+    // Get specific agent
+    Get(ctx context.Context, serviceType string) (*AgentEntry, error)
 }
 ```
 
 ---
 
-### 2. Contract Validator
+### 2. Orchestrator
 
-**Purpose:** Validate deployed services against their contract specifications.
-
-**Inputs:**
-- Deployed service URL
-- Contract definition (OpenAPI, Protobuf, etc.)
-- Test vectors
+**Purpose:** Invoke Perf Agents and coordinate benchmark execution.
 
 **Process:**
-1. Load contract for service type
-2. Load test vectors (happy path, errors, edge cases)
-3. Execute each test vector against service
-4. Compare responses to expected outcomes
-5. Aggregate results
+1. Get list of enabled agents
+2. For each agent (parallel or sequential based on config):
+   - Build invocation request
+   - Call agent endpoint with timeout
+   - Collect response
+3. Handle failures gracefully (continue with other agents)
 
-**Outputs:**
-- Validation result (pass/fail per test)
-- Detailed error messages
-- Contract compliance percentage
-
-**Test Vector Format:**
-```yaml
-# test-vectors/happy-path.yaml
-name: "Valid Discord Ping"
-description: "Service responds to valid ping with pong"
-request:
-  method: POST
-  path: /interactions
-  headers:
-    Content-Type: application/json
-    X-Signature-Ed25519: "${COMPUTED_SIGNATURE}"
-    X-Signature-Timestamp: "${CURRENT_TIMESTAMP}"
-  body:
-    type: 1
-    id: "123456789"
-    application_id: "987654321"
-expected:
-  status: 200
-  headers:
-    Content-Type: application/json
-  body:
-    type: 1
+**Invocation Request (sent to Agent):**
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "implementations": ["go-gin", "rust-actix"],
+  "config": {
+    "cold_start_iterations": 10,
+    "warm_request_count": 100,
+    "warm_request_concurrency": 10,
+    "profile": "default"
+  }
+}
 ```
+
+If `implementations` is empty or omitted, the Agent benchmarks all active implementations.
 
 **API:**
 ```go
-type ContractValidator interface {
-    // Load contract for service type
-    LoadContract(ctx context.Context, serviceType string) (*Contract, error)
+type Orchestrator interface {
+    // Run benchmarks for all enabled agents
+    RunAll(ctx context.Context, config BenchmarkConfig) (*AggregatedResults, error)
 
-    // Validate service against contract
-    Validate(ctx context.Context, serviceURL string, contract *Contract) (*ValidationResult, error)
+    // Run benchmark for specific service type
+    RunOne(ctx context.Context, serviceType string, config BenchmarkConfig) (*AgentResults, error)
 
-    // Run specific test vector
-    RunTestVector(ctx context.Context, serviceURL string, vector TestVector) (*TestResult, error)
+    // Run with custom agent filter
+    RunFiltered(ctx context.Context, filter AgentFilter, config BenchmarkConfig) (*AggregatedResults, error)
+}
+```
+
+**Authentication:**
+- Uses GCP service account identity
+- Agents grant `roles/run.invoker` to Perf Manager service account
+- No API keys or tokens needed
+
+---
+
+### 3. Aggregator
+
+**Purpose:** Combine results from multiple Agents into unified structure.
+
+**Process:**
+1. Receive results from each Agent
+2. Validate result format against schema
+3. Merge into unified results structure
+4. Calculate cross-agent statistics (if applicable)
+
+**Aggregated Results Structure:**
+```go
+type AggregatedResults struct {
+    RunID       string
+    StartTime   time.Time
+    EndTime     time.Time
+    Duration    time.Duration
+    Config      BenchmarkConfig
+    AgentResults []AgentResults
+    Summary     ResultsSummary
+    Errors      []AgentError
 }
 
-type ValidationResult struct {
-    ServiceType    string
-    ServiceName    string
-    ServiceURL     string
-    TotalTests     int
-    PassedTests    int
-    FailedTests    int
-    Compliance     float64 // Percentage
-    Results        []TestResult
-    Duration       time.Duration
+type ResultsSummary struct {
+    TotalAgents        int
+    SuccessfulAgents   int
+    FailedAgents       int
+    TotalImplementations int
+    BenchmarkedImplementations int
 }
 ```
 
 ---
 
-### 3. Image Builder
+### 4. Storage
 
-**Purpose:** Build container images from service Dockerfiles.
-
-**Inputs:**
-- Service entry from catalog
-- Target image tag
-- Build configuration
-
-**Process:**
-1. Clone service repository (if not cached)
-2. Build Docker image using Cloud Build or local Docker
-3. Push to Artifact Registry
-4. Return image digest
-
-**Outputs:**
-- Image URI with digest
-- Build logs
-- Build duration
-
-**API:**
-```go
-type ImageBuilder interface {
-    // Build image for a service
-    Build(ctx context.Context, service ServiceEntry, tag string) (*BuildResult, error)
-
-    // Check if image exists
-    Exists(ctx context.Context, imageURI string) (bool, error)
-
-    // Get image metadata
-    Inspect(ctx context.Context, imageURI string) (*ImageInfo, error)
-}
-
-type BuildResult struct {
-    ImageURI    string        // Full URI with digest
-    Digest      string        // Image digest
-    Size        int64         // Image size in bytes
-    Duration    time.Duration // Build time
-    BuildLogs   string        // Build output
-}
-```
-
----
-
-### 4. Cloud Run Deployer
-
-**Purpose:** Deploy services to Cloud Run and manage their lifecycle.
-
-**Inputs:**
-- Image URI
-- Deployment profile
-- Service configuration
-
-**Process:**
-1. Create/update Cloud Run service
-2. Configure resources (CPU, memory, concurrency)
-3. Set environment variables
-4. Wait for deployment to complete
-5. Verify service health
-
-**Outputs:**
-- Service URL
-- Deployment status
-- Readiness confirmation
-
-**Deployment Profile:**
-```yaml
-profiles:
-  default:
-    cpu: "1"
-    memory: "512Mi"
-    max_instances: 1
-    min_instances: 0
-    concurrency: 80
-    timeout: 30s
-    execution_env: gen2
-    startup_cpu_boost: true
-    vpc_connector: null
-    env_vars:
-      LOG_LEVEL: info
-```
-
-**API:**
-```go
-type CloudRunDeployer interface {
-    // Deploy service to Cloud Run
-    Deploy(ctx context.Context, req DeployRequest) (*DeployResult, error)
-
-    // Get service status
-    Status(ctx context.Context, serviceName string) (*ServiceStatus, error)
-
-    // Delete service
-    Delete(ctx context.Context, serviceName string) error
-
-    // Scale service to zero
-    ScaleToZero(ctx context.Context, serviceName string) error
-
-    // Wait for service to be ready
-    WaitReady(ctx context.Context, serviceName string, timeout time.Duration) error
-}
-
-type DeployRequest struct {
-    ServiceName string
-    ImageURI    string
-    Profile     DeploymentProfile
-    Labels      map[string]string
-}
-
-type DeployResult struct {
-    ServiceName string
-    ServiceURL  string
-    Revision    string
-    Region      string
-    DeployTime  time.Duration
-}
-```
-
----
-
-### 5. Benchmark Executor
-
-**Purpose:** Execute performance measurements against deployed services.
-
-**Inputs:**
-- Service URL
-- Benchmark configuration
-- Test payload generator
-
-**Process:**
-1. Verify service is ready
-2. Execute cold start measurements
-3. Execute warm request measurements
-4. Calculate statistics
-
-**Outputs:**
-- Raw measurements
-- Statistical summaries
-- Benchmark metadata
-
-**Measurement Types:**
-
-#### Cold Start Measurement
-```go
-type ColdStartMeasurement struct {
-    Iteration       int
-    ScaleDownTime   time.Duration  // Time to scale to zero
-    ResponseTime    time.Duration  // Time to first response
-    ServerTiming    time.Duration  // Server-reported processing time
-    StatusCode      int
-    Timestamp       time.Time
-}
-```
-
-#### Warm Request Measurement
-```go
-type WarmRequestMeasurement struct {
-    RequestNum      int
-    ResponseTime    time.Duration
-    StatusCode      int
-    ContentLength   int64
-    Timestamp       time.Time
-}
-```
-
-**Statistics:**
-```go
-type BenchmarkStatistics struct {
-    Count       int
-    Min         time.Duration
-    Max         time.Duration
-    Mean        time.Duration
-    Median      time.Duration
-    StdDev      time.Duration
-    P50         time.Duration
-    P90         time.Duration
-    P95         time.Duration
-    P99         time.Duration
-}
-```
-
-**API:**
-```go
-type BenchmarkExecutor interface {
-    // Run full benchmark suite for a service
-    Run(ctx context.Context, serviceURL string, config BenchmarkConfig) (*BenchmarkResult, error)
-
-    // Run cold start measurement
-    MeasureColdStart(ctx context.Context, serviceURL string, iterations int) ([]ColdStartMeasurement, error)
-
-    // Run warm request measurements
-    MeasureWarmRequests(ctx context.Context, serviceURL string, count, concurrency int) ([]WarmRequestMeasurement, error)
-
-    // Measure scale-to-zero time
-    MeasureScaleToZero(ctx context.Context, serviceName string, timeout time.Duration) (time.Duration, error)
-}
-```
-
----
-
-### 6. Result Store
-
-**Purpose:** Persist benchmark results and enable historical analysis.
-
-**Inputs:**
-- Benchmark results
-- Run metadata
-- Storage configuration
-
-**Process:**
-1. Generate unique run ID
-2. Serialize results to JSON
-3. Upload to GCS
-4. Update latest pointers
+**Purpose:** Persist benchmark results to GCS.
 
 **Storage Layout:**
 ```
-gs://cloudrun-benchmark-results/
+gs://perf-results/
 ├── runs/
-│   ├── 2026-01-24-abc123/
-│   │   ├── metadata.json
-│   │   ├── services/
-│   │   │   ├── discord-webhook/
-│   │   │   │   ├── go-gin.json
-│   │   │   │   ├── rust-actix.json
-│   │   │   │   └── ...
-│   │   │   └── rest-crud/
-│   │   │       └── ...
-│   │   └── summary.json
-│   └── ...
+│   └── 2026-01-24-abc123/
+│       ├── metadata.json           # Run metadata
+│       ├── config.json             # Benchmark configuration
+│       ├── agents/
+│       │   ├── discord-webhook.json  # Raw results from Agent
+│       │   ├── rest-crud.json
+│       │   └── ...
+│       ├── aggregated.json         # Combined results
+│       └── report.md               # Generated report
 ├── baselines/
-│   ├── latest.json
-│   └── 2026-01-01.json
-└── indexes/
-    └── runs.json
+│   ├── latest.json                 # Symlink/copy to latest baseline
+│   └── 2026-01-15.json             # Historical baselines
+└── index.json                      # Index of all runs
 ```
 
 **API:**
 ```go
-type ResultStore interface {
-    // Save benchmark results
-    Save(ctx context.Context, run *BenchmarkRun) error
+type Storage interface {
+    // Save complete run results
+    SaveRun(ctx context.Context, results *AggregatedResults) error
 
-    // Load benchmark run
-    Load(ctx context.Context, runID string) (*BenchmarkRun, error)
+    // Load run by ID
+    LoadRun(ctx context.Context, runID string) (*AggregatedResults, error)
 
-    // List runs
-    List(ctx context.Context, filter RunFilter) ([]RunSummary, error)
+    // List all runs
+    ListRuns(ctx context.Context, limit int) ([]RunSummary, error)
 
-    // Get latest baseline
-    GetBaseline(ctx context.Context) (*BenchmarkRun, error)
+    // Get current baseline
+    GetBaseline(ctx context.Context) (*AggregatedResults, error)
 
     // Set new baseline
     SetBaseline(ctx context.Context, runID string) error
-
-    // Compare two runs
-    Compare(ctx context.Context, baselineID, currentID string) (*ComparisonResult, error)
 }
 ```
 
 ---
 
-### 7. Report Generator
+### 5. Reporter
 
-**Purpose:** Generate human and machine-readable reports from benchmark results.
+**Purpose:** Generate human and machine-readable reports.
 
-**Inputs:**
-- Benchmark run(s)
-- Report format
-- Comparison baseline (optional)
+**Report Types:**
 
-**Outputs:**
-- Markdown reports
-- JSON reports
-- Comparison reports
+| Type | Format | Purpose |
+|------|--------|---------|
+| Summary | Markdown | Human-readable overview |
+| Detailed | Markdown | Full results with all metrics |
+| JSON | JSON | Programmatic consumption |
+| Comparison | Markdown | Diff against baseline |
 
 **Report Sections:**
-1. Executive Summary
-2. Service Rankings
-3. Per-Service Details
-4. Cold Start Analysis
-5. Warm Request Analysis
-6. Regression Alerts
-7. Recommendations
+1. Executive Summary (best/worst performers, regressions)
+2. Agent-by-Agent Results
+3. Implementation Rankings (cold start, warm requests)
+4. Regression Alerts
+5. Raw Statistics
 
-**Markdown Report Example:**
+**Example Summary Report:**
 ```markdown
-# Cloud Run Benchmark Report
+# Perf Benchmark Report
 
 **Run ID:** 2026-01-24-abc123
-**Date:** 2026-01-24 14:30:00 UTC
-**Services Tested:** 19
-**Service Types:** discord-webhook
+**Date:** 2026-01-24 14:30 UTC
+**Duration:** 45 minutes
 
-## Executive Summary
+## Summary
 
-| Metric | Best | Worst | Mean |
-|--------|------|-------|------|
-| Cold Start (p50) | 145ms (go-gin) | 2,340ms (java-spring3) | 890ms |
-| Warm Request (p50) | 2ms (rust-actix) | 45ms (ruby-rails) | 12ms |
+| Metric | Value |
+|--------|-------|
+| Service Types Tested | 6 |
+| Implementations Tested | 114 |
+| Successful | 112 |
+| Failed | 2 |
 
-## Cold Start Rankings
+## Cold Start Rankings (Top 10)
 
-| Rank | Service | P50 | P90 | P99 | Change |
-|------|---------|-----|-----|-----|--------|
-| 1 | go-gin | 145ms | 180ms | 220ms | -5% |
-| 2 | rust-actix | 160ms | 195ms | 240ms | +2% |
-| 3 | cpp-drogon | 175ms | 210ms | 260ms | 0% |
+| Rank | Service Type | Implementation | P50 | P99 | Δ Baseline |
+|------|--------------|----------------|-----|-----|------------|
+| 1 | discord-webhook | go-gin | 145ms | 220ms | -5% |
+| 2 | discord-webhook | rust-actix | 160ms | 240ms | +2% |
+| 3 | rest-crud | go-gin | 180ms | 280ms | 0% |
 ...
+
+## Regressions (>10% slower than baseline)
+
+| Service Type | Implementation | Metric | Baseline | Current | Change |
+|--------------|----------------|--------|----------|---------|--------|
+| discord-webhook | java-spring3 | cold_start_p50 | 800ms | 920ms | +15% |
+
+## Errors
+
+- rest-crud/php-laravel: Connection timeout after 30s
+- grpc-unary/ruby-rails: Contract validation failed (3 tests)
 ```
 
 **API:**
 ```go
-type ReportGenerator interface {
-    // Generate Markdown report
-    GenerateMarkdown(ctx context.Context, run *BenchmarkRun, opts ReportOptions) (string, error)
+type Reporter interface {
+    // Generate markdown summary
+    GenerateSummary(ctx context.Context, results *AggregatedResults) (string, error)
+
+    // Generate detailed markdown report
+    GenerateDetailed(ctx context.Context, results *AggregatedResults) (string, error)
 
     // Generate JSON report
-    GenerateJSON(ctx context.Context, run *BenchmarkRun) ([]byte, error)
+    GenerateJSON(ctx context.Context, results *AggregatedResults) ([]byte, error)
 
-    // Generate comparison report
-    GenerateComparison(ctx context.Context, baseline, current *BenchmarkRun) (*ComparisonReport, error)
-}
-
-type ReportOptions struct {
-    IncludeRawData    bool
-    CompareBaseline   bool
-    BaselineRunID     string
-    Sections          []string
+    // Generate comparison against baseline
+    GenerateComparison(ctx context.Context, baseline, current *AggregatedResults) (string, error)
 }
 ```
 
 ---
 
-## Orchestration Workflow
-
-### Full Benchmark Flow
+## CLI Interface
 
 ```
-START
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│ 1. Service Discovery                     │
-│    - Fetch manifests from repos          │
-│    - Build service catalog               │
-│    - Apply filters (type, impl)          │
-└─────────────────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│ 2. Image Building                        │
-│    - Build images in parallel batches    │
-│    - Push to Artifact Registry           │
-│    - Verify image availability           │
-└─────────────────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│ 3. Deployment                            │
-│    - Deploy to Cloud Run in batches      │
-│    - Wait for readiness                  │
-│    - Verify health endpoints             │
-└─────────────────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│ 4. Contract Validation                   │
-│    - Run test vectors                    │
-│    - Record compliance                   │
-│    - Flag failures (don't benchmark)     │
-└─────────────────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│ 5. Benchmark Execution                   │
-│    For each service:                     │
-│    a. Scale to zero, wait                │
-│    b. Cold start measurements (N iter)   │
-│    c. Warm request measurements          │
-│    d. Record results                     │
-└─────────────────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│ 6. Result Storage                        │
-│    - Save raw measurements               │
-│    - Calculate statistics                │
-│    - Upload to GCS                       │
-└─────────────────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│ 7. Report Generation                     │
-│    - Compare to baseline                 │
-│    - Generate Markdown/JSON              │
-│    - Publish reports                     │
-└─────────────────────────────────────────┘
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│ 8. Cleanup                               │
-│    - Delete Cloud Run services           │
-│    - Clean up images (optional)          │
-└─────────────────────────────────────────┘
-  │
-  ▼
-END
+perf-manager [global-flags] <command> [command-flags]
+
+Global Flags:
+  --config <path>       Configuration file (default: perf-manager.yaml)
+  --project <id>        GCP project ID (or $GCP_PROJECT_ID)
+  --verbose             Enable verbose logging
+  --dry-run             Show what would be done
+
+Commands:
+  discover              List available Perf Agents
+  run                   Execute benchmark suite
+  report                Generate report from stored results
+  compare               Compare two benchmark runs
+  baseline              Manage baselines
+  cleanup               Clean up old results
+
+Examples:
+  # Discover registered agents
+  perf-manager discover
+
+  # Run full benchmark suite
+  perf-manager run
+
+  # Run specific service type
+  perf-manager run --type discord-webhook
+
+  # Run with specific implementations
+  perf-manager run --type discord-webhook --impl go-gin,rust-actix
+
+  # Generate report from latest run
+  perf-manager report --run latest
+
+  # Compare runs
+  perf-manager compare --baseline 2026-01-15-xyz --current 2026-01-24-abc
+
+  # Set new baseline
+  perf-manager baseline set 2026-01-24-abc123
 ```
 
 ---
 
 ## Configuration
 
-### Main Configuration File
-
 ```yaml
-# cloudrun-perf.yaml
+# perf-manager.yaml
+
 version: "1.0"
 
-# GCP Settings
 gcp:
   project_id: ${GCP_PROJECT_ID}
   region: us-central1
-  artifact_registry:
-    location: us-central1
-    repository: cloudrun-perf-images
 
-# Service Repository Registry
-repositories:
-  - name: discord-webhook
-    url: https://github.com/org/cloudrun-service-discord
-    ref: main
-    contract: contracts/v1/discord-webhook.yaml
+registry:
+  bucket: perf-agent-registry
+  path: agents/
 
-  - name: rest-crud
-    url: https://github.com/org/cloudrun-service-rest-crud
-    ref: main
-    contract: contracts/v1/rest-crud.yaml
+results:
+  bucket: perf-results
+  retention_days: 90
 
-# Deployment Profiles
-profiles:
-  default:
-    cpu: "1"
-    memory: "512Mi"
-    max_instances: 1
-    min_instances: 0
-    concurrency: 80
-    execution_env: gen2
-    startup_cpu_boost: true
-
-  constrained:
-    cpu: "0.5"
-    memory: "256Mi"
-    max_instances: 1
-    concurrency: 40
-
-# Benchmark Configuration
 benchmark:
-  cold_start:
-    iterations: 10
-    scale_to_zero_timeout: 15m
-    warmup_requests: 3
+  cold_start_iterations: 10
+  warm_request_count: 100
+  warm_request_concurrency: 10
+  timeout: 30m                    # Per-agent timeout
 
-  warm_requests:
-    count: 100
-    concurrency: 10
+execution:
+  parallel_agents: true           # Run agents in parallel
+  max_parallel: 3                 # Max concurrent agent invocations
+  continue_on_error: true         # Don't abort on single agent failure
 
-  timeouts:
-    deploy: 5m
-    health_check: 30s
-    scale_to_zero: 15m
+reporting:
+  generate_on_completion: true
+  formats: [markdown, json]
+  comparison:
+    regression_threshold: 10      # Percent change to flag as regression
+    improvement_threshold: 10     # Percent change to flag as improvement
 
-# Result Storage
-storage:
-  type: gcs
-  bucket: cloudrun-benchmark-results
-  prefix: ""
-
-# Filtering
+# Optional: filter which agents to run
 filter:
-  service_types: []      # Empty = all
-  implementations: []    # Empty = all
-  exclude: []            # Explicit exclusions
+  service_types: []               # Empty = all
+  exclude_types: []               # Explicit exclusions
+```
 
-# Notifications (optional)
-notifications:
-  slack:
-    webhook_url: ${SLACK_WEBHOOK}
-    on_completion: true
-    on_regression: true
-    regression_threshold: 10  # Percent
+---
+
+## Deployment
+
+### As Cloud Run Job (Recommended)
+
+```yaml
+# terraform/cloudrun-job.tf
+
+resource "google_cloud_run_v2_job" "perf_manager" {
+  name     = "perf-manager"
+  location = var.region
+
+  template {
+    template {
+      containers {
+        image = "${var.artifact_registry}/perf-manager:latest"
+
+        env {
+          name  = "GCP_PROJECT_ID"
+          value = var.project_id
+        }
+      }
+
+      service_account = google_service_account.perf_manager.email
+      timeout         = "3600s"  # 1 hour
+    }
+  }
+}
+
+# Schedule: Run daily at 2 AM
+resource "google_cloud_scheduler_job" "perf_manager_daily" {
+  name     = "perf-manager-daily"
+  schedule = "0 2 * * *"
+
+  http_target {
+    http_method = "POST"
+    uri         = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/jobs/perf-manager:run"
+    oauth_token {
+      service_account_email = google_service_account.scheduler.email
+    }
+  }
+}
+```
+
+### Service Account Permissions
+
+```yaml
+# Required roles for Perf Manager service account
+
+# Read agent registry
+- roles/storage.objectViewer  # on perf-agent-registry bucket
+
+# Write results
+- roles/storage.objectAdmin   # on perf-results bucket
+
+# Invoke Perf Agents
+- roles/run.invoker           # granted per-agent by each agent's IAM
+
+# Optional: Cloud Logging
+- roles/logging.logWriter
+```
+
+---
+
+## Standard Agent Interface
+
+The Perf Manager invokes Agents using this standardized interface. See [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md) for complete Agent specification.
+
+### Request (Manager → Agent)
+
+```http
+POST /benchmark HTTP/1.1
+Host: discord-perf-agent-xxxxx-uc.a.run.app
+Authorization: Bearer <identity-token>
+Content-Type: application/json
+
+{
+  "run_id": "2026-01-24-abc123",
+  "implementations": [],
+  "config": {
+    "cold_start_iterations": 10,
+    "warm_request_count": 100,
+    "warm_request_concurrency": 10,
+    "profile": "default"
+  }
+}
+```
+
+### Response (Agent → Manager)
+
+```json
+{
+  "service_type": "discord-webhook",
+  "agent_version": "1.2.0",
+  "run_id": "2026-01-24-abc123",
+  "start_time": "2026-01-24T14:30:00Z",
+  "end_time": "2026-01-24T14:45:00Z",
+  "results": [
+    {
+      "implementation": "go-gin",
+      "status": "success",
+      "contract_compliance": 100.0,
+      "cold_start": {
+        "iterations": 10,
+        "measurements_ms": [145, 148, 142, 151, 147, 144, 149, 146, 143, 150],
+        "statistics": {
+          "min_ms": 142,
+          "max_ms": 151,
+          "mean_ms": 146.5,
+          "median_ms": 146.5,
+          "p50_ms": 146,
+          "p90_ms": 150,
+          "p99_ms": 151,
+          "stddev_ms": 2.9
+        }
+      },
+      "warm_requests": {
+        "count": 100,
+        "concurrency": 10,
+        "statistics": {
+          "min_ms": 2,
+          "max_ms": 15,
+          "mean_ms": 4.2,
+          "p50_ms": 3,
+          "p90_ms": 8,
+          "p99_ms": 12
+        },
+        "throughput_rps": 238.5,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "implementation": "rust-actix",
+      "status": "success",
+      ...
+    }
+  ],
+  "errors": []
+}
 ```
 
 ---
 
 ## Error Handling
 
-### Failure Modes and Recovery
+### Agent Invocation Errors
 
-| Failure Mode | Impact | Recovery Strategy |
-|--------------|--------|-------------------|
-| Git clone fails | Cannot discover service | Retry 3x, then skip with warning |
-| Image build fails | Cannot benchmark service | Log error, continue with others |
-| Deployment fails | Cannot benchmark service | Retry once, then skip |
-| Contract validation fails | Service doesn't meet spec | Skip benchmarking, report failure |
-| Benchmark timeout | Incomplete measurements | Record partial data, flag as incomplete |
-| GCS upload fails | Results not persisted | Retry 3x, keep local copy |
+| Error Type | Handling |
+|------------|----------|
+| Network timeout | Retry once, then mark agent as failed |
+| HTTP 4xx | Log error, skip agent (configuration issue) |
+| HTTP 5xx | Retry with backoff, then mark failed |
+| Invalid response | Log warning, include partial results if possible |
 
-### Error Reporting
+### Aggregation Policy
 
-```go
-type BenchmarkError struct {
-    Phase       string    // discovery, build, deploy, validate, benchmark, report
-    ServiceType string
-    ServiceName string
-    Message     string
-    Cause       error
-    Timestamp   time.Time
-    Recoverable bool
-}
-```
+- Continue processing other agents on individual failure
+- Include failed agents in report with error details
+- Exit code reflects overall success (0 = all pass, 1 = some failures)
 
 ---
 
@@ -737,64 +582,88 @@ type BenchmarkError struct {
 
 ```json
 {
-  "level": "info",
+  "severity": "INFO",
   "time": "2026-01-24T14:30:00Z",
-  "component": "benchmark-executor",
+  "component": "orchestrator",
+  "event": "agent_invocation_start",
+  "run_id": "2026-01-24-abc123",
   "service_type": "discord-webhook",
-  "service_name": "go-gin",
-  "event": "cold_start_measured",
-  "iteration": 3,
-  "duration_ms": 145,
-  "status_code": 200
+  "agent_endpoint": "https://discord-perf-agent-xxxxx-uc.a.run.app"
 }
 ```
 
-### Metrics (for Cloud Monitoring)
+### Key Events
 
-| Metric | Type | Labels |
-|--------|------|--------|
-| `benchmark_cold_start_duration` | Histogram | service_type, service_name |
-| `benchmark_warm_request_duration` | Histogram | service_type, service_name |
-| `benchmark_contract_compliance` | Gauge | service_type, service_name |
-| `benchmark_run_duration` | Histogram | service_type |
-| `benchmark_errors_total` | Counter | phase, error_type |
+| Event | Severity | Description |
+|-------|----------|-------------|
+| `run_started` | INFO | Benchmark run initiated |
+| `agent_invocation_start` | INFO | Calling agent endpoint |
+| `agent_invocation_complete` | INFO | Agent returned results |
+| `agent_invocation_error` | ERROR | Agent call failed |
+| `results_saved` | INFO | Results written to GCS |
+| `report_generated` | INFO | Report created |
+| `run_completed` | INFO | Full run finished |
 
 ---
 
 ## Security Considerations
 
-1. **Credentials** - Never log or expose GCP credentials
-2. **Image signing** - Consider signing images for verification
-3. **Network isolation** - Services run in isolated Cloud Run environments
-4. **Least privilege** - Service account has minimal required permissions
-5. **Audit logging** - All operations logged for audit trail
+1. **No secrets in config** - Use environment variables or Secret Manager
+2. **Service account scoping** - Minimal required permissions
+3. **Audit logging** - All GCS and Cloud Run operations logged
+4. **No credential logging** - Ensure tokens don't appear in logs
 
 ---
 
-## Future Considerations
+## Repository Structure
 
-1. **Parallel benchmark execution** - Run multiple services simultaneously
-2. **Geographic distribution** - Benchmark in multiple regions
-3. **Custom test payloads** - Allow service-specific benchmark scenarios
-4. **Regression alerting** - Automated alerts on performance degradation
-5. **Dashboard integration** - Real-time monitoring during runs
-6. **Cost tracking** - Report GCP costs per benchmark run
+```
+cloudrun-perf-manager/
+├── cmd/
+│   └── perf-manager/
+│       └── main.go
+├── internal/
+│   ├── discovery/
+│   │   ├── discovery.go
+│   │   └── discovery_test.go
+│   ├── orchestrator/
+│   │   ├── orchestrator.go
+│   │   └── orchestrator_test.go
+│   ├── aggregator/
+│   │   ├── aggregator.go
+│   │   └── aggregator_test.go
+│   ├── storage/
+│   │   ├── gcs.go
+│   │   └── gcs_test.go
+│   └── reporter/
+│       ├── markdown.go
+│       ├── json.go
+│       └── comparison.go
+├── schemas/
+│   ├── agent-manifest.schema.json
+│   ├── agent-request.schema.json
+│   ├── agent-response.schema.json
+│   └── results.schema.json
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── iam.tf
+│   ├── storage.tf
+│   └── cloudrun-job.tf
+├── configs/
+│   ├── default.yaml
+│   └── quick.yaml
+├── Dockerfile
+├── go.mod
+├── go.sum
+└── README.md
+```
 
 ---
 
-## Implementation Priority
+## Document History
 
-| Component | Priority | Complexity | Dependencies |
-|-----------|----------|------------|--------------|
-| Service Discovery | P0 | Medium | Git, YAML parsing |
-| Contract Validator | P0 | Medium | Test vector format |
-| Image Builder | P0 | Low | Cloud Build API |
-| Cloud Run Deployer | P0 | Medium | Cloud Run API |
-| Benchmark Executor | P0 | High | Request signing |
-| Result Store | P1 | Low | GCS API |
-| Report Generator | P1 | Medium | Result Store |
-| Notifications | P2 | Low | Slack API |
-
----
-
-*This specification is part of the Multi-Repository Architecture Proposal.*
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 0.1 | 2026-01-24 | Architecture Review | Initial draft |
+| 0.2 | 2026-01-24 | Architecture Review | Simplified for delegated agent pattern |
