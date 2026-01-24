@@ -1,7 +1,7 @@
 # Cloud Run Cold Start Benchmark Suite
 
 A comprehensive test suite for benchmarking Cloud Run cold-start latency across
-17 language/framework implementations using a Discord interactions webhook as the workload.
+19 language/framework implementations using a Discord interactions webhook as the workload.
 
 **This is NOT a production Discord bot**—it's a test harness for measuring webhook
 handling performance and cold start characteristics across different runtimes.
@@ -14,7 +14,7 @@ based on the language runtime, framework, container size, and other factors.
 
 This benchmark suite:
 
-- Measures cold start latency for Discord webhook handlers across 17 implementations
+- Measures cold start latency for Discord webhook handlers across 19 implementations
 - Compares warm request performance after containers are running
 - Provides reproducible, automated benchmarking on Cloud Run
 - Validates service correctness via black-box contract tests
@@ -51,25 +51,27 @@ all implementations behave identically regardless of language.
 
 ## Service Implementations
 
-| Service               | Language   | Framework        | Status      |
-| --------------------- | ---------- | ---------------- | ----------- |
-| `go-gin`              | Go         | Gin              | ✅ Complete |
-| `rust-actix`          | Rust       | Actix-web        | ✅ Complete |
-| `cpp-drogon`          | C++        | Drogon           | ✅ Complete |
-| `java-spring3`        | Java       | Spring Boot (v3) | ✅ Complete |
-| `java-spring2`        | Java       | Spring Boot (v2) | ✅ Complete |
-| `java-quarkus`        | Java       | Quarkus          | ✅ Complete |
-| `java-quarkus-native` | Java       | Quarkus (Native) | ✅ Complete |
-| `java-micronaut`      | Java       | Micronaut        | ✅ Complete |
-| `kotlin-ktor`         | Kotlin     | Ktor             | ✅ Complete |
-| `node-express`        | Node.js    | Express          | ✅ Complete |
-| `typescript-fastify`  | TypeScript | Fastify          | ✅ Complete |
-| `python-django`       | Python     | Django           | ✅ Complete |
-| `python-flask`        | Python     | Flask            | ✅ Complete |
-| `php-laravel`         | PHP        | Laravel          | ✅ Complete |
-| `ruby-rails`          | Ruby       | Rails            | ✅ Complete |
-| `csharp-aspnet`       | C#         | ASP.NET Core     | ✅ Complete |
-| `scala-play`          | Scala      | Play             | ✅ Complete |
+| Service                | Language   | Framework             | Status      |
+| ---------------------- | ---------- | --------------------- | ----------- |
+| `go-gin`               | Go         | Gin                   | ✅ Complete |
+| `rust-actix`           | Rust       | Actix-web             | ✅ Complete |
+| `cpp-drogon`           | C++        | Drogon                | ✅ Complete |
+| `java-spring2`         | Java       | Spring Boot (v2)      | ✅ Complete |
+| `java-spring3`         | Java       | Spring Boot (v3)      | ✅ Complete |
+| `java-spring4`         | Java       | Spring Boot (v4)      | ✅ Complete |
+| `java-quarkus`         | Java       | Quarkus               | ✅ Complete |
+| `java-quarkus-native`  | Java       | Quarkus (Native)      | ✅ Complete |
+| `java-micronaut`       | Java       | Micronaut             | ✅ Complete |
+| `kotlin-ktor`          | Kotlin     | Ktor                  | ✅ Complete |
+| `node-express`         | Node.js    | Express               | ✅ Complete |
+| `typescript-fastify`   | TypeScript | Fastify               | ✅ Complete |
+| `python-django`        | Python     | Django                | ✅ Complete |
+| `python-flask`         | Python     | Flask                 | ✅ Complete |
+| `php-laravel`          | PHP        | Laravel               | ✅ Complete |
+| `ruby-rails`           | Ruby       | Rails                 | ✅ Complete |
+| `csharp-aspnet`        | C#         | ASP.NET Core          | ✅ Complete |
+| `csharp-aspnet-native` | C#         | ASP.NET Core (Native) | ✅ Complete |
+| `scala-play`           | Scala      | Play                  | ✅ Complete |
 
 ## Quick Start
 
@@ -109,10 +111,10 @@ go test ./tests/contract/...
 
 ```text
 discord-bot-test-suite/
-├── services/                    # Language/framework implementations
+├── services/                    # 19 language/framework implementations
 │   ├── go-gin/
+│   ├── java-spring4/
 │   ├── python-flask/
-│   ├── java-spring3/
 │   └── ...
 ├── tests/
 │   ├── contract/               # Black-box contract tests
