@@ -1,0 +1,26 @@
+# Docker Build Composite Action
+#
+# Builds a Docker image with GHA cache support.
+
+name: 'Docker Build'
+description: 'Build Docker image with GHA cache support'
+
+inputs:
+  service-dir:
+    description: 'Service directory name'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+    - name: Build service image
+      uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+      with:
+        context: ./services/${{ inputs.service-dir }}
+        push: false
+        tags: service-${{ inputs.service-dir }}:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
