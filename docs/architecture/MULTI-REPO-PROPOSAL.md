@@ -426,6 +426,69 @@ The Agent uses these to validate services. Perf Manager only sees pass/fail comp
 
 ---
 
+### ADR-008: Configuration Extensibility for Multi-Dimensional Testing
+
+**Status:** Accepted
+
+**Context:**
+The initial focus is comparing implementations across languages/frameworks. However, future research questions include:
+- How does CPU allocation (0.5, 1, 2, 4 vCPUs) affect cold start?
+- Does Startup CPU Boost benefit certain languages more than others?
+- What's the impact of memory allocation on different frameworks?
+- What's the minimum viable configuration per implementation?
+
+The Perf Manager must support these varied testing scenarios without understanding what dimensions are being tested.
+
+**Decision:** Opaque agent configuration with dimension-tagged results
+
+**Implementation:**
+
+1. **Request structure** - Manager passes `agent_config` through without interpretation:
+```json
+{
+  "benchmark_config": {
+    "cold_start_iterations": 10,
+    "warm_request_count": 100
+  },
+  "agent_config": {
+    // Opaque to Manager - Agent interprets freely
+    "test_matrix": {
+      "implementations": ["go-gin", "java-spring3"],
+      "cpu": ["1", "2", "4"],
+      "startup_boost": [true, false]
+    }
+  }
+}
+```
+
+2. **Response structure** - Results tagged with dimensions:
+```json
+{
+  "results": [
+    {
+      "dimensions": {
+        "implementation": "go-gin",
+        "cpu": "2",
+        "startup_boost": true
+      },
+      "cold_start": { "p50_ms": 98 }
+    }
+  ]
+}
+```
+
+3. **Reporting** - Manager aggregates by any dimension without understanding semantics
+
+**Rationale:**
+- Manager remains completely agnostic to testing dimensions
+- Agents can evolve their testing strategies independently
+- New dimensions (region, memory, VPC) require only Agent changes
+- Enables research questions beyond "which language is fastest?"
+
+**See:** [CONFIG-EXTENSIBILITY.md](./CONFIG-EXTENSIBILITY.md) for complete specification.
+
+---
+
 ## Agent Hosting: Options and Trade-offs
 
 This section analyzes hosting strategies for Perf Agents, given the constraint that Cloud Run services take approximately 15 minutes to scale to zero after deployment.
@@ -784,7 +847,15 @@ See [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md) for complete specification.
 
 See [PERF-MANAGER-SPEC.md](./PERF-MANAGER-SPEC.md) for complete specification.
 
-### Appendix C: Proposed Service Types
+### Appendix C: Configuration Extensibility
+
+See [CONFIG-EXTENSIBILITY.md](./CONFIG-EXTENSIBILITY.md) for multi-dimensional testing patterns including:
+- CPU/Memory scaling studies
+- Startup Boost effectiveness analysis
+- Cost optimization research
+- Configuration matrix expansion
+
+### Appendix D: Proposed Service Types
 
 | Service Type | Purpose | Agent Complexity |
 |--------------|---------|------------------|

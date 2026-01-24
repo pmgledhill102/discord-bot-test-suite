@@ -53,7 +53,7 @@
 
 ---
 
-## 7 Key Decisions
+## 8 Key Decisions
 
 | # | Decision | Rationale |
 |---|----------|-----------|
@@ -64,6 +64,7 @@
 | 5 | **Manifest schema validation** | Catch errors early in CI |
 | 6 | **Always-deployed Agents** | Only 5-6 agents, immediate availability |
 | 7 | **Pre-deployed services (scaled to zero)** | Zero idle cost, true cold starts |
+| 8 | **Opaque agent config with dimension tags** | Multi-dimensional testing without Manager changes |
 
 ---
 
@@ -155,6 +156,37 @@ The Manager doesn't know or care what "discord-webhook" means internally.
 
 ---
 
+## Multi-Dimensional Testing (Future)
+
+The framework supports testing beyond language/framework comparisons:
+
+```
+Current:   implementation = [go-gin, rust-actix, java-spring3, ...]
+
+Future:    implementation × cpu × memory × startup_boost
+           = [go-gin, java-spring3] × [1, 2, 4] × [512Mi] × [true, false]
+           = 12 configurations to test
+```
+
+**Research questions this enables:**
+
+| Question | How |
+|----------|-----|
+| Does Go benefit from 4 CPUs as much as Java? | CPU scaling study |
+| Which languages benefit most from Startup Boost? | Boost on/off comparison |
+| What's the minimum viable config per language? | Cost optimization study |
+
+**How it stays Manager-agnostic:**
+
+1. Manager passes `agent_config` through untouched
+2. Agent interprets and runs whatever tests it wants
+3. Results come back tagged with `dimensions: {cpu: "2", boost: true, ...}`
+4. Manager aggregates and reports by any dimension
+
+See [CONFIG-EXTENSIBILITY.md](./CONFIG-EXTENSIBILITY.md) for complete patterns.
+
+---
+
 ## Repository Structure
 
 ```
@@ -223,6 +255,7 @@ cloudrun-service-grpc-unary/        ← gRPC services + Agent
 | [MULTI-REPO-PROPOSAL.md](./MULTI-REPO-PROPOSAL.md) | Full architecture + ADRs |
 | [PERF-MANAGER-SPEC.md](./PERF-MANAGER-SPEC.md) | Manager specification |
 | [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md) | Agent specification |
+| [CONFIG-EXTENSIBILITY.md](./CONFIG-EXTENSIBILITY.md) | Multi-dimensional testing patterns |
 
 ---
 
