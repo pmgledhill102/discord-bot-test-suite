@@ -3,11 +3,14 @@
 # Native AOT produces a self-contained executable that doesn't require
 # the .NET runtime, resulting in faster cold-start times and smaller images.
 
-# Build stage: .NET SDK with native compilation tools
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS builder
+# Build stage: .NET SDK with native compilation tools (Ubuntu for glibc compatibility)
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS builder
 
 # Install native compilation dependencies
-RUN apk add --no-cache clang build-base zlib-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    clang \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -21,23 +24,38 @@ COPY . .
 # Publish with Native AOT
 RUN dotnet publish -c Release -o out
 
-# Runtime stage: minimal image (no .NET runtime needed)
-FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine
+# Library stage: build libsodium 1.0.20 from source (NSec requires >= 1.0.20)
+FROM ubuntu:24.04 AS libs
 
-# Install libsodium for Ed25519 signature validation (NSec.Cryptography dependency)
-# Create symlink for unversioned library name (NSec looks for libsodium.so)
-RUN apk add --no-cache libsodium && \
-    ln -s /usr/lib/libsodium.so.26 /usr/lib/libsodium.so
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -L https://download.libsodium.org/libsodium/releases/libsodium-1.0.20-stable.tar.gz | tar xz \
+    && cd libsodium-stable \
+    && ./configure --prefix=/usr --disable-static \
+    && make -j$(nproc) \
+    && make install \
+    && mkdir -p /staging/lib \
+    && cp /usr/lib/libsodium.so.26* /staging/lib/ \
+    && ln -s libsodium.so.26 /staging/lib/libsodium.so
+
+# Runtime stage: Microsoft chiseled image (distroless-like, non-root by default)
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-noble-chiseled
+
+# Reduce glibc memory allocator arena count for lower memory usage
+ENV MALLOC_ARENA_MAX=2
 
 WORKDIR /app
+
+# Copy libsodium from libs stage (NSec.Cryptography dependency for Ed25519)
+COPY --from=libs /staging/lib/libsodium* /usr/lib/
 
 # Copy the native binary
 COPY --from=builder /app/out/DiscordWebhookNative /app/
 
-# Non-root user for security
-USER 1000
-
-# Expose port
+# Expose port (chiseled images run as non-root by default)
 EXPOSE 8080
 
 # Run the native binary directly
