@@ -67,17 +67,8 @@ jobs:
           echo "Auto-merge eligible: ${{ steps.check.outputs.eligible }}"
           echo "Reason: ${{ steps.check.outputs.reason }}"
 
-      - name: Wait for CI to pass
-        if: steps.check.outputs.eligible == 'true'
-        uses: lewagon/wait-on-check-action@v1.3.4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 30
-          running-workflow-name: Dependabot Auto-Merge
-          allowed-conclusions: success,skipped
-
       - name: Enable auto-merge
+        # gh pr merge --auto waits for required checks to pass before merging
         if: steps.check.outputs.eligible == 'true'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
