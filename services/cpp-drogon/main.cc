@@ -9,12 +9,12 @@
  */
 
 #include <drogon/drogon.h>
-#include <sodium.h>
 
 #include <chrono>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <sodium.h>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -75,8 +75,7 @@ std::vector<unsigned char> hexToBytes(const std::string& hex) {
     std::vector<unsigned char> bytes;
     bytes.reserve(hex.length() / 2);
     for (size_t i = 0; i < hex.length(); i += 2) {
-        unsigned char byte = static_cast<unsigned char>(
-            std::stoi(hex.substr(i, 2), nullptr, 16));
+        unsigned char byte = static_cast<unsigned char>(std::stoi(hex.substr(i, 2), nullptr, 16));
         bytes.push_back(byte);
     }
     return bytes;
@@ -85,8 +84,7 @@ std::vector<unsigned char> hexToBytes(const std::string& hex) {
 /**
  * Validate Discord Ed25519 signature
  */
-bool validateSignature(const std::string& signature_hex,
-                       const std::string& timestamp,
+bool validateSignature(const std::string& signature_hex, const std::string& timestamp,
                        const std::string& body) {
     if (signature_hex.empty() || timestamp.empty() || g_public_key.empty()) {
         return false;
@@ -120,11 +118,9 @@ bool validateSignature(const std::string& signature_hex,
     // Verify signature: verify(timestamp + body)
     std::string message = timestamp + body;
 
-    int result = crypto_sign_verify_detached(
-        signature.data(),
-        reinterpret_cast<const unsigned char*>(message.data()),
-        message.size(),
-        g_public_key.data());
+    int result = crypto_sign_verify_detached(signature.data(),
+                                             reinterpret_cast<const unsigned char*>(message.data()),
+                                             message.size(), g_public_key.data());
 
     return result == 0;
 }
@@ -147,16 +143,26 @@ Json::Value sanitizeInteraction(const Json::Value& interaction) {
     Json::Value sanitized;
 
     // Copy safe fields only (explicitly exclude "token")
-    if (interaction.isMember("type")) sanitized["type"] = interaction["type"];
-    if (interaction.isMember("id")) sanitized["id"] = interaction["id"];
-    if (interaction.isMember("application_id")) sanitized["application_id"] = interaction["application_id"];
-    if (interaction.isMember("data")) sanitized["data"] = interaction["data"];
-    if (interaction.isMember("guild_id")) sanitized["guild_id"] = interaction["guild_id"];
-    if (interaction.isMember("channel_id")) sanitized["channel_id"] = interaction["channel_id"];
-    if (interaction.isMember("member")) sanitized["member"] = interaction["member"];
-    if (interaction.isMember("user")) sanitized["user"] = interaction["user"];
-    if (interaction.isMember("locale")) sanitized["locale"] = interaction["locale"];
-    if (interaction.isMember("guild_locale")) sanitized["guild_locale"] = interaction["guild_locale"];
+    if (interaction.isMember("type"))
+        sanitized["type"] = interaction["type"];
+    if (interaction.isMember("id"))
+        sanitized["id"] = interaction["id"];
+    if (interaction.isMember("application_id"))
+        sanitized["application_id"] = interaction["application_id"];
+    if (interaction.isMember("data"))
+        sanitized["data"] = interaction["data"];
+    if (interaction.isMember("guild_id"))
+        sanitized["guild_id"] = interaction["guild_id"];
+    if (interaction.isMember("channel_id"))
+        sanitized["channel_id"] = interaction["channel_id"];
+    if (interaction.isMember("member"))
+        sanitized["member"] = interaction["member"];
+    if (interaction.isMember("user"))
+        sanitized["user"] = interaction["user"];
+    if (interaction.isMember("locale"))
+        sanitized["locale"] = interaction["locale"];
+    if (interaction.isMember("guild_locale"))
+        sanitized["guild_locale"] = interaction["guild_locale"];
 
     return sanitized;
 }
@@ -186,10 +192,12 @@ void publishToPubSub(const Json::Value& interaction) {
         pubsubMsg["messages"][0]["attributes"]["interaction_id"] = sanitized["id"].asString();
     }
     if (sanitized.isMember("type")) {
-        pubsubMsg["messages"][0]["attributes"]["interaction_type"] = std::to_string(sanitized["type"].asInt());
+        pubsubMsg["messages"][0]["attributes"]["interaction_type"] =
+            std::to_string(sanitized["type"].asInt());
     }
     if (sanitized.isMember("application_id")) {
-        pubsubMsg["messages"][0]["attributes"]["application_id"] = sanitized["application_id"].asString();
+        pubsubMsg["messages"][0]["attributes"]["application_id"] =
+            sanitized["application_id"].asString();
     }
     if (sanitized.isMember("guild_id")) {
         pubsubMsg["messages"][0]["attributes"]["guild_id"] = sanitized["guild_id"].asString();
@@ -198,7 +206,8 @@ void publishToPubSub(const Json::Value& interaction) {
         pubsubMsg["messages"][0]["attributes"]["channel_id"] = sanitized["channel_id"].asString();
     }
     if (sanitized.isMember("data") && sanitized["data"].isMember("name")) {
-        pubsubMsg["messages"][0]["attributes"]["command_name"] = sanitized["data"]["name"].asString();
+        pubsubMsg["messages"][0]["attributes"]["command_name"] =
+            sanitized["data"]["name"].asString();
     }
 
     // Get current timestamp
@@ -211,8 +220,7 @@ void publishToPubSub(const Json::Value& interaction) {
     std::string requestBody = Json::writeString(writer, pubsubMsg);
 
     // Build URL: http://{emulator}/v1/projects/{project}/topics/{topic}:publish
-    std::string url = "http://" + g_pubsub_emulator_host +
-                      "/v1/projects/" + g_project_id +
+    std::string url = "http://" + g_pubsub_emulator_host + "/v1/projects/" + g_project_id +
                       "/topics/" + g_pubsub_topic + ":publish";
 
     // Parse host and port from emulator host
@@ -240,8 +248,8 @@ void publishToPubSub(const Json::Value& interaction) {
         if (resp->getStatusCode() == k200OK) {
             LOG_INFO << "Published to Pub/Sub successfully";
         } else {
-            LOG_ERROR << "Pub/Sub publish failed: HTTP " << resp->getStatusCode()
-                      << " - " << resp->body();
+            LOG_ERROR << "Pub/Sub publish failed: HTTP " << resp->getStatusCode() << " - "
+                      << resp->body();
         }
     } else {
         LOG_ERROR << "Pub/Sub publish failed: connection error";
@@ -262,9 +270,7 @@ HttpResponsePtr handlePing() {
  */
 HttpResponsePtr handleApplicationCommand(const Json::Value& interaction) {
     // Publish to Pub/Sub in background
-    std::thread([interaction]() {
-        publishToPubSub(interaction);
-    }).detach();
+    std::thread([interaction]() { publishToPubSub(interaction); }).detach();
 
     // Respond with deferred response (non-ephemeral)
     Json::Value response;
@@ -369,13 +375,15 @@ int main() {
     const char* project_id = std::getenv("GOOGLE_CLOUD_PROJECT");
     const char* topic_name = std::getenv("PUBSUB_TOPIC");
     const char* emulator_host = std::getenv("PUBSUB_EMULATOR_HOST");
-    if (project_id) g_project_id = project_id;
-    if (topic_name) g_pubsub_topic = topic_name;
-    if (emulator_host) g_pubsub_emulator_host = emulator_host;
+    if (project_id)
+        g_project_id = project_id;
+    if (topic_name)
+        g_pubsub_topic = topic_name;
+    if (emulator_host)
+        g_pubsub_emulator_host = emulator_host;
 
     if (!g_pubsub_emulator_host.empty() && !g_project_id.empty() && !g_pubsub_topic.empty()) {
-        std::cout << "Pub/Sub configured: " << g_pubsub_emulator_host
-                  << " project=" << g_project_id
+        std::cout << "Pub/Sub configured: " << g_pubsub_emulator_host << " project=" << g_project_id
                   << " topic=" << g_pubsub_topic << std::endl;
     }
 
