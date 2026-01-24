@@ -133,10 +133,11 @@ pre-commit run --all-files
 
 ### C# (csharp-aspnet, csharp-aspnet-native)
 
-- **Tool**: dotnet format
+- **Tool**: dotnet format whitespace
 - **Config**: Default .NET formatting settings
-- **CI**: `dotnet format --verify-no-changes`
+- **CI**: `dotnet format whitespace --verify-no-changes`
 - **Pre-commit**: Local hooks with HUMAN_HERE wrapper
+- **Note**: Uses `whitespace` subcommand to avoid false positives from analyzer warnings (e.g., AOT IL2026/IL3050)
 
 ### Kotlin (kotlin-ktor)
 

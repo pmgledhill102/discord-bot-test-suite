@@ -173,13 +173,13 @@ repos:
     hooks:
       - id: dotnet-format-csharp-aspnet
         name: dotnet format csharp-aspnet (agent-only)
-        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/csharp-aspnet && dotnet format --verify-no-changes'
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/csharp-aspnet && dotnet format whitespace --verify-no-changes'
         language: system
         files: ^services/csharp-aspnet/.*\.cs$
         pass_filenames: false
       - id: dotnet-format-csharp-aspnet-native
         name: dotnet format csharp-aspnet-native (agent-only)
-        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/csharp-aspnet-native && dotnet format --verify-no-changes'
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/csharp-aspnet-native && dotnet format whitespace --verify-no-changes'
         language: system
         files: ^services/csharp-aspnet-native/.*\.cs$
         pass_filenames: false

@@ -50,7 +50,7 @@ jobs:
 
       - name: Check code formatting
         working-directory: services/csharp-aspnet-native
-        run: dotnet format --verify-no-changes
+        run: dotnet format whitespace --verify-no-changes
 
       - name: Build (check for compilation errors)
         working-directory: services/csharp-aspnet-native
