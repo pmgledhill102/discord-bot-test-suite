@@ -1,14 +1,11 @@
 # Rust/Actix-web Discord webhook service
-# Multi-stage build for smaller final image
+# Optimized multi-stage build with musl for static linking
 
-# Build stage
-FROM rust:1.93-slim-bookworm AS builder
+# Build stage - Alpine with musl
+FROM rust:1.93-alpine AS builder
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    pkg-config \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Install musl build dependencies
+RUN apk add --no-cache musl-dev
 
 WORKDIR /app
 
@@ -27,16 +24,10 @@ COPY src ./src
 # Build for release (touch to ensure rebuild)
 RUN touch src/main.rs && cargo build --release
 
-# Runtime stage
-FROM debian:bookworm-slim
+# Runtime stage - distroless static (minimal ~2MB base)
+FROM gcr.io/distroless/static-debian12
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    libssl3 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy binary from builder
+# Copy statically linked binary from builder
 COPY --from=builder /app/target/release/discord-webhook-service /server
 
 # Expose port
