@@ -12,6 +12,7 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -19,7 +20,8 @@ import (
 	"strconv"
 	"time"
 
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub/v2"
+	pubsubpb "cloud.google.com/go/pubsub/v2/apiv1/pubsubpb"
 	"github.com/gin-gonic/gin"
 )
 
@@ -57,10 +59,10 @@ type InteractionResponse struct {
 }
 
 var (
-	publicKey    ed25519.PublicKey
-	pubsubClient *pubsub.Client
-	pubsubTopic  *pubsub.Topic
-	projectID    string
+	publicKey       ed25519.PublicKey
+	pubsubClient    *pubsub.Client
+	pubsubPublisher *pubsub.Publisher
+	projectID       string
 )
 
 func main() {
@@ -91,17 +93,24 @@ func main() {
 		if err != nil {
 			log.Printf("Warning: Failed to create Pub/Sub client: %v", err)
 		} else {
-			pubsubTopic = pubsubClient.Topic(topicName)
+			topicPath := fmt.Sprintf("projects/%s/topics/%s", projectID, topicName)
+
 			// Ensure topic exists (for emulator, create if not exists)
-			exists, err := pubsubTopic.Exists(ctx)
+			_, err := pubsubClient.TopicAdminClient.GetTopic(ctx, &pubsubpb.GetTopicRequest{
+				Topic: topicPath,
+			})
 			if err != nil {
-				log.Printf("Warning: Failed to check topic existence: %v", err)
-			} else if !exists {
-				pubsubTopic, err = pubsubClient.CreateTopic(ctx, topicName)
+				// Topic doesn't exist, create it
+				_, err = pubsubClient.TopicAdminClient.CreateTopic(ctx, &pubsubpb.Topic{
+					Name: topicPath,
+				})
 				if err != nil {
 					log.Printf("Warning: Failed to create topic: %v", err)
 				}
 			}
+
+			// Create publisher for the topic
+			pubsubPublisher = pubsubClient.Publisher(topicPath)
 		}
 	}
 
@@ -193,7 +202,7 @@ func handlePing(c *gin.Context) {
 
 func handleApplicationCommand(c *gin.Context, interaction *Interaction) {
 	// Publish to Pub/Sub (if configured)
-	if pubsubTopic != nil {
+	if pubsubPublisher != nil {
 		go publishToPubSub(interaction)
 	}
 
@@ -226,27 +235,30 @@ func publishToPubSub(interaction *Interaction) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Build message with attributes
-	msg := &pubsub.Message{
-		Data: data,
-		Attributes: map[string]string{
-			"interaction_id":   interaction.ID,
-			"interaction_type": strconv.Itoa(interaction.Type),
-			"application_id":   interaction.ApplicationID,
-			"guild_id":         interaction.GuildID,
-			"channel_id":       interaction.ChannelID,
-			"timestamp":        time.Now().UTC().Format(time.RFC3339),
-		},
+	// Build attributes
+	attributes := map[string]string{
+		"interaction_id":   interaction.ID,
+		"interaction_type": strconv.Itoa(interaction.Type),
+		"application_id":   interaction.ApplicationID,
+		"guild_id":         interaction.GuildID,
+		"channel_id":       interaction.ChannelID,
+		"timestamp":        time.Now().UTC().Format(time.RFC3339),
 	}
 
 	// Add command name if available
 	if interaction.Data != nil {
 		if name, ok := interaction.Data["name"].(string); ok {
-			msg.Attributes["command_name"] = name
+			attributes["command_name"] = name
 		}
 	}
 
-	result := pubsubTopic.Publish(ctx, msg)
+	// Build message
+	msg := &pubsub.Message{
+		Data:       data,
+		Attributes: attributes,
+	}
+
+	result := pubsubPublisher.Publish(ctx, msg)
 	if _, err := result.Get(ctx); err != nil {
 		log.Printf("Failed to publish to Pub/Sub: %v", err)
 	}
