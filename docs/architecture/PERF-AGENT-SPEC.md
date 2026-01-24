@@ -33,32 +33,232 @@ Each service type has exactly one Perf Agent. The Agent handles all service-spec
 
 ### Must Do
 
-1. **Accept standard invocation** - Implement `/benchmark` endpoint
-2. **Test implementations** - Execute cold start and warm request measurements
-3. **Validate contracts** - Run contract tests against services
-4. **Return standard results** - Use the defined response schema
-5. **Handle errors gracefully** - Report failures without crashing
+1. **Implement phased API** - `/deploy`, `/measure`, `/status`, `/cleanup` endpoints
+2. **Deploy services** - Deploy implementations to Cloud Run with specified configurations
+3. **Schedule measurement** - Create Cloud Scheduler job to trigger measurement phase
+4. **Manage state in GCS** - Write deployment manifests, status, and results to GCS
+5. **Test implementations** - Execute cold start and warm request measurements
+6. **Validate contracts** - Run contract tests against services
+7. **Return standard results** - Use the defined response schema
+8. **Handle errors gracefully** - Report failures, enable recovery
 
 ### May Do
 
-1. **Deploy services** - If services aren't pre-deployed
-2. **Manage dependencies** - Set up databases, message queues, etc.
-3. **Custom metrics** - Include service-type-specific measurements
-4. **Caching** - Cache test artifacts for efficiency
+1. **Manage dependencies** - Set up databases, message queues, etc.
+2. **Custom metrics** - Include service-type-specific measurements
+3. **Parallel deployment** - Deploy multiple services concurrently
 
 ### Must NOT Do
 
 1. **Expose service internals** - Results must be protocol-agnostic
 2. **Require Manager changes** - New Agents work with existing Manager
 3. **Break the interface** - Must conform to response schema
+4. **Wait for scale-to-zero** - Use scheduled execution instead
+
+---
+
+## Phased Execution Model
+
+The Agent implements a two-phase benchmark execution to avoid idle compute time while waiting for services to scale to zero.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PHASE 1: DEPLOYMENT                           │
+│                                                                  │
+│  Perf Manager ──► POST /deploy ──► Agent deploys services       │
+│                                    Agent writes manifest to GCS  │
+│                                    Agent schedules measurement   │
+│                                    Agent returns immediately     │
+│                                                                  │
+│  Duration: ~2-5 minutes (active compute)                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ 15-20 minutes (NO COMPUTE RUNNING)
+                              │ Services scale to zero
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    PHASE 2: MEASUREMENT                          │
+│                                                                  │
+│  Cloud Scheduler ──► POST /measure ──► Agent reads manifest     │
+│                                        Agent measures cold start │
+│                                        Agent measures warm reqs  │
+│                                        Agent writes results      │
+│                                                                  │
+│  Duration: ~15-30 minutes (active compute)                      │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Standard API
 
-### Endpoint: POST /benchmark
+### Endpoint: POST /deploy
 
-**Purpose:** Execute benchmark suite for this service type.
+**Purpose:** Deploy services and schedule measurement phase.
+
+**Request:**
+```http
+POST /deploy HTTP/1.1
+Host: discord-perf-agent-xxxxx-uc.a.run.app
+Authorization: Bearer <identity-token>
+Content-Type: application/json
+
+{
+  "run_id": "2026-01-24-abc123",
+  "benchmark_config": {
+    "cold_start_iterations": 10,
+    "warm_request_count": 100,
+    "warm_request_concurrency": 10
+  },
+  "agent_config": {
+    "implementations": ["go-gin", "rust-actix"],
+    "test_matrix": {
+      "cpu": ["1", "2"],
+      "startup_boost": [true]
+    }
+  },
+  "schedule": {
+    "measure_delay_minutes": 20
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "status": "deploying",
+  "services_to_deploy": 4,
+  "measure_scheduled_at": "2026-01-24T14:20:00Z",
+  "state_url": "gs://perf-benchmark-state/runs/2026-01-24-abc123/discord-webhook/",
+  "scheduler_job": "discord-measure-2026-01-24-abc123"
+}
+```
+
+**What the Agent does:**
+1. Validates request
+2. Expands configuration matrix (e.g., 2 impls × 2 CPUs = 4 deployments)
+3. Deploys services to Cloud Run (parallel)
+4. Writes deployment manifest to GCS
+5. Creates Cloud Scheduler job for measurement phase
+6. Returns immediately (does NOT wait for scale-to-zero)
+
+---
+
+### Endpoint: POST /measure
+
+**Purpose:** Execute measurements against deployed services (triggered by Cloud Scheduler).
+
+**Request:**
+```http
+POST /measure HTTP/1.1
+Host: discord-perf-agent-xxxxx-uc.a.run.app
+Authorization: Bearer <identity-token>
+Content-Type: application/json
+
+{
+  "run_id": "2026-01-24-abc123"
+}
+```
+
+**Response:**
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "status": "measuring",
+  "results_url": "gs://perf-benchmark-state/runs/2026-01-24-abc123/discord-webhook/results.json"
+}
+```
+
+**What the Agent does:**
+1. Reads deployment manifest from GCS
+2. Verifies services are at zero instances (optional check)
+3. For each deployed service:
+   - Runs contract validation
+   - Measures cold starts (N iterations)
+   - Measures warm requests
+4. Writes results to GCS
+5. Optionally publishes completion event to Pub/Sub
+6. Deletes the Cloud Scheduler job (one-time execution)
+
+---
+
+### Endpoint: GET /status/{run_id}
+
+**Purpose:** Check progress of a benchmark run.
+
+**Response:**
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "service_type": "discord-webhook",
+  "phase": "measuring",
+  "progress": {
+    "total_services": 4,
+    "deployed": 4,
+    "measured": 2
+  },
+  "timestamps": {
+    "deploy_started": "2026-01-24T14:00:00Z",
+    "deploy_completed": "2026-01-24T14:03:00Z",
+    "measure_started": "2026-01-24T14:20:00Z",
+    "measure_completed": null
+  },
+  "errors": []
+}
+```
+
+**Phase values:** `pending`, `deploying`, `waiting`, `measuring`, `completed`, `failed`
+
+---
+
+### Endpoint: POST /cleanup
+
+**Purpose:** Remove deployed services and clean up resources.
+
+**Request:**
+```http
+POST /cleanup HTTP/1.1
+Host: discord-perf-agent-xxxxx-uc.a.run.app
+Authorization: Bearer <identity-token>
+Content-Type: application/json
+
+{
+  "run_id": "2026-01-24-abc123"
+}
+```
+
+**Response:**
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "services_deleted": 4,
+  "scheduler_job_deleted": true
+}
+```
+
+---
+
+### Endpoint: GET /health
+
+**Purpose:** Health check for the Agent itself.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "version": "1.2.0",
+  "service_type": "discord-webhook"
+}
+```
+
+---
+
+## Legacy Endpoint: POST /benchmark
+
+**Purpose:** Single-phase benchmark execution (for backwards compatibility or simple cases).
+
+**Note:** This endpoint performs deployment, waits, and measurement in a single call. Use only for quick tests or debugging. For production benchmarks, use the phased `/deploy` + `/measure` pattern.
 
 **Request:**
 ```http
@@ -202,6 +402,183 @@ Content-Type: application/json
 
 ---
 
+## GCS State Management
+
+The Agent uses GCS to persist state between phases, enabling recovery from failures and coordination with the Perf Manager.
+
+### State Structure
+
+```
+gs://perf-benchmark-state/
+├── runs/
+│   └── {run_id}/
+│       └── {service_type}/
+│           ├── deployment-manifest.json    # Services deployed
+│           ├── deployment-status.json      # Deployment progress
+│           ├── measurement-status.json     # Measurement progress
+│           └── results.json                # Final results
+```
+
+### Deployment Manifest Schema
+
+Written by `/deploy`, read by `/measure`:
+
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "service_type": "discord-webhook",
+  "agent_version": "1.2.0",
+  "deployed_at": "2026-01-24T14:00:00Z",
+  "measure_scheduled_at": "2026-01-24T14:20:00Z",
+  "scheduler_job_name": "discord-measure-2026-01-24-abc123",
+  "benchmark_config": {
+    "cold_start_iterations": 10,
+    "warm_request_count": 100,
+    "warm_request_concurrency": 10
+  },
+  "services": [
+    {
+      "implementation": "go-gin",
+      "service_name": "discord-go-gin-abc123-cpu1",
+      "service_url": "https://discord-go-gin-abc123-cpu1-xxxxx-uc.a.run.app",
+      "image": "us-central1-docker.pkg.dev/project/repo/discord-go-gin:latest",
+      "dimensions": {
+        "implementation": "go-gin",
+        "cpu": "1",
+        "memory": "512Mi",
+        "startup_boost": true
+      },
+      "deployed_at": "2026-01-24T14:01:23Z",
+      "status": "deployed"
+    },
+    {
+      "implementation": "go-gin",
+      "service_name": "discord-go-gin-abc123-cpu2",
+      "service_url": "https://discord-go-gin-abc123-cpu2-xxxxx-uc.a.run.app",
+      "dimensions": {
+        "implementation": "go-gin",
+        "cpu": "2",
+        "memory": "512Mi",
+        "startup_boost": true
+      },
+      "deployed_at": "2026-01-24T14:01:45Z",
+      "status": "deployed"
+    }
+  ]
+}
+```
+
+### Status File Schema
+
+Updated during execution:
+
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "phase": "measuring",
+  "started_at": "2026-01-24T14:20:00Z",
+  "updated_at": "2026-01-24T14:25:00Z",
+  "progress": {
+    "total": 4,
+    "completed": 2,
+    "failed": 0
+  },
+  "current_service": "discord-rust-actix-abc123-cpu1",
+  "errors": []
+}
+```
+
+---
+
+## Cloud Scheduler Integration
+
+The Agent creates one-time Cloud Scheduler jobs to trigger the measurement phase.
+
+### Creating the Scheduler Job
+
+```go
+func (a *Agent) scheduleMeasurement(runID string, delay time.Duration) error {
+    ctx := context.Background()
+
+    // Calculate execution time
+    executeAt := time.Now().Add(delay)
+
+    // Create scheduler job
+    job := &schedulerpb.Job{
+        Name: fmt.Sprintf("projects/%s/locations/%s/jobs/%s-measure-%s",
+            a.project, a.region, a.serviceType, runID),
+        Schedule: executeAt.Format("05 04 15 02 01 ?"), // One-time cron
+        HttpTarget: &schedulerpb.HttpTarget{
+            Uri:        fmt.Sprintf("https://%s/measure", a.agentURL),
+            HttpMethod: schedulerpb.HttpMethod_POST,
+            Body:       []byte(fmt.Sprintf(`{"run_id":"%s"}`, runID)),
+            Headers:    map[string]string{"Content-Type": "application/json"},
+            OidcToken: &schedulerpb.OidcToken{
+                ServiceAccountEmail: a.serviceAccount,
+            },
+        },
+    }
+
+    _, err := a.schedulerClient.CreateJob(ctx, &schedulerpb.CreateJobRequest{
+        Parent: fmt.Sprintf("projects/%s/locations/%s", a.project, a.region),
+        Job:    job,
+    })
+
+    return err
+}
+```
+
+### Cleaning Up the Scheduler Job
+
+After measurement completes (or on cleanup):
+
+```go
+func (a *Agent) deleteSchedulerJob(runID string) error {
+    ctx := context.Background()
+
+    jobName := fmt.Sprintf("projects/%s/locations/%s/jobs/%s-measure-%s",
+        a.project, a.region, a.serviceType, runID)
+
+    return a.schedulerClient.DeleteJob(ctx, &schedulerpb.DeleteJobRequest{
+        Name: jobName,
+    })
+}
+```
+
+### Alternative: Cloud Tasks
+
+For more precise timing, Cloud Tasks can be used instead of Cloud Scheduler:
+
+```go
+func (a *Agent) scheduleMeasurementWithTasks(runID string, delay time.Duration) error {
+    ctx := context.Background()
+
+    task := &taskspb.Task{
+        ScheduleTime: timestamppb.New(time.Now().Add(delay)),
+        MessageType: &taskspb.Task_HttpRequest{
+            HttpRequest: &taskspb.HttpRequest{
+                Url:        fmt.Sprintf("https://%s/measure", a.agentURL),
+                HttpMethod: taskspb.HttpMethod_POST,
+                Body:       []byte(fmt.Sprintf(`{"run_id":"%s"}`, runID)),
+                OidcToken: &taskspb.OidcToken{
+                    ServiceAccountEmail: a.serviceAccount,
+                },
+            },
+        },
+    }
+
+    _, err := a.tasksClient.CreateTask(ctx, &taskspb.CreateTaskRequest{
+        Parent: fmt.Sprintf("projects/%s/locations/%s/queues/%s",
+            a.project, a.region, "perf-measure-queue"),
+        Task: task,
+    })
+
+    return err
+}
+```
+
+---
+
 ## Implementation Guide
 
 ### Agent Structure
@@ -213,8 +590,14 @@ cloudrun-service-{type}/
 │   ├── main.go                    # Entry point
 │   ├── internal/
 │   │   ├── api/
-│   │   │   ├── handlers.go        # HTTP handlers
+│   │   │   ├── handlers.go        # HTTP handlers (deploy, measure, status, cleanup)
 │   │   │   └── middleware.go      # Auth, logging
+│   │   ├── deploy/
+│   │   │   ├── deployer.go        # Cloud Run deployment
+│   │   │   └── scheduler.go       # Cloud Scheduler/Tasks integration
+│   │   ├── state/
+│   │   │   ├── gcs.go             # GCS state management
+│   │   │   └── manifest.go        # Manifest read/write
 │   │   ├── benchmark/
 │   │   │   ├── executor.go        # Orchestrates benchmark
 │   │   │   ├── coldstart.go       # Cold start measurement

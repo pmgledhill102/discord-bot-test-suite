@@ -62,8 +62,8 @@
 | 3 | **GCS-based registry** | Pluggable, no Manager changes for new types |
 | 4 | **Service account auth** | Native GCP, no secrets to manage |
 | 5 | **Manifest schema validation** | Catch errors early in CI |
-| 6 | **Always-deployed Agents** | Only 5-6 agents, immediate availability |
-| 7 | **Pre-deployed services (scaled to zero)** | Zero idle cost, true cold starts |
+| 6 | **Always-deployed Agents** | Only 5-6 agents, immediate availability for scheduling |
+| 7 | **Phased scheduled execution** | No idle compute waiting for scale-to-zero |
 | 8 | **Opaque agent config with dimension tags** | Multi-dimensional testing without Manager changes |
 
 ---
@@ -105,21 +105,37 @@ uploads manifest                    │   ├── rest-crud.yaml   │
 
 Cloud Run services take ~15 minutes to scale to zero after deployment. Cold start benchmarks require services at zero.
 
-### Solution
+### Solution: Phased Scheduled Execution
+
+```
+Phase 1: Deploy (~5 min)     Phase 2: Measure (~20 min)
+┌─────────┐                  ┌─────────┐
+│ Deploy  │───── 15-20 min ─►│ Measure │
+│ services│   (no compute)   │ cold    │
+└─────────┘                  │ starts  │
+     │                       └─────────┘
+     │
+     └──► Schedule via Cloud Scheduler
+```
+
+**No idle compute** during the scale-to-zero wait.
+
+### Component Hosting
 
 | Component | Strategy | Why |
 |-----------|----------|-----|
-| **Perf Agents** (5-6) | Always deployed | Few in number, need immediate availability |
-| **Services under test** (100+) | Deployed via CI, scaled to zero | Zero idle cost, already at zero when benchmark runs |
-| **Perf Manager** | Cloud Run Job | Triggered on schedule, no idle cost |
+| **Perf Agents** (5-6) | Always deployed | Need to be available for scheduling |
+| **Services under test** | Deployed per run, cleaned up after | Enables configuration matrix testing |
+| **Perf Manager** | Cloud Run Job | Orchestrates phased execution |
+| **Phase coordination** | Cloud Scheduler + GCS state | Efficient, reliable |
 
 ### Cost Impact
 
-| Component | Idle Cost |
-|-----------|-----------|
-| 6 Perf Agents | ~$30-60/month |
-| 114 Services (at zero) | $0/month |
-| Per benchmark run | ~$5-15 |
+| Approach | Compute Time | Cost per Run |
+|----------|--------------|--------------|
+| Wait in agent | 210 min | ~$10.50 |
+| Phased scheduled | ~27 min active | ~$2.70 |
+| **Savings** | 183 min | **74%** |
 
 ---
 

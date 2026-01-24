@@ -659,95 +659,215 @@ Perf Manager:
 | **Failure handling** | Simple | Need idempotency | Need idempotency |
 | **Observability** | Good | Split across jobs | Split, needs tracing |
 
-**Verdict:** ⚠️ **C1 is simplest if job timeout allows**
+**Verdict:** ⚠️ **C2 (Scheduled) is recommended** - More complex but much more efficient
 
 ---
 
-### Option D: Hybrid - Pre-deployed Services with On-Demand Measurement
+### Option D: Pre-deployed Services (Steady State)
 
-**Description:** Keep services deployed (but scaled to zero), only invoke the Agent for measurement.
+**Description:** Services remain deployed between benchmark runs. If last request was >15 minutes ago, they're already at zero.
 
-```
-Services: Always deployed, scaled to zero (no cost when idle)
-Agent: Invoked on-demand, measures cold start, returns results
-```
+**Limitation:** Only works for steady-state testing. Doesn't support configuration matrix testing (CPU scaling, memory studies) which requires deploying services with different configurations.
 
-This is essentially the current model, but with recognition that Cloud Run's scale-to-zero means "deployed" services cost nothing when idle.
-
-**Key insight:** The 15-minute wait is only needed after *deployment* or *last request*. If services are deployed but haven't received traffic for >15 minutes, they're already at zero.
-
-**Workflow:**
-1. Services deployed once (via CI on merge)
-2. Benchmark run starts
-3. Services are already at zero (deployed hours/days ago)
-4. Agent measures cold start immediately
-5. No 15-minute wait needed!
-
-| Aspect | Assessment |
-|--------|------------|
-| **Cost** | ✅ Zero for idle services (Gen2 Cloud Run). |
-| **Cold start accuracy** | ✅ True cold start (services at zero for extended time). |
-| **Complexity** | ✅ Simple orchestration. |
-| **Freshness** | ⚠️ Must redeploy when code changes (handled by CI). |
-
-**Verdict:** ✅ **Recommended approach**
+**Verdict:** ⚠️ **Useful for simple cases, but doesn't support multi-dimensional testing**
 
 ---
 
-### Recommended Strategy
+### Recommended Strategy: Phased Scheduled Execution
 
-**For Perf Agents (5-6 total):**
-- **Always-deployed Cloud Run services**
-- Minimal cost for a small number of agents
-- Immediate availability
-- Simple invocation
+**Decision:** Option C2 - Two-phase scheduled execution
 
-**For Services Under Test (100+ total):**
-- **Deployed via CI, remain deployed, scaled to zero**
-- Cloud Run Gen2 has no minimum instance charge
-- Services naturally at zero between benchmark runs
-- Cold start measurement begins immediately
+This approach separates deployment from measurement, avoiding idle compute time while waiting for scale-to-zero.
 
-**For Benchmark Orchestration:**
-- Perf Manager invokes Agent
-- Agent doesn't deploy services (already deployed)
-- Agent calls service endpoint, measures response time
-- If service was recently active (not at zero), Agent waits or flags the measurement
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            BENCHMARK TIMELINE                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  T+0min        T+1min                    T+20min           T+35min          │
+│    │             │                          │                 │             │
+│    ▼             ▼                          ▼                 ▼             │
+│  ┌─────┐     ┌─────┐                    ┌─────┐          ┌─────┐           │
+│  │Start│────►│Deploy│────► (idle) ────►│Measure│────────►│Report│          │
+│  │ Job │     │Phase │     No compute    │ Phase│         │      │          │
+│  └─────┘     └─────┘      running!      └─────┘          └─────┘           │
+│                │                           │                                 │
+│                │     Services scale        │                                 │
+│                │     to zero during        │                                 │
+│                │     this window           │                                 │
+│                │                           │                                 │
+│           Agent exits               Agent invoked                           │
+│           after deploy              via Cloud Scheduler                     │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-**Scale-to-Zero Detection:**
-```go
-// Agent can check if service is at zero via Cloud Run Admin API
-instances := getActiveInstances(serviceName)
-if instances > 0 {
-    // Service is warm - either wait or skip/flag this measurement
-    log.Warn("Service not at zero, measurement may not reflect cold start")
+**Phased Execution Flow:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PHASE 1: DEPLOYMENT                           │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Perf Manager invokes Agent /deploy endpoint                 │
+│  2. Agent deploys all services (parallel)                       │
+│  3. Agent writes deployment manifest to GCS                     │
+│  4. Agent schedules Phase 2 via Cloud Scheduler (T+20min)       │
+│  5. Agent returns immediately (no waiting)                      │
+│                                                                  │
+│  Duration: ~2-5 minutes                                         │
+│  Compute: Active only during deployment                         │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ 15-20 minutes pass
+                              │ (no compute running)
+                              │ Services scale to zero
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    PHASE 2: MEASUREMENT                          │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Cloud Scheduler triggers Agent /measure endpoint            │
+│  2. Agent reads deployment manifest from GCS                    │
+│  3. Agent measures cold starts (services now at zero)           │
+│  4. Agent measures warm requests                                │
+│  5. Agent writes results to GCS                                 │
+│  6. Agent notifies completion (optional: Pub/Sub)               │
+│                                                                  │
+│  Duration: ~15-30 minutes                                       │
+│  Compute: Active only during measurement                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    PHASE 3: AGGREGATION                          │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Perf Manager polls GCS for results (or receives Pub/Sub)    │
+│  2. Perf Manager aggregates results from all Agents             │
+│  3. Perf Manager generates reports                              │
+│  4. Perf Manager triggers cleanup (optional)                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Agent API for Phased Execution:**
+
+| Endpoint | Purpose | Triggered By |
+|----------|---------|--------------|
+| `POST /deploy` | Deploy services, schedule measurement | Perf Manager |
+| `POST /measure` | Measure cold starts and warm requests | Cloud Scheduler |
+| `GET /status/{run_id}` | Check progress of a run | Perf Manager (polling) |
+| `POST /cleanup` | Remove deployed services | Perf Manager |
+
+**GCS State Management:**
+
+```
+gs://perf-benchmark-state/
+├── runs/
+│   └── {run_id}/
+│       ├── deployment-manifest.json    # Written by /deploy
+│       ├── deployment-status.json      # Updated during deployment
+│       ├── measurement-status.json     # Updated during measurement
+│       └── results.json                # Final results
+```
+
+**Deployment Manifest Example:**
+```json
+{
+  "run_id": "2026-01-24-abc123",
+  "service_type": "discord-webhook",
+  "deployed_at": "2026-01-24T14:00:00Z",
+  "measure_scheduled_at": "2026-01-24T14:20:00Z",
+  "services": [
+    {
+      "implementation": "go-gin",
+      "service_name": "discord-go-gin-abc123",
+      "service_url": "https://discord-go-gin-abc123-xxxxx-uc.a.run.app",
+      "dimensions": {"implementation": "go-gin", "cpu": "1", "memory": "512Mi"}
+    },
+    {
+      "implementation": "rust-actix",
+      "service_name": "discord-rust-actix-abc123",
+      "service_url": "https://discord-rust-actix-abc123-xxxxx-uc.a.run.app",
+      "dimensions": {"implementation": "rust-actix", "cpu": "1", "memory": "512Mi"}
+    }
+  ]
 }
+```
+
+**Benefits of Phased Approach:**
+
+| Aspect | Benefit |
+|--------|---------|
+| **Compute efficiency** | No idle time waiting for scale-to-zero |
+| **Cost** | Pay only for active deployment/measurement |
+| **Parallelism** | All agents can deploy simultaneously |
+| **Scalability** | Works for 100+ services across matrix configurations |
+| **Reliability** | State persisted in GCS survives failures |
+
+**Trade-offs:**
+
+| Complexity | Mitigation |
+|------------|------------|
+| Cloud Scheduler setup | Terraform module provided |
+| State management in GCS | Clear schema, idempotent operations |
+| Split observability | Structured logging with run_id correlation |
+| Failure recovery | Status files enable retry of failed phases |
+
+**Failure Handling:**
+
+```
+If deployment fails midway:
+  1. Status file shows partial deployment
+  2. Measurement phase skips undeployed services
+  3. Results marked as partial
+  4. Cleanup removes deployed services
+
+If measurement phase fails to trigger:
+  1. Perf Manager detects timeout (no results after T+45min)
+  2. Perf Manager can manually trigger /measure
+  3. Or mark run as failed and cleanup
+
+If measurement fails midway:
+  1. Partial results written to GCS
+  2. Status shows which services measured
+  3. Can retry measurement for remaining services
 ```
 
 ---
 
 ### Cost Analysis
 
-**Always-deployed Agents (recommended):**
+**Phased execution cost model:**
+
+| Phase | Duration | Compute Cost |
+|-------|----------|--------------|
+| Deploy (6 agents parallel) | ~5 min | ~$0.50 |
+| Wait for scale-to-zero | ~15-20 min | $0 (no compute) |
+| Measure (6 agents parallel) | ~20 min | ~$2.00 |
+| Aggregation | ~2 min | ~$0.20 |
+| **Total per full run** | ~45 min | **~$2.70** |
+
+**Comparison with "wait in agent" approach:**
+
+| Approach | Compute Time | Cost per Run |
+|----------|--------------|--------------|
+| Wait in agent | 6 × 35 min = 210 min | ~$10.50 |
+| Phased scheduled | ~27 min active | ~$2.70 |
+| **Savings** | 183 min | **~$7.80 (74%)** |
+
+**Always-deployed Agents:**
 
 | Component | Count | Monthly Cost (idle) |
 |-----------|-------|---------------------|
 | Perf Agents | 6 | ~$30-60 |
-| **Total Agents** | | **~$30-60/month** |
 
-**Services under test (deployed, scaled to zero):**
+**Services under test (deployed per run, cleaned up after):**
 
-| Component | Count | Monthly Cost (idle) |
-|-----------|-------|---------------------|
-| Discord implementations | 19 | $0 (at zero) |
-| REST CRUD implementations | 19 | $0 (at zero) |
-| ... (4 more types) | 76 | $0 (at zero) |
-| **Total Services** | ~114 | **$0/month (idle)** |
+With phased execution, services can be deployed fresh for each run and cleaned up after, enabling configuration matrix testing (different CPU, memory, etc.).
 
-**Benchmark run cost (when actively testing):**
-- ~114 services × 10 cold starts × ~1 second = ~19 minutes of compute
-- Plus warm request testing
-- Estimated: $5-15 per full benchmark run
+| Scenario | Services Deployed | Cost |
+|----------|-------------------|------|
+| Simple (19 impl × 1 config) | 19 | ~$1/run |
+| CPU study (4 impl × 4 configs) | 16 | ~$1/run |
+| Full matrix (19 impl × 4 CPU × 2 boost) | 152 | ~$8/run |
 
 ---
 
@@ -755,9 +875,10 @@ if instances > 0 {
 
 | Component | Hosting Strategy | Rationale |
 |-----------|------------------|-----------|
-| Perf Agents | Always-deployed Cloud Run services | Few in number, need immediate availability |
-| Services under test | Deployed via CI, scaled to zero | Cost-free when idle, true cold starts |
-| Perf Manager | Cloud Run Job (triggered) | Runs periodically, no idle cost |
+| Perf Agents | Always-deployed Cloud Run services | Few in number, need immediate availability for scheduling |
+| Services under test | Deployed per run, cleaned up after | Enables configuration matrix testing |
+| Perf Manager | Cloud Run Job (triggered) | Orchestrates phased execution |
+| Phase coordination | Cloud Scheduler + GCS state | Efficient, no idle compute during scale-to-zero wait |
 
 ---
 
