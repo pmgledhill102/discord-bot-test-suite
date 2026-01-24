@@ -63,20 +63,21 @@ repos:
     hooks:
       - id: cspell
         name: cspell (agent-only)
-        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || npx cspell --no-progress "**/*.md" --exclude ".beads/**"'
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || npx cspell --no-progress "$@"' --
         language: system
         files: \.md$
-        pass_filenames: false
+        exclude: ^\.beads/
       - id: markdownlint
         name: markdownlint (agent-only)
-        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || npx markdownlint-cli2 "**/*.md" "#.beads/**" "#**/node_modules/**"'
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || npx markdownlint-cli2 "$@"' --
         language: system
         files: \.md$
-        pass_filenames: false
+        exclude: ^(\.beads/|.*node_modules/)
 
   # Go - golangci-lint v2 (agent-only - slower check)
   # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
-  # Note: CI uses golangci-lint v2.8.0 with --timeout=5m (same as .golangci.yml)
+  # Note: golangci-lint needs whole-package context for cross-file analysis,
+  # so we lint all files when any .go file changes (pass_filenames: false)
   - repo: local
     hooks:
       - id: golangci-lint-go-gin
@@ -106,13 +107,13 @@ repos:
     hooks:
       - id: rubocop
         name: rubocop ruby-rails (agent-only)
-        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/ruby-rails && rubocop --config .rubocop.yml'
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || rubocop --config services/ruby-rails/.rubocop.yml "$@"' --
         language: system
         files: ^services/ruby-rails/.*\.rb$
-        pass_filenames: false
 
   # TypeScript/JavaScript - ESLint (agent-only - slower check)
   # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  # Note: Each service has only 1 source file, so we lint all when any changes
   - repo: local
     hooks:
       - id: eslint-typescript-fastify
@@ -134,10 +135,9 @@ repos:
     hooks:
       - id: clang-format-cpp-drogon
         name: clang-format cpp-drogon (agent-only)
-        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || clang-format --dry-run --Werror services/cpp-drogon/main.cc'
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || clang-format --dry-run --Werror "$@"' --
         language: system
         files: ^services/cpp-drogon/.*\.(cc|cpp|h|hpp)$
-        pass_filenames: false
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
