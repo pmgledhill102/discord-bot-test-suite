@@ -18,14 +18,15 @@ resource "google_service_account" "cloudrun_benchmark" {
 
 locals {
   benchmark_roles = [
-    "roles/run.admin",               # Deploy and manage Cloud Run services
-    "roles/run.invoker",             # Invoke Cloud Run services (IAM-authenticated)
-    "roles/artifactregistry.writer", # Push images to AR
-    "roles/artifactregistry.reader", # Query/list images in AR
-    "roles/pubsub.admin",            # Create test topics/subscriptions
-    "roles/logging.viewer",          # View Cloud Run logs
-    "roles/monitoring.viewer",       # View metrics and dashboards
-    "roles/iam.serviceAccountUser",  # Impersonate runtime SA for deployments
+    "roles/run.admin",                      # Deploy and manage Cloud Run services
+    "roles/run.invoker",                    # Invoke Cloud Run services (IAM-authenticated)
+    "roles/artifactregistry.writer",        # Push images to AR
+    "roles/artifactregistry.reader",        # Query/list images in AR
+    "roles/pubsub.admin",                   # Create test topics/subscriptions
+    "roles/logging.viewer",                 # View Cloud Run logs
+    "roles/monitoring.viewer",              # View metrics and dashboards
+    "roles/iam.serviceAccountUser",         # Impersonate runtime SA for deployments
+    "roles/iam.serviceAccountTokenCreator", # Generate ID tokens for Cloud Run invocation
   ]
 }
 
