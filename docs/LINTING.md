@@ -25,14 +25,15 @@ HUMAN_HERE=1 pre-commit run --all-files
 
 ### Checks that respect HUMAN_HERE
 
-| Check               | Tool              | Why skippable        |
-| ------------------- | ----------------- | -------------------- |
-| cspell              | Spell checker     | Slower, can be noisy |
-| markdownlint        | Markdown linter   | Slower               |
-| golangci-lint       | Go linter         | Slower (5m timeout)  |
-| rubocop             | Ruby linter       | Slower               |
-| eslint (TypeScript) | TypeScript linter | Requires npm install |
-| eslint (Node.js)    | JavaScript linter | Requires npm install |
+| Check               | Tool              | Why skippable            |
+| ------------------- | ----------------- | ------------------------ |
+| cspell              | Spell checker     | Slower, can be noisy     |
+| markdownlint        | Markdown linter   | Slower                   |
+| golangci-lint       | Go linter         | Slower (5m timeout)      |
+| rubocop             | Ruby linter       | Slower                   |
+| eslint (TypeScript) | TypeScript linter | Requires npm install     |
+| eslint (Node.js)    | JavaScript linter | Requires npm install     |
+| clang-format        | C++ formatter     | Requires clang installed |
 
 ### Checks that always run
 
@@ -46,6 +47,7 @@ These checks are fast and always run regardless of HUMAN_HERE:
 - ruff (Python linting and formatting)
 - shellcheck (Shell script linting)
 - hadolint (Dockerfile linting)
+- clang-format (C++ formatting)
 
 ## Pre-commit Setup
 
@@ -98,6 +100,14 @@ pre-commit run --all-files
 - **Tool**: ESLint
 - **Config**: `services/node-express/eslint.config.mjs`
 - **CI**: `npm run lint`
+- **Pre-commit**: Local hook with HUMAN_HERE wrapper
+
+### C++ (cpp-drogon)
+
+- **Tool**: clang-format
+- **Config**: `services/cpp-drogon/.clang-format`
+- **Static analysis config**: `services/cpp-drogon/.clang-tidy` (for future use)
+- **CI**: `clang-format --dry-run --Werror` <!-- cspell:disable-line -->
 - **Pre-commit**: Local hook with HUMAN_HERE wrapper
 
 ### Shell Scripts
@@ -171,7 +181,63 @@ When adding linting for a new language or service:
 4. **Add CI step**: Ensure same tool version and config
 5. **Document**: Update this file with the new linting setup
 
-### HUMAN_HERE Hook Template
+### Incremental vs Whole-Directory Linting
+
+Pre-commit hooks can operate in two modes:
+
+| Mode                | When to Use                                         | `pass_filenames` |
+| ------------------- | --------------------------------------------------- | ---------------- |
+| **Incremental**     | Tool can lint individual files correctly            | `true` (default) |
+| **Whole-directory** | Tool needs full context (e.g., cross-file analysis) | `false`          |
+
+**Incremental linting** (preferred): The hook receives only the changed files and lints just those.
+This is faster for typical commits that touch few files.
+
+**Whole-directory linting**: The hook runs on all files in a directory when any file changes.
+Required when the linter needs to see all files for correct analysis (e.g., Go's cross-package checks).
+
+#### Decision Guide
+
+Use **incremental** (`pass_filenames: true` or omit) when:
+
+- The linter works correctly on individual files (most formatters, spell checkers)
+- Files are independent (no cross-file analysis needed)
+- The service has many source files
+
+Use **whole-directory** (`pass_filenames: false`) when:
+
+- The linter requires package/module context (e.g., `golangci-lint` for Go)
+- The service has only 1-2 source files (no benefit to incremental)
+- Cross-file analysis is needed for correctness
+
+#### Examples from this repo
+
+| Hook             | Mode            | Reason                                        |
+| ---------------- | --------------- | --------------------------------------------- |
+| cspell           | Incremental     | Spell checking is per-file                    |
+| markdownlint     | Incremental     | Markdown linting is per-file                  |
+| clang-format     | Incremental     | Formatting is per-file                        |
+| rubocop          | Incremental     | Ruby linting works per-file                   |
+| golangci-lint    | Whole-directory | Go needs package context for type checking    |
+| eslint (node/ts) | Whole-directory | Only 1 source file, no benefit to incremental |
+
+### HUMAN_HERE Hook Templates
+
+**Incremental linting** (lints only changed files):
+
+```yaml
+- repo: local
+  hooks:
+    - id: my-linter-service-name
+      name: my-linter service-name (agent-only)
+      entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || my-linter --config path/to/config "$@"' --
+      language: system
+      files: ^services/service-name/.*\.ext$
+```
+
+Note: The `"$@"' --` pattern passes filenames from pre-commit to the linter command.
+
+**Whole-directory linting** (lints all files when any change):
 
 ```yaml
 - repo: local
