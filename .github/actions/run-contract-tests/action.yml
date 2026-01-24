@@ -1,0 +1,95 @@
+# Run Contract Tests Composite Action
+#
+# Full contract test lifecycle: infrastructure, service, tests, cleanup.
+
+name: 'Run Contract Tests'
+description: 'Run contract tests against a service'
+
+inputs:
+  service-dir:
+    description: 'Service directory name'
+    required: true
+  discord-public-key:
+    description: 'Discord public key for signature validation'
+    required: false
+    default: '398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159'
+  health-check-timeout:
+    description: 'Health check timeout in seconds'
+    required: false
+    default: '30'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+    - name: Start Pub/Sub emulator
+      shell: bash
+      run: |
+        docker compose -f docker-compose.pubsub.yml up -d
+        echo "Waiting for Pub/Sub emulator..."
+        for _ in {1..30}; do
+          if curl -s http://localhost:8085 > /dev/null 2>&1; then
+            echo "Pub/Sub emulator is ready"
+            break
+          fi
+          sleep 1
+        done
+
+    - name: Build and start service
+      shell: bash
+      run: |
+        docker build -t service-under-test ./services/${{ inputs.service-dir }}
+        docker run -d \
+          --name service-under-test \
+          --network host \
+          -e PORT=8080 \
+          -e DISCORD_PUBLIC_KEY=${{ inputs.discord-public-key }} \
+          -e PUBSUB_EMULATOR_HOST=localhost:8085 \
+          -e GOOGLE_CLOUD_PROJECT=test-project \
+          -e PUBSUB_TOPIC=discord-interactions \
+          service-under-test
+
+        echo "Waiting for service to be ready..."
+        for _ in $(seq 1 ${{ inputs.health-check-timeout }}); do
+          if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+            echo "Service is ready"
+            break
+          fi
+          sleep 1
+        done
+
+    - name: Set up Go
+      uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+      with:
+        go-version: '1.25'
+        cache-dependency-path: tests/contract/go.sum
+
+    - name: Run contract tests
+      shell: bash
+      working-directory: tests/contract
+      env:
+        CONTRACT_TEST_TARGET: http://localhost:8080
+        PUBSUB_EMULATOR_HOST: localhost:8085
+        GOOGLE_CLOUD_PROJECT: test-project
+      run: |
+        go test -v -race ./...
+
+    - name: Show service logs on failure
+      if: failure()
+      shell: bash
+      run: |
+        echo "=== Service logs ==="
+        docker logs service-under-test || true
+        echo ""
+        echo "=== Pub/Sub emulator logs ==="
+        docker compose -f docker-compose.pubsub.yml logs || true
+
+    - name: Cleanup
+      if: always()
+      shell: bash
+      run: |
+        docker stop service-under-test || true
+        docker rm service-under-test || true
+        docker compose -f docker-compose.pubsub.yml down || true
