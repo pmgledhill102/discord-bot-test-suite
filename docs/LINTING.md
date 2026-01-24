@@ -40,6 +40,7 @@ HUMAN_HERE=1 pre-commit run --all-files
 | dotnet format       | C# formatter      | Requires .NET SDK        |
 | ktlint              | Kotlin linter     | Requires Gradle          |
 | scalafmt            | Scala formatter   | Requires sbt             |
+| spotless            | Java formatter    | Requires Maven           |
 
 ### Checks that always run
 
@@ -150,6 +151,14 @@ pre-commit run --all-files
 - **Config**: `services/scala-play/.scalafmt.conf`
 - **CI**: `sbt scalafmtCheckAll`
 - **Pre-commit**: Local hook with HUMAN_HERE wrapper
+
+### Java (6 services)
+
+- **Services**: java-spring4, java-spring3, java-spring2, java-micronaut, java-quarkus, java-quarkus-native
+- **Tool**: Spotless (via Maven plugin) with Google Java Format
+- **Config**: `pom.xml` in each service directory
+- **CI**: `mvn spotless:check -q`
+- **Pre-commit**: Local hooks with HUMAN_HERE wrapper
 
 ### Shell Scripts
 
@@ -267,6 +276,7 @@ Use **whole-directory** (`pass_filenames: false`) when:
 | dotnet format    | Whole-directory | Requires .NET project context                 |
 | ktlint           | Whole-directory | Gradle plugin needs project context           |
 | scalafmt         | Whole-directory | sbt plugin needs project context              |
+| spotless         | Whole-directory | Maven plugin needs project context            |
 
 ### HUMAN_HERE Hook Templates
 

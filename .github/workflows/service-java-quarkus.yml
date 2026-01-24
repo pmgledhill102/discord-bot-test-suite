@@ -46,6 +46,10 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Check code formatting with Spotless
+        working-directory: services/java-quarkus
+        run: mvn spotless:check -q
+
       - name: Verify with Maven
         working-directory: services/java-quarkus
         run: mvn verify -DskipTests -q
