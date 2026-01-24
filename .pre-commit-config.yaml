@@ -184,6 +184,17 @@ repos:
         files: ^services/csharp-aspnet-native/.*\.cs$
         pass_filenames: false
 
+  # Kotlin - ktlint (agent-only - requires Gradle)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: ktlint-kotlin-ktor
+        name: ktlint kotlin-ktor (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/kotlin-ktor && gradle ktlintCheck --no-daemon'
+        language: system
+        files: ^services/kotlin-ktor/.*\.kt$
+        pass_filenames: false
+
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.6

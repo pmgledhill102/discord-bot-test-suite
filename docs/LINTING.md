@@ -38,6 +38,7 @@ HUMAN_HERE=1 pre-commit run --all-files
 | clippy              | Rust linter       | Slower, requires Rust    |
 | pint                | PHP formatter     | Requires composer        |
 | dotnet format       | C# formatter      | Requires .NET SDK        |
+| ktlint              | Kotlin linter     | Requires Gradle          |
 
 ### Checks that always run
 
@@ -134,6 +135,13 @@ pre-commit run --all-files
 - **Config**: Default .NET formatting settings
 - **CI**: `dotnet format --verify-no-changes`
 - **Pre-commit**: Local hooks with HUMAN_HERE wrapper
+
+### Kotlin (kotlin-ktor)
+
+- **Tool**: ktlint (via Gradle plugin)
+- **Config**: `gradle/libs.versions.toml` version catalog
+- **CI**: `gradle ktlintCheck --no-daemon`
+- **Pre-commit**: Local hook with HUMAN_HERE wrapper
 
 ### Shell Scripts
 
@@ -249,6 +257,7 @@ Use **whole-directory** (`pass_filenames: false`) when:
 | clippy           | Whole-directory | Cargo needs project context                   |
 | pint             | Whole-directory | Requires composer autoload                    |
 | dotnet format    | Whole-directory | Requires .NET project context                 |
+| ktlint           | Whole-directory | Gradle plugin needs project context           |
 
 ### HUMAN_HERE Hook Templates
 

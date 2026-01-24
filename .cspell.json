@@ -17,6 +17,7 @@
     "htmlcov",
     "impls",
     "ktor",
+    "ktlint",
     "Laravel",
     "micronaut",
     "phpcs",

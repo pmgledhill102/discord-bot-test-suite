@@ -48,6 +48,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
 
+      - name: Check code formatting with ktlint
+        working-directory: services/kotlin-ktor
+        run: gradle ktlintCheck --no-daemon
+
       - name: Run Gradle build check
         working-directory: services/kotlin-ktor
         run: gradle check --no-daemon
