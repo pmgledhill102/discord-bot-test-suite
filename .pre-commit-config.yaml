@@ -128,6 +128,17 @@ repos:
         files: ^services/node-express/.*\.js$
         pass_filenames: false
 
+  # C++ - clang-format (agent-only - requires clang-format installed)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: clang-format-cpp-drogon
+        name: clang-format cpp-drogon (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || clang-format --dry-run --Werror services/cpp-drogon/main.cc'
+        language: system
+        files: ^services/cpp-drogon/.*\.(cc|cpp|h|hpp)$
+        pass_filenames: false
+
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.6
