@@ -25,6 +25,7 @@
     "quarkus",
     "rubocop",
     "runpb",
+    "scalafmt",
     "scalecheck",
     "schedulerpb",
     "signin",

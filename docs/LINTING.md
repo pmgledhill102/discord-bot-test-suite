@@ -39,6 +39,7 @@ HUMAN_HERE=1 pre-commit run --all-files
 | pint                | PHP formatter     | Requires composer        |
 | dotnet format       | C# formatter      | Requires .NET SDK        |
 | ktlint              | Kotlin linter     | Requires Gradle          |
+| scalafmt            | Scala formatter   | Requires sbt             |
 
 ### Checks that always run
 
@@ -141,6 +142,13 @@ pre-commit run --all-files
 - **Tool**: ktlint (via Gradle plugin)
 - **Config**: `gradle/libs.versions.toml` version catalog
 - **CI**: `gradle ktlintCheck --no-daemon`
+- **Pre-commit**: Local hook with HUMAN_HERE wrapper
+
+### Scala (scala-play)
+
+- **Tool**: scalafmt (via sbt plugin)
+- **Config**: `services/scala-play/.scalafmt.conf`
+- **CI**: `sbt scalafmtCheckAll`
 - **Pre-commit**: Local hook with HUMAN_HERE wrapper
 
 ### Shell Scripts
@@ -258,6 +266,7 @@ Use **whole-directory** (`pass_filenames: false`) when:
 | pint             | Whole-directory | Requires composer autoload                    |
 | dotnet format    | Whole-directory | Requires .NET project context                 |
 | ktlint           | Whole-directory | Gradle plugin needs project context           |
+| scalafmt         | Whole-directory | sbt plugin needs project context              |
 
 ### HUMAN_HERE Hook Templates
 
