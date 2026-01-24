@@ -1,9 +1,13 @@
 # Dependabot configuration
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+#
+# Strategy: Two-tier approach
+# - Tier 1 (auto-merge): Patch and minor updates via dependabot-auto-merge.yml
+# - Tier 2 (manual review): Major versions, Docker base images, GitHub Actions
 
 version: 2
 updates:
-  # GitHub Actions
+  # GitHub Actions (manual review - infrastructure changes)
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
@@ -14,8 +18,12 @@ updates:
     labels:
       - 'dependencies'
       - 'github-actions'
+    groups:
+      github-actions:
+        patterns:
+          - '*'
 
-  # Go modules (contract tests and Go service)
+  # Go modules (contract tests)
   - package-ecosystem: 'gomod'
     directory: '/'
     schedule:
@@ -31,7 +39,7 @@ updates:
         patterns:
           - '*'
 
-  # Go service (when it exists)
+  # Go service
   - package-ecosystem: 'gomod'
     directory: '/services/go-gin'
     schedule:
@@ -42,6 +50,10 @@ updates:
     labels:
       - 'dependencies'
       - 'go'
+    groups:
+      go-gin-deps:
+        patterns:
+          - '*'
 
   # Python services
   - package-ecosystem: 'pip'
@@ -54,6 +66,10 @@ updates:
     labels:
       - 'dependencies'
       - 'python'
+    groups:
+      django-deps:
+        patterns:
+          - '*'
 
   - package-ecosystem: 'pip'
     directory: '/services/python-flask'
@@ -65,8 +81,12 @@ updates:
     labels:
       - 'dependencies'
       - 'python'
+    groups:
+      flask-deps:
+        patterns:
+          - '*'
 
-  # Node.js service
+  # Node.js services
   - package-ecosystem: 'npm'
     directory: '/services/node-express'
     schedule:
@@ -77,23 +97,27 @@ updates:
     labels:
       - 'dependencies'
       - 'javascript'
+    groups:
+      express-deps:
+        patterns:
+          - '*'
 
-  # Java service (Spring Boot 3)
-  - package-ecosystem: 'maven'
-    directory: '/services/java-spring3'
+  - package-ecosystem: 'npm'
+    directory: '/services/typescript-fastify'
     schedule:
       interval: 'weekly'
       day: 'monday'
     commit-message:
-      prefix: 'deps(spring3)'
+      prefix: 'deps(fastify)'
     labels:
       - 'dependencies'
-      - 'java'
-    ignore:
-      - dependency-name: 'org.springframework.boot:spring-boot-starter-parent'
-        versions: ['>=4.0.0']
+      - 'typescript'
+    groups:
+      fastify-deps:
+        patterns:
+          - '*'
 
-  # Java service (Spring Boot 4)
+  # Java services
   - package-ecosystem: 'maven'
     directory: '/services/java-spring4'
     schedule:
@@ -104,11 +128,32 @@ updates:
     labels:
       - 'dependencies'
       - 'java'
+    groups:
+      spring4-deps:
+        patterns:
+          - '*'
     ignore:
       - dependency-name: 'org.springframework.boot:spring-boot-starter-parent'
         versions: ['>=5.0.0']
 
-  # Java service (Spring Boot 2)
+  - package-ecosystem: 'maven'
+    directory: '/services/java-spring3'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(spring3)'
+    labels:
+      - 'dependencies'
+      - 'java'
+    groups:
+      spring3-deps:
+        patterns:
+          - '*'
+    ignore:
+      - dependency-name: 'org.springframework.boot:spring-boot-starter-parent'
+        versions: ['>=4.0.0']
+
   - package-ecosystem: 'maven'
     directory: '/services/java-spring2'
     schedule:
@@ -119,9 +164,90 @@ updates:
     labels:
       - 'dependencies'
       - 'java'
+    groups:
+      spring2-deps:
+        patterns:
+          - '*'
     ignore:
       - dependency-name: 'org.springframework.boot:spring-boot-starter-parent'
         versions: ['>=3.0.0']
+
+  - package-ecosystem: 'maven'
+    directory: '/services/java-micronaut'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(micronaut)'
+    labels:
+      - 'dependencies'
+      - 'java'
+    groups:
+      micronaut-deps:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'maven'
+    directory: '/services/java-quarkus'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(quarkus)'
+    labels:
+      - 'dependencies'
+      - 'java'
+    groups:
+      quarkus-deps:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'maven'
+    directory: '/services/java-quarkus-native'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(quarkus-native)'
+    labels:
+      - 'dependencies'
+      - 'java'
+    groups:
+      quarkus-native-deps:
+        patterns:
+          - '*'
+
+  # Kotlin service
+  - package-ecosystem: 'gradle'
+    directory: '/services/kotlin-ktor'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(ktor)'
+    labels:
+      - 'dependencies'
+      - 'kotlin'
+    groups:
+      ktor-deps:
+        patterns:
+          - '*'
+
+  # Scala service
+  - package-ecosystem: 'gradle'
+    directory: '/services/scala-play'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(play)'
+    labels:
+      - 'dependencies'
+      - 'scala'
+    groups:
+      play-deps:
+        patterns:
+          - '*'
 
   # Rust service
   - package-ecosystem: 'cargo'
@@ -134,8 +260,12 @@ updates:
     labels:
       - 'dependencies'
       - 'rust'
+    groups:
+      actix-deps:
+        patterns:
+          - '*'
 
-  # .NET service
+  # .NET services
   - package-ecosystem: 'nuget'
     directory: '/services/csharp-aspnet'
     schedule:
@@ -146,6 +276,25 @@ updates:
     labels:
       - 'dependencies'
       - 'csharp'
+    groups:
+      aspnet-deps:
+        patterns:
+          - '*'
+
+  - package-ecosystem: 'nuget'
+    directory: '/services/csharp-aspnet-native'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(aspnet-native)'
+    labels:
+      - 'dependencies'
+      - 'csharp'
+    groups:
+      aspnet-native-deps:
+        patterns:
+          - '*'
 
   # Ruby service
   - package-ecosystem: 'bundler'
@@ -158,6 +307,10 @@ updates:
     labels:
       - 'dependencies'
       - 'ruby'
+    groups:
+      rails-deps:
+        patterns:
+          - '*'
 
   # PHP service
   - package-ecosystem: 'composer'
@@ -170,8 +323,24 @@ updates:
     labels:
       - 'dependencies'
       - 'php'
+    groups:
+      laravel-deps:
+        patterns:
+          - '*'
 
-  # Docker
+  # C++ service (vcpkg)
+  - package-ecosystem: 'docker'
+    directory: '/services/cpp-drogon'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(drogon)'
+    labels:
+      - 'dependencies'
+      - 'cpp'
+
+  # Docker base images (manual review - infrastructure changes)
   - package-ecosystem: 'docker'
     directory: '/'
     schedule:
@@ -187,3 +356,19 @@ updates:
       # Without this, builds take 15+ minutes compiling grpc from source
       - dependency-name: 'ruby'
         versions: ['>=4.0.0']
+
+  # Terraform
+  - package-ecosystem: 'terraform'
+    directory: '/terraform'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps(terraform)'
+    labels:
+      - 'dependencies'
+      - 'terraform'
+    groups:
+      terraform-deps:
+        patterns:
+          - '*'
