@@ -156,6 +156,17 @@ repos:
         files: ^services/rust-actix/.*\.rs$
         pass_filenames: false
 
+  # PHP - Laravel Pint (agent-only - requires composer install)
+  # Use HUMAN_HERE=1 to skip this check when running pre-commit manually
+  - repo: local
+    hooks:
+      - id: pint-php-laravel
+        name: pint php-laravel (agent-only)
+        entry: bash -c '[ -n "$HUMAN_HERE" ] && exit 0 || cd services/php-laravel && vendor/bin/pint --test'
+        language: system
+        files: ^services/php-laravel/.*\.php$
+        pass_filenames: false
+
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.6

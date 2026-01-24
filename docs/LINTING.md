@@ -36,6 +36,7 @@ HUMAN_HERE=1 pre-commit run --all-files
 | clang-format        | C++ formatter     | Requires clang installed |
 | rustfmt             | Rust formatter    | Requires Rust toolchain  |
 | clippy              | Rust linter       | Slower, requires Rust    |
+| pint                | PHP formatter     | Requires composer        |
 
 ### Checks that always run
 
@@ -118,6 +119,13 @@ pre-commit run --all-files
 - **Config**: Default Rust toolchain settings
 - **CI**: `cargo fmt --check` and `cargo clippy -- -D warnings`
 - **Pre-commit**: Local hooks with HUMAN_HERE wrapper
+
+### PHP (php-laravel)
+
+- **Tool**: Laravel Pint
+- **Config**: Default Pint settings (Laravel preset)
+- **CI**: `vendor/bin/pint --test`
+- **Pre-commit**: Local hook with HUMAN_HERE wrapper
 
 ### Shell Scripts
 
@@ -231,6 +239,7 @@ Use **whole-directory** (`pass_filenames: false`) when:
 | eslint (node/ts) | Whole-directory | Only 1 source file, no benefit to incremental |
 | rustfmt          | Whole-directory | Cargo needs project context                   |
 | clippy           | Whole-directory | Cargo needs project context                   |
+| pint             | Whole-directory | Requires composer autoload                    |
 
 ### HUMAN_HERE Hook Templates
 
