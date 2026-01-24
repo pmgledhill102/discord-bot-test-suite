@@ -6,7 +6,6 @@ Provides Ed25519 signing and Pub/Sub interaction utilities.
 
 import hashlib
 import json
-import os
 import sys
 import time
 from typing import Optional, Tuple
@@ -66,25 +65,18 @@ def create_ping_request() -> bytes:
 
 def create_slash_command_request(command_name: str = "test-command") -> bytes:
     """Create a Discord slash command interaction request body."""
-    return json.dumps({
-        "type": 2,
-        "id": "123456789",
-        "application_id": "987654321",
-        "token": "test-token-should-be-redacted",
-        "guild_id": "111222333",
-        "channel_id": "444555666",
-        "data": {
-            "id": "cmd123",
-            "name": command_name,
-            "type": 1
-        },
-        "member": {
-            "user": {
-                "id": "user123",
-                "username": "testuser"
-            }
+    return json.dumps(
+        {
+            "type": 2,
+            "id": "123456789",
+            "application_id": "987654321",
+            "token": "test-token-should-be-redacted",
+            "guild_id": "111222333",
+            "channel_id": "444555666",
+            "data": {"id": "cmd123", "name": command_name, "type": 1},
+            "member": {"user": {"id": "user123", "username": "testuser"}},
         }
-    }).encode()
+    ).encode()
 
 
 def setup_pubsub(project_id: str, topic_name: str, subscription_name: str) -> bool:
@@ -115,7 +107,7 @@ def setup_pubsub(project_id: str, topic_name: str, subscription_name: str) -> bo
                 request={
                     "name": subscription_path,
                     "topic": topic_path,
-                    "ack_deadline_seconds": 10
+                    "ack_deadline_seconds": 10,
                 }
             )
         except gcp_exceptions.AlreadyExists:
@@ -127,7 +119,9 @@ def setup_pubsub(project_id: str, topic_name: str, subscription_name: str) -> bo
         return False
 
 
-def pull_message(project_id: str, subscription_name: str, timeout: float = 5.0) -> Optional[dict]:
+def pull_message(
+    project_id: str, subscription_name: str, timeout: float = 5.0
+) -> Optional[dict]:
     """
     Pull a single message from Pub/Sub subscription.
     Returns message data dict or None if timeout/error.
@@ -140,27 +134,23 @@ def pull_message(project_id: str, subscription_name: str, timeout: float = 5.0) 
         subscription_path = subscriber.subscription_path(project_id, subscription_name)
 
         response = subscriber.pull(
-            request={
-                "subscription": subscription_path,
-                "max_messages": 1
-            },
-            timeout=timeout
+            request={"subscription": subscription_path, "max_messages": 1},
+            timeout=timeout,
         )
 
         if response.received_messages:
             msg = response.received_messages[0]
             # Acknowledge the message
             subscriber.acknowledge(
-                request={
-                    "subscription": subscription_path,
-                    "ack_ids": [msg.ack_id]
-                }
+                request={"subscription": subscription_path, "ack_ids": [msg.ack_id]}
             )
             return {
                 "data": msg.message.data.decode(),
                 "attributes": dict(msg.message.attributes),
                 "message_id": msg.message.message_id,
-                "publish_time": msg.message.publish_time.isoformat() if msg.message.publish_time else None
+                "publish_time": msg.message.publish_time.isoformat()
+                if msg.message.publish_time
+                else None,
             }
         return None
     except Exception as e:
@@ -183,11 +173,8 @@ def clear_subscription(project_id: str, subscription_name: str) -> int:
 
         while True:
             response = subscriber.pull(
-                request={
-                    "subscription": subscription_path,
-                    "max_messages": 100
-                },
-                timeout=1.0
+                request={"subscription": subscription_path, "max_messages": 100},
+                timeout=1.0,
             )
 
             if not response.received_messages:
@@ -195,10 +182,7 @@ def clear_subscription(project_id: str, subscription_name: str) -> int:
 
             ack_ids = [msg.ack_id for msg in response.received_messages]
             subscriber.acknowledge(
-                request={
-                    "subscription": subscription_path,
-                    "ack_ids": ack_ids
-                }
+                request={"subscription": subscription_path, "ack_ids": ack_ids}
             )
             count += len(ack_ids)
     except Exception:
@@ -222,26 +206,38 @@ if __name__ == "__main__":
     sign_parser.add_argument("--timestamp", help="Timestamp (default: current time)")
 
     # Create ping request
-    ping_parser = subparsers.add_parser("create-ping", help="Create signed ping request")
+    ping_parser = subparsers.add_parser(
+        "create-ping", help="Create signed ping request"
+    )
 
     # Create slash command request
-    slash_parser = subparsers.add_parser("create-slash", help="Create signed slash command request")
+    slash_parser = subparsers.add_parser(
+        "create-slash", help="Create signed slash command request"
+    )
     slash_parser.add_argument("--name", default="test-command", help="Command name")
 
     # Setup Pub/Sub
-    setup_parser = subparsers.add_parser("setup-pubsub", help="Setup Pub/Sub topic and subscription")
+    setup_parser = subparsers.add_parser(
+        "setup-pubsub", help="Setup Pub/Sub topic and subscription"
+    )
     setup_parser.add_argument("--project", required=True, help="GCP project ID")
     setup_parser.add_argument("--topic", required=True, help="Topic name")
     setup_parser.add_argument("--subscription", required=True, help="Subscription name")
 
     # Pull message
-    pull_parser = subparsers.add_parser("pull-message", help="Pull message from Pub/Sub")
+    pull_parser = subparsers.add_parser(
+        "pull-message", help="Pull message from Pub/Sub"
+    )
     pull_parser.add_argument("--project", required=True, help="GCP project ID")
     pull_parser.add_argument("--subscription", required=True, help="Subscription name")
-    pull_parser.add_argument("--timeout", type=float, default=5.0, help="Timeout in seconds")
+    pull_parser.add_argument(
+        "--timeout", type=float, default=5.0, help="Timeout in seconds"
+    )
 
     # Clear subscription
-    clear_parser = subparsers.add_parser("clear-subscription", help="Clear pending messages")
+    clear_parser = subparsers.add_parser(
+        "clear-subscription", help="Clear pending messages"
+    )
     clear_parser.add_argument("--project", required=True, help="GCP project ID")
     clear_parser.add_argument("--subscription", required=True, help="Subscription name")
 
@@ -259,20 +255,12 @@ if __name__ == "__main__":
     elif args.command == "create-ping":
         body = create_ping_request()
         sig, ts = sign_request(body)
-        print(json.dumps({
-            "body": body.decode(),
-            "signature": sig,
-            "timestamp": ts
-        }))
+        print(json.dumps({"body": body.decode(), "signature": sig, "timestamp": ts}))
 
     elif args.command == "create-slash":
         body = create_slash_command_request(args.name)
         sig, ts = sign_request(body)
-        print(json.dumps({
-            "body": body.decode(),
-            "signature": sig,
-            "timestamp": ts
-        }))
+        print(json.dumps({"body": body.decode(), "signature": sig, "timestamp": ts}))
 
     elif args.command == "setup-pubsub":
         success = setup_pubsub(args.project, args.topic, args.subscription)

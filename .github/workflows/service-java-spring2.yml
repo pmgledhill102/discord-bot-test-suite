@@ -21,6 +21,10 @@ on:
       - 'docker-compose.pubsub.yml'
       - '.github/workflows/service-java-spring2.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DISCORD_PUBLIC_KEY: 398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159
   SERVICE_DIR: java-spring2
@@ -111,7 +115,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
-          go-version: '1.24'
+          go-version: '1.25'
           cache-dependency-path: tests/contract/go.sum
 
       - name: Run contract tests
