@@ -8,7 +8,7 @@
 
 ## The Core Design
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        PERF MANAGER                              │
 │                                                                  │
@@ -70,7 +70,7 @@
 
 ## Discovery Flow
 
-```
+```text
                                     ┌─────────────────────────┐
                                     │   GCS Bucket            │
                                     │   perf-agent-registry   │
@@ -92,6 +92,7 @@ uploads manifest                    │   ├── rest-crud.yaml   │
 ```
 
 **Adding a new service type:**
+
 1. Create service repository with Agent
 2. Deploy Agent to Cloud Run
 3. Upload manifest YAML to GCS
@@ -107,7 +108,7 @@ Cloud Run services take ~15 minutes to scale to zero after deployment. Cold star
 
 ### Solution: Phased Scheduled Execution
 
-```
+```text
 Phase 1: Deploy (~5 min)     Phase 2: Measure (~20 min)
 ┌─────────┐                  ┌─────────┐
 │ Deploy  │───── 15-20 min ─►│ Measure │
@@ -142,6 +143,7 @@ Phase 1: Deploy (~5 min)     Phase 2: Measure (~20 min)
 ## Standard Agent Interface
 
 **Request (Manager → Agent):**
+
 ```json
 {
   "run_id": "2026-01-24-abc123",
@@ -154,6 +156,7 @@ Phase 1: Deploy (~5 min)     Phase 2: Measure (~20 min)
 ```
 
 **Response (Agent → Manager):**
+
 ```json
 {
   "service_type": "discord-webhook",
@@ -176,7 +179,7 @@ The Manager doesn't know or care what "discord-webhook" means internally.
 
 The framework supports testing beyond language/framework comparisons:
 
-```
+```text
 Current:   implementation = [go-gin, rust-actix, java-spring3, ...]
 
 Future:    implementation × cpu × memory × startup_boost
@@ -205,7 +208,7 @@ See [CONFIG-EXTENSIBILITY.md](./CONFIG-EXTENSIBILITY.md) for complete patterns.
 
 ## Repository Structure
 
-```
+```text
 cloudrun-perf-manager/              ← Orchestration only
 ├── internal/
 │   ├── discovery/                  # Read GCS registry
@@ -275,4 +278,4 @@ cloudrun-service-grpc-unary/        ← gRPC services + Agent
 
 ---
 
-*Last updated: 2026-01-24 (Revision 2 - Delegated Agent Pattern)*
+Last updated: 2026-01-24 (Revision 2 - Delegated Agent Pattern)

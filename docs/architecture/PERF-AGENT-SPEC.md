@@ -61,7 +61,7 @@ Each service type has exactly one Perf Agent. The Agent handles all service-spec
 
 The Agent implements a two-phase benchmark execution to avoid idle compute time while waiting for services to scale to zero.
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    PHASE 1: DEPLOYMENT                           │
 │                                                                  │
@@ -97,6 +97,7 @@ The Agent implements a two-phase benchmark execution to avoid idle compute time 
 **Purpose:** Deploy services and schedule measurement phase.
 
 **Request:**
+
 ```http
 POST /deploy HTTP/1.1
 Host: discord-perf-agent-xxxxx-uc.a.run.app
@@ -124,6 +125,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "run_id": "2026-01-24-abc123",
@@ -136,6 +138,7 @@ Content-Type: application/json
 ```
 
 **What the Agent does:**
+
 1. Validates request
 2. Expands configuration matrix (e.g., 2 impls × 2 CPUs = 4 deployments)
 3. Deploys services to Cloud Run (parallel)
@@ -150,6 +153,7 @@ Content-Type: application/json
 **Purpose:** Execute measurements against deployed services (triggered by Cloud Scheduler).
 
 **Request:**
+
 ```http
 POST /measure HTTP/1.1
 Host: discord-perf-agent-xxxxx-uc.a.run.app
@@ -162,6 +166,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "run_id": "2026-01-24-abc123",
@@ -171,6 +176,7 @@ Content-Type: application/json
 ```
 
 **What the Agent does:**
+
 1. Reads deployment manifest from GCS
 2. Verifies services are at zero instances (optional check)
 3. For each deployed service:
@@ -188,6 +194,7 @@ Content-Type: application/json
 **Purpose:** Check progress of a benchmark run.
 
 **Response:**
+
 ```json
 {
   "run_id": "2026-01-24-abc123",
@@ -217,6 +224,7 @@ Content-Type: application/json
 **Purpose:** Remove deployed services and clean up resources.
 
 **Request:**
+
 ```http
 POST /cleanup HTTP/1.1
 Host: discord-perf-agent-xxxxx-uc.a.run.app
@@ -229,6 +237,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "run_id": "2026-01-24-abc123",
@@ -244,6 +253,7 @@ Content-Type: application/json
 **Purpose:** Health check for the Agent itself.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -258,9 +268,11 @@ Content-Type: application/json
 
 **Purpose:** Single-phase benchmark execution (for backwards compatibility or simple cases).
 
-**Note:** This endpoint performs deployment, waits, and measurement in a single call. Use only for quick tests or debugging. For production benchmarks, use the phased `/deploy` + `/measure` pattern.
+**Note:** This endpoint performs deployment, waits, and measurement in a single call. Use only for quick
+tests or debugging. For production benchmarks, use the phased `/deploy` + `/measure` pattern.
 
 **Request:**
+
 ```http
 POST /benchmark HTTP/1.1
 Host: discord-perf-agent-xxxxx-uc.a.run.app
@@ -291,6 +303,7 @@ Content-Type: application/json
 | `config.profile` | string | No | Deployment profile (default: "default") |
 
 **Response:**
+
 ```json
 {
   "service_type": "discord-webhook",
@@ -369,26 +382,12 @@ Content-Type: application/json
 
 ---
 
-### Endpoint: GET /health
-
-**Purpose:** Health check for the Agent itself.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "version": "1.2.0",
-  "service_type": "discord-webhook"
-}
-```
-
----
-
 ### Endpoint: GET /implementations
 
 **Purpose:** List available implementations and their status.
 
 **Response:**
+
 ```json
 {
   "service_type": "discord-webhook",
@@ -408,7 +407,7 @@ The Agent uses GCS to persist state between phases, enabling recovery from failu
 
 ### State Structure
 
-```
+```text
 gs://perf-benchmark-state/
 ├── runs/
 │   └── {run_id}/
@@ -583,7 +582,7 @@ func (a *Agent) scheduleMeasurementWithTasks(runID string, delay time.Duration) 
 
 ### Agent Structure
 
-```
+```text
 cloudrun-service-{type}/
 ├── agent/
 │   ├── Dockerfile
@@ -705,6 +704,7 @@ func (m *ColdStartMeasurer) Measure(ctx context.Context, impl Implementation, it
 This is where service-specific knowledge lives:
 
 **Discord Webhook:**
+
 ```go
 type DiscordRequestor struct {
     privateKey ed25519.PrivateKey
@@ -738,6 +738,7 @@ func (r *DiscordRequestor) MakeTestRequest(ctx context.Context, impl Implementat
 ```
 
 **gRPC Unary:**
+
 ```go
 type GRPCRequestor struct {
     // gRPC-specific config

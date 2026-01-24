@@ -9,7 +9,9 @@
 
 ## Overview
 
-The benchmark suite is designed to test performance across multiple **dimensions**, not just language/framework variations. This document describes how the architecture supports extensible configuration while keeping the Perf Manager completely agnostic to what is being tested.
+The benchmark suite is designed to test performance across multiple **dimensions**, not just
+language/framework variations. This document describes how the architecture supports extensible
+configuration while keeping the Perf Manager completely agnostic to what is being tested.
 
 ---
 
@@ -19,7 +21,7 @@ The benchmark suite is designed to test performance across multiple **dimensions
 
 The initial focus is comparing implementations across languages and frameworks:
 
-```
+```text
 Dimension: implementation
 Values: go-gin, rust-actix, python-flask, java-spring3, ...
 ```
@@ -52,12 +54,14 @@ Additional dimensions to investigate:
 **The Perf Manager must remain agnostic to testing dimensions.**
 
 The Manager doesn't know or care whether the Agent is:
+
 - Testing different implementations
 - Testing the same implementation with different CPU allocations
 - Testing startup boost on/off
 - Testing any combination of the above
 
 The Manager only knows:
+
 - How to pass configuration to Agents
 - How to receive results tagged with metadata
 - How to aggregate and compare results
@@ -70,7 +74,7 @@ The Manager only knows:
 
 ### Layered Configuration
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    PERF MANAGER CONFIG                           │
 │  (What to run, how many iterations)                             │
@@ -199,7 +203,9 @@ Results include **dimension tags** that describe what configuration produced the
 }
 ```
 
-**Key insight:** The same implementation (`go-gin`) can appear multiple times with different dimension values. The Manager doesn't need to understand what "cpu" or "startup_boost" mean - it just stores and reports the data.
+**Key insight:** The same implementation (`go-gin`) can appear multiple times with different dimension
+values. The Manager doesn't need to understand what "cpu" or "startup_boost" mean - it just stores
+and reports the data.
 
 ---
 
@@ -513,9 +519,11 @@ func expandMatrix(matrix TestMatrix) []map[string]string {
 ### Matrix Explosion
 
 A full matrix can create many combinations:
+
 - 19 implementations × 4 CPU values × 4 memory values × 2 boost values = 608 configurations
 
 **Mitigations:**
+
 1. Subset of implementations for focused studies
 2. Run studies separately, not all at once
 3. Parallelization within Agent
@@ -524,10 +532,12 @@ A full matrix can create many combinations:
 ### Cost Management
 
 Each configuration requires a deployed service:
+
 - Idle cost: $0 (scaled to zero)
 - Benchmark cost: ~$0.05 per cold start measurement
 
 Full 608-config matrix with 10 iterations each:
+
 - 608 × 10 = 6,080 cold starts
 - ~$300 in compute costs per full run
 
@@ -561,7 +571,8 @@ The configuration extensibility model ensures:
 4. **Reports are flexible** - Manager can group/compare by any dimension
 5. **Future-proof** - New dimensions require only Agent changes
 
-This enables the framework to evolve from "which language is fastest?" to "what's the optimal configuration for each language?" without architectural changes.
+This enables the framework to evolve from "which language is fastest?" to "what's the optimal
+configuration for each language?" without architectural changes.
 
 ---
 

@@ -18,7 +18,9 @@ The Perf Manager is the central orchestration component that:
 - **Stores** results in GCS
 - **Reports** on performance with comparisons to baselines
 
-**Critical design principle:** The Perf Manager has **zero knowledge** of service-specific testing. It doesn't know how to test Discord webhooks, gRPC services, or REST APIs. That knowledge lives entirely in the Perf Agents.
+**Critical design principle:** The Perf Manager has **zero knowledge** of service-specific testing.
+It doesn't know how to test Discord webhooks, gRPC services, or REST APIs.
+That knowledge lives entirely in the Perf Agents.
 
 ---
 
@@ -39,7 +41,7 @@ The Perf Manager only sees standardized results.
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        PERF MANAGER                              │
 │                                                                  │
@@ -79,6 +81,7 @@ The Perf Manager only sees standardized results.
 **Purpose:** Find and validate Perf Agents from the GCS registry.
 
 **Process:**
+
 1. List objects in `gs://perf-agent-registry/agents/`
 2. Download each `.yaml` manifest
 3. Validate against JSON Schema
@@ -86,6 +89,7 @@ The Perf Manager only sees standardized results.
 5. Filter by enabled status
 
 **Agent Catalog Entry:**
+
 ```go
 type AgentEntry struct {
     ServiceType     string   // e.g., "discord-webhook"
@@ -103,6 +107,7 @@ type Implementation struct {
 ```
 
 **API:**
+
 ```go
 type Discovery interface {
     // Refresh agent catalog from GCS
@@ -126,6 +131,7 @@ type Discovery interface {
 **Purpose:** Invoke Perf Agents and coordinate benchmark execution.
 
 **Process:**
+
 1. Get list of enabled agents
 2. For each agent (parallel or sequential based on config):
    - Build invocation request
@@ -134,6 +140,7 @@ type Discovery interface {
 3. Handle failures gracefully (continue with other agents)
 
 **Invocation Request (sent to Agent):**
+
 ```json
 {
   "run_id": "2026-01-24-abc123",
@@ -150,6 +157,7 @@ type Discovery interface {
 If `implementations` is empty or omitted, the Agent benchmarks all active implementations.
 
 **API:**
+
 ```go
 type Orchestrator interface {
     // Run benchmarks for all enabled agents
@@ -164,6 +172,7 @@ type Orchestrator interface {
 ```
 
 **Authentication:**
+
 - Uses GCP service account identity
 - Agents grant `roles/run.invoker` to Perf Manager service account
 - No API keys or tokens needed
@@ -175,12 +184,14 @@ type Orchestrator interface {
 **Purpose:** Combine results from multiple Agents into unified structure.
 
 **Process:**
+
 1. Receive results from each Agent
 2. Validate result format against schema
 3. Merge into unified results structure
 4. Calculate cross-agent statistics (if applicable)
 
 **Aggregated Results Structure:**
+
 ```go
 type AggregatedResults struct {
     RunID       string
@@ -209,7 +220,8 @@ type ResultsSummary struct {
 **Purpose:** Persist benchmark results to GCS.
 
 **Storage Layout:**
-```
+
+```text
 gs://perf-results/
 ├── runs/
 │   └── 2026-01-24-abc123/
@@ -228,6 +240,7 @@ gs://perf-results/
 ```
 
 **API:**
+
 ```go
 type Storage interface {
     // Save complete run results
@@ -263,6 +276,7 @@ type Storage interface {
 | Comparison | Markdown | Diff against baseline |
 
 **Report Sections:**
+
 1. Executive Summary (best/worst performers, regressions)
 2. Agent-by-Agent Results
 3. Implementation Rankings (cold start, warm requests)
@@ -270,6 +284,7 @@ type Storage interface {
 5. Raw Statistics
 
 **Example Summary Report:**
+
 ```markdown
 # Perf Benchmark Report
 
@@ -308,6 +323,7 @@ type Storage interface {
 ```
 
 **API:**
+
 ```go
 type Reporter interface {
     // Generate markdown summary
@@ -328,7 +344,7 @@ type Reporter interface {
 
 ## CLI Interface
 
-```
+```text
 perf-manager [global-flags] <command> [command-flags]
 
 Global Flags:
@@ -480,7 +496,8 @@ resource "google_cloud_scheduler_job" "perf_manager_daily" {
 
 ## Standard Agent Interface
 
-The Perf Manager invokes Agents using this standardized interface. See [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md) for complete Agent specification.
+The Perf Manager invokes Agents using this standardized interface.
+See [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md) for complete Agent specification.
 
 ### Request (Manager → Agent)
 
@@ -617,7 +634,7 @@ Content-Type: application/json
 
 ## Repository Structure
 
-```
+```text
 cloudrun-perf-manager/
 ├── cmd/
 │   └── perf-manager/

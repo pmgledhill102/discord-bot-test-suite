@@ -24,14 +24,19 @@
 
 ## Executive Summary
 
-This document proposes restructuring the current monolithic Cloud Run benchmarking repository into a multi-repository architecture with a **delegated agent pattern**:
+This document proposes restructuring the current monolithic Cloud Run benchmarking repository into
+a multi-repository architecture with a **delegated agent pattern**:
 
 - **1 Perf Manager repository** - Generic orchestration, result aggregation, and reporting
 - **5-6 Service Type repositories** - Each containing ~20 language/framework implementations **plus a Perf Agent**
 
-**Key architectural principle:** The Perf Manager has no knowledge of service-type-specific testing. It discovers Perf Agents via a GCS registry, invokes them through a standard interface, and collects standardized results. All service-specific testing logic lives in the Perf Agent within each service repository.
+**Key architectural principle:** The Perf Manager has no knowledge of service-type-specific testing.
+It discovers Perf Agents via a GCS registry, invokes them through a standard interface, and collects
+standardized results. All service-specific testing logic lives in the Perf Agent within each
+service repository.
 
 This enables:
+
 - Adding new service types without any Perf Manager code changes
 - Co-location of test logic with the services being tested
 - Clean separation of orchestration from execution
@@ -42,7 +47,7 @@ This enables:
 
 ### What We Have Today
 
-```
+```text
 discord-bot-test-suite/
 ├── services/                    # 19 implementations of ONE service type
 │   ├── go-gin/
@@ -69,8 +74,10 @@ discord-bot-test-suite/
 
 ### Current Limitations for Scaling
 
-1. **Benchmark tool knows service specifics** - The CLI contains Discord-specific signature generation, payload structures, and validation logic
-2. **Scaling means leaky abstractions** - Adding gRPC, GraphQL, etc. would require the benchmark tool to understand each protocol
+1. **Benchmark tool knows service specifics** - The CLI contains Discord-specific signature
+   generation, payload structures, and validation logic
+2. **Scaling means leaky abstractions** - Adding gRPC, GraphQL, etc. would require the benchmark
+   tool to understand each protocol
 3. **100+ always-deployed services** - Current "keep deployed" model doesn't scale economically
 4. **Monolithic coupling** - Changes to any service type's testing require benchmark tool releases
 
@@ -80,7 +87,7 @@ discord-bot-test-suite/
 
 ### High-Level Design: Delegated Agent Pattern
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         PERF MANAGER                                 │
 │                                                                      │
@@ -138,7 +145,7 @@ discord-bot-test-suite/
 
 ### Repository Structure
 
-```
+```text
 Organizations/Repositories:
 
 cloudrun-perf-manager/               # Central orchestrator
@@ -186,7 +193,7 @@ cloudrun-service-rest-crud/          # REST CRUD service type
 
 The Perf Manager discovers available Agents by reading manifests from a GCS bucket:
 
-```
+```text
 gs://perf-agent-registry/
 ├── agents/
 │   ├── discord-webhook.yaml         # Deployed by Discord repo CI
@@ -226,7 +233,8 @@ gs://perf-agent-registry/
 
 **Decision:** Multi-Repository
 
-**Rationale:** At 5-6 service types with 20 implementations each (~100+ services), a monorepo becomes unmanageable. Each service type has distinct concerns that map well to repository boundaries.
+**Rationale:** At 5-6 service types with 20 implementations each (~100+ services), a monorepo becomes
+unmanageable. Each service type has distinct concerns that map well to repository boundaries.
 
 *See full analysis in Critical Analysis section.*
 
@@ -237,7 +245,8 @@ gs://perf-agent-registry/
 **Status:** Accepted
 
 **Context:**
-The Perf Manager needs to benchmark multiple service types (Discord, REST, gRPC, etc.). Each has different protocols, payloads, and validation requirements.
+The Perf Manager needs to benchmark multiple service types (Discord, REST, gRPC, etc.). Each has
+different protocols, payloads, and validation requirements.
 
 **Options Considered:**
 
@@ -258,6 +267,7 @@ The Perf Manager needs to benchmark multiple service types (Discord, REST, gRPC,
 5. **Natural ownership** - Service repo owns everything about that service type
 
 **Consequences:**
+
 - (+) Adding new service types requires zero Manager changes
 - (+) Each Agent can use the most appropriate tools for its service type
 - (+) Service-specific expertise stays in service repo
@@ -271,11 +281,13 @@ The Perf Manager needs to benchmark multiple service types (Discord, REST, gRPC,
 **Status:** Accepted
 
 **Context:**
-The Perf Manager needs to discover which Agents exist and how to invoke them. Options include hardcoded configuration, GitHub API scanning, or external registry.
+The Perf Manager needs to discover which Agents exist and how to invoke them. Options include
+hardcoded configuration, GitHub API scanning, or external registry.
 
 **Decision:** GCS bucket with YAML manifests
 
 **Manifest Schema:**
+
 ```yaml
 # gs://perf-agent-registry/agents/discord-webhook.yaml
 schema_version: "1.0"
@@ -312,12 +324,14 @@ metadata:
 ```
 
 **Schema Validation:**
+
 - JSON Schema defines required fields and formats
 - CI pipelines validate manifests before upload
 - Perf Manager validates on discovery
 - Invalid manifests are logged and skipped (not fatal)
 
 **Rationale:**
+
 - Simple, file-based discovery
 - No database or API server required
 - Self-service: repos manage their own manifests
@@ -331,9 +345,11 @@ metadata:
 **Status:** Requires Decision - See detailed analysis below
 
 **Context:**
-Perf Agents need to be available when the Perf Manager runs. With 100+ services under test, the hosting model significantly impacts cost, complexity, and benchmark accuracy.
+Perf Agents need to be available when the Perf Manager runs. With 100+ services under test, the
+hosting model significantly impacts cost, complexity, and benchmark accuracy.
 
-**Key Constraint:** Cloud Run services take ~15 minutes to scale to zero after deployment. Cold start benchmarks require services to be at zero instances.
+**Key Constraint:** Cloud Run services take ~15 minutes to scale to zero after deployment.
+Cold start benchmarks require services to be at zero instances.
 
 *See detailed analysis in next section.*
 
@@ -349,11 +365,13 @@ Perf Manager needs to invoke Perf Agents securely.
 **Decision:** GCP Service Account with IAM
 
 **Implementation:**
+
 1. Perf Manager runs under a dedicated service account: `perf-manager@project.iam.gserviceaccount.com`
 2. Each Perf Agent grants Cloud Run Invoker role to this service account
 3. No shared secrets, API keys, or tokens
 
 **Terraform example for Agent:**
+
 ```hcl
 resource "google_cloud_run_service_iam_member" "perf_manager_invoker" {
   service  = google_cloud_run_service.perf_agent.name
@@ -364,6 +382,7 @@ resource "google_cloud_run_service_iam_member" "perf_manager_invoker" {
 ```
 
 **Rationale:**
+
 - Native GCP authentication
 - No secrets to manage or rotate
 - Auditable via Cloud Audit Logs
@@ -390,10 +409,12 @@ Agent manifests in GCS need to be valid to ensure reliable discovery and invocat
 | Discovery | When Perf Manager reads | Log warning, skip agent |
 
 **Schema Location:**
+
 - Canonical schema in Perf Manager repo: `schemas/agent-manifest.schema.json`
 - Copied/referenced by service repos for local validation
 
 **Tooling:**
+
 - `ajv` (Node.js) or `jsonschema` (Python) for CI validation
 - Pre-commit hooks using `check-jsonschema`
 
@@ -409,12 +430,14 @@ Previously proposed that Perf Manager define contracts. With delegated agents, t
 **Decision:** Each service repository owns its contract
 
 **Rationale:**
+
 - Perf Manager doesn't need to understand contracts - Agents validate compliance
 - Contract evolution is service-type-specific
 - Co-location improves maintainability
 
 **Contract Location:**
-```
+
+```text
 cloudrun-service-discord/
 └── contract/
     ├── openapi.yaml           # The contract
@@ -432,18 +455,21 @@ The Agent uses these to validate services. Perf Manager only sees pass/fail comp
 
 **Context:**
 The initial focus is comparing implementations across languages/frameworks. However, future research questions include:
+
 - How does CPU allocation (0.5, 1, 2, 4 vCPUs) affect cold start?
 - Does Startup CPU Boost benefit certain languages more than others?
 - What's the impact of memory allocation on different frameworks?
 - What's the minimum viable configuration per implementation?
 
-The Perf Manager must support these varied testing scenarios without understanding what dimensions are being tested.
+The Perf Manager must support these varied testing scenarios without understanding what dimensions
+are being tested.
 
 **Decision:** Opaque agent configuration with dimension-tagged results
 
 **Implementation:**
 
 1. **Request structure** - Manager passes `agent_config` through without interpretation:
+
 ```json
 {
   "benchmark_config": {
@@ -461,7 +487,8 @@ The Perf Manager must support these varied testing scenarios without understandi
 }
 ```
 
-2. **Response structure** - Results tagged with dimensions:
+1. **Response structure** - Results tagged with dimensions:
+
 ```json
 {
   "results": [
@@ -477,9 +504,10 @@ The Perf Manager must support these varied testing scenarios without understandi
 }
 ```
 
-3. **Reporting** - Manager aggregates by any dimension without understanding semantics
+1. **Reporting** - Manager aggregates by any dimension without understanding semantics
 
 **Rationale:**
+
 - Manager remains completely agnostic to testing dimensions
 - Agents can evolve their testing strategies independently
 - New dimensions (region, memory, VPC) require only Agent changes
@@ -491,11 +519,12 @@ The Perf Manager must support these varied testing scenarios without understandi
 
 ## Agent Hosting: Options and Trade-offs
 
-This section analyzes hosting strategies for Perf Agents, given the constraint that Cloud Run services take approximately 15 minutes to scale to zero after deployment.
+This section analyzes hosting strategies for Perf Agents, given the constraint that Cloud Run
+services take approximately 15 minutes to scale to zero after deployment.
 
 ### The Core Challenge
 
-```
+```text
 Timeline for cold start measurement:
 
 Deploy Service ──────────────────────────────────► Scale to Zero ────► Measure Cold Start
@@ -507,13 +536,15 @@ Deploy Service ─────────────────────�
                                                          (what we measure)
 ```
 
-For 100+ services, if we deploy on-demand and wait for scale-to-zero each time, the benchmark run becomes extremely long and the orchestration complex.
+For 100+ services, if we deploy on-demand and wait for scale-to-zero each time, the benchmark run
+becomes extremely long and the orchestration complex.
 
 ### Option A: Always-Deployed Agents (Current Pattern)
 
-**Description:** Perf Agents are deployed once and remain running. They're available immediately when the Perf Manager needs them.
+**Description:** Perf Agents are deployed once and remain running. They're available immediately
+when the Perf Manager needs them.
 
-```
+```text
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   Discord   │     │  REST CRUD  │     │    gRPC     │
 │ Perf Agent  │     │ Perf Agent  │     │ Perf Agent  │
@@ -527,6 +558,7 @@ For 100+ services, if we deploy on-demand and wait for scale-to-zero each time, 
 ```
 
 **Manifest configuration:**
+
 ```yaml
 agent:
   type: cloud_run_service
@@ -544,6 +576,7 @@ agent:
 **Scaling Analysis:**
 
 With 5-6 Agents (one per service type), always-deployed is reasonable:
+
 - 6 Cloud Run services with minimum instances
 - Cost: ~$30-60/month idle
 - Complexity: Minimal
@@ -556,9 +589,10 @@ The Agents themselves are few in number (5-6), not 100+. Each Agent then handles
 
 ### Option B: On-Demand Agent with Long-Running Job
 
-**Description:** Perf Manager triggers a Cloud Run Job for each Agent. The job runs until all that Agent's benchmarks complete (including 15-min scale-to-zero waits).
+**Description:** Perf Manager triggers a Cloud Run Job for each Agent. The job runs until all that
+Agent's benchmarks complete (including 15-min scale-to-zero waits).
 
-```
+```text
 Perf Manager
      │
      ├──► Invoke Discord Agent Job ──► Deploys 19 services
@@ -573,6 +607,7 @@ Perf Manager
 ```
 
 **Manifest configuration:**
+
 ```yaml
 agent:
   type: cloud_run_job
@@ -589,10 +624,12 @@ agent:
 | **Parallelization** | ⚠️ Can run Agent jobs in parallel, but each Agent still has internal waits. |
 
 **Runtime estimate (sequential Agents):**
-- 6 Agents × (15 min wait + 30 min benchmarks) = ~4.5 hours minimum
+
+6 Agents × (15 min wait + 30 min benchmarks) = ~4.5 hours minimum
 
 **Runtime estimate (parallel Agents):**
-- 45 min per Agent, but resource contention and quota limits may extend this
+
+45 min per Agent, but resource contention and quota limits may extend this
 
 **Verdict:** ⚠️ **Viable but slow**
 
@@ -600,9 +637,10 @@ agent:
 
 ### Option C: Scheduled Deferred Execution
 
-**Description:** Separate the deployment phase from the measurement phase. Deploy all services, wait for scale-to-zero, then measure.
+**Description:** Separate the deployment phase from the measurement phase. Deploy all services,
+wait for scale-to-zero, then measure.
 
-```
+```text
 Phase 1: Deploy (t=0)
 ┌─────────────┐
 │ Deploy all  │
@@ -624,8 +662,9 @@ Phase 3: Measure (t=15min+)
 
 **Implementation approaches:**
 
-**C1: Single long-running job with internal phases**
-```
+#### C1: Single long-running job with internal phases
+
+```text
 Agent Job:
   1. Deploy all 19 implementations
   2. Sleep 15 minutes
@@ -633,8 +672,9 @@ Agent Job:
   4. Return results
 ```
 
-**C2: Two-phase scheduled execution**
-```
+#### C2: Two-phase scheduled execution
+
+```text
 Perf Manager:
   1. Invoke Agent "deploy" endpoint
   2. Schedule measurement for T+20 minutes (Cloud Scheduler)
@@ -643,8 +683,9 @@ Perf Manager:
   5. Perf Manager polls for completion
 ```
 
-**C3: Event-driven with Pub/Sub**
-```
+#### C3: Event-driven with Pub/Sub
+
+```text
 1. Agent deploys services, publishes "ready-for-measurement" event
 2. Cloud Scheduler or delayed Pub/Sub triggers measurement
 3. Agent measures and publishes results
@@ -665,9 +706,11 @@ Perf Manager:
 
 ### Option D: Pre-deployed Services (Steady State)
 
-**Description:** Services remain deployed between benchmark runs. If last request was >15 minutes ago, they're already at zero.
+**Description:** Services remain deployed between benchmark runs. If last request was >15 minutes
+ago, they're already at zero.
 
-**Limitation:** Only works for steady-state testing. Doesn't support configuration matrix testing (CPU scaling, memory studies) which requires deploying services with different configurations.
+**Limitation:** Only works for steady-state testing. Doesn't support configuration matrix testing
+(CPU scaling, memory studies) which requires deploying services with different configurations.
 
 **Verdict:** ⚠️ **Useful for simple cases, but doesn't support multi-dimensional testing**
 
@@ -677,9 +720,10 @@ Perf Manager:
 
 **Decision:** Option C2 - Two-phase scheduled execution
 
-This approach separates deployment from measurement, avoiding idle compute time while waiting for scale-to-zero.
+This approach separates deployment from measurement, avoiding idle compute time while waiting for
+scale-to-zero.
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            BENCHMARK TIMELINE                                │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -704,7 +748,7 @@ This approach separates deployment from measurement, avoiding idle compute time 
 
 **Phased Execution Flow:**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    PHASE 1: DEPLOYMENT                           │
 ├─────────────────────────────────────────────────────────────────┤
@@ -758,7 +802,7 @@ This approach separates deployment from measurement, avoiding idle compute time 
 
 **GCS State Management:**
 
-```
+```text
 gs://perf-benchmark-state/
 ├── runs/
 │   └── {run_id}/
@@ -769,6 +813,7 @@ gs://perf-benchmark-state/
 ```
 
 **Deployment Manifest Example:**
+
 ```json
 {
   "run_id": "2026-01-24-abc123",
@@ -813,7 +858,7 @@ gs://perf-benchmark-state/
 
 **Failure Handling:**
 
-```
+```text
 If deployment fails midway:
   1. Status file shows partial deployment
   2. Measurement phase skips undeployed services
@@ -861,7 +906,8 @@ If measurement fails midway:
 
 **Services under test (deployed per run, cleaned up after):**
 
-With phased execution, services can be deployed fresh for each run and cleaned up after, enabling configuration matrix testing (different CPU, memory, etc.).
+With phased execution, services can be deployed fresh for each run and cleaned up after, enabling
+configuration matrix testing (different CPU, memory, etc.).
 
 | Scenario | Services Deployed | Cost |
 |----------|-------------------|------|
@@ -887,7 +933,7 @@ With phased execution, services can be deployed fresh for each run and cleaned u
 ### Arguments FOR Delegated Agent + Multi-Repo
 
 1. **Clean separation** - Perf Manager truly doesn't know service specifics
-2. **Scalability** - New service types require zero Manager changes
+2. **Scalability** - New service types require zero Manager changes (no code updates needed)
 3. **Ownership** - Service teams own their testing logic
 4. **Flexibility** - Each Agent can use best tools for its domain
 
@@ -905,19 +951,22 @@ With phased execution, services can be deployed fresh for each run and cleaned u
 
 ### Verdict
 
-The delegated agent pattern is appropriate for this use case. The alternative (Perf Manager knowing all protocols) would create a monolithic, tightly-coupled system that's hard to extend.
+The delegated agent pattern is appropriate for this use case. The alternative (Perf Manager knowing
+all protocols) would create a monolithic, tightly-coupled system that's hard to extend.
 
 ---
 
 ## Migration Strategy
 
 ### Phase 1: Infrastructure Setup
+
 1. Create GCS bucket for agent registry
 2. Define and publish manifest schema
 3. Set up Perf Manager service account
 4. Create Terraform modules for common infrastructure
 
 ### Phase 2: Extract Perf Manager
+
 1. Create `cloudrun-perf-manager` repository
 2. Implement discovery from GCS registry
 3. Implement standard agent invocation
@@ -925,6 +974,7 @@ The delegated agent pattern is appropriate for this use case. The alternative (P
 5. Initially, register one "fake" agent for testing
 
 ### Phase 3: Create Discord Perf Agent
+
 1. Create `cloudrun-service-discord` repository
 2. Move services from current repo
 3. Implement Perf Agent with current benchmark logic
@@ -932,6 +982,7 @@ The delegated agent pattern is appropriate for this use case. The alternative (P
 5. Validate end-to-end flow
 
 ### Phase 4: Add Service Types Incrementally
+
 1. For each new service type:
    - Create repository
    - Implement reference implementation (Go recommended)
@@ -940,6 +991,7 @@ The delegated agent pattern is appropriate for this use case. The alternative (P
 2. Validate with Perf Manager
 
 ### Phase 5: Deprecate Monorepo
+
 1. Archive original repository
 2. Update documentation
 3. Redirect references
@@ -971,6 +1023,7 @@ See [PERF-MANAGER-SPEC.md](./PERF-MANAGER-SPEC.md) for complete specification.
 ### Appendix C: Configuration Extensibility
 
 See [CONFIG-EXTENSIBILITY.md](./CONFIG-EXTENSIBILITY.md) for multi-dimensional testing patterns including:
+
 - CPU/Memory scaling studies
 - Startup Boost effectiveness analysis
 - Cost optimization research
