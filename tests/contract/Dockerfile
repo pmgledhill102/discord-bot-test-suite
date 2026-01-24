@@ -3,7 +3,7 @@
 # This image contains the Go test suite and can be run against
 # any service implementation via the CONTRACT_TEST_TARGET env var.
 
-FROM golang:1.22-alpine
+FROM golang:1.25-alpine
 
 WORKDIR /tests
 

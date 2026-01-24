@@ -1,0 +1,60 @@
+# Clang-format configuration for cpp-drogon service
+# Based on Google style with adjustments for this project
+
+BasedOnStyle: Google
+Language: Cpp
+Standard: c++17
+
+# Line length
+ColumnLimit: 100
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+IndentCaseLabels: true
+NamespaceIndentation: None
+
+# Braces
+BreakBeforeBraces: Attach
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Alignment
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands: true
+AlignTrailingComments: true
+
+# Spacing
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Includes
+IncludeBlocks: Regroup
+IncludeCategories:
+  # Drogon headers first
+  - Regex: '^<drogon/'
+    Priority: 1
+  # Other library headers
+  - Regex: '^<'
+    Priority: 2
+  # Local headers
+  - Regex: '^"'
+    Priority: 3
+SortIncludes: true
+
+# Other
+PointerAlignment: Left
+DerivePointerAlignment: false
+ReflowComments: true
