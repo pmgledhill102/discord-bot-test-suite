@@ -5,10 +5,13 @@ terraform/*.tfstate.backup
 terraform/.terraform.lock.hcl
 terraform/terraform.tfvars
 
+# Packer
+packer/*.pkr.hcl.lock
+packer/output-*/
+
 # Environment files
 .env
 *.env.local
-compose/.env
 
 # Secrets (never commit these!)
 *.pem
@@ -18,9 +21,6 @@ compose/.env
 
 # SSH
 config/ssh-config-sandbox
-
-# Docker
-docker/*.tar
 
 # Logs
 *.log
@@ -36,6 +36,6 @@ Thumbs.db
 *.swp
 *.swo
 
-# Generated configs
+# Generated configs (created by setup-ghostty.sh)
 config/ghostty-sandbox.conf
 config/launch-*.sh
