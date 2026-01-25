@@ -1,0 +1,41 @@
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+terraform/terraform.tfvars
+
+# Environment files
+.env
+*.env.local
+compose/.env
+
+# Secrets (never commit these!)
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+
+# SSH
+config/ssh-config-sandbox
+
+# Docker
+docker/*.tar
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Generated configs
+config/ghostty-sandbox.conf
+config/launch-*.sh
