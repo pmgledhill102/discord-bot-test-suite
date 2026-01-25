@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This directory contains Architecture Decision Records (ADRs) for the Claude Code sandbox infrastructure.
+This directory contains Architecture Decision Records (ADRs) for cloudcoop.
 
 ## Index
 
@@ -15,9 +15,10 @@ This directory contains Architecture Decision Records (ADRs) for the Claude Code
 | [ADR-0007](0007-infrastructure-management-approach.md) | Infrastructure Management (gcloud vs Terraform) | Accepted | 2026-01-25 |
 | [ADR-0008](0008-agent-agnostic-design.md) | Agent-Agnostic Design | Accepted | 2026-01-25 |
 | [ADR-0009](0009-api-key-management.md) | API Key Management | Accepted | 2026-01-25 |
-| [ADR-0010](0010-cloud-agnostic-design.md) | Cloud-Agnostic Design | Proposed | 2026-01-25 |
+| [ADR-0010](0010-cloud-agnostic-design.md) | Cloud-Agnostic Design | Accepted | 2026-01-25 |
 | [ADR-0011](0011-tui-implementation-approach.md) | TUI Implementation Approach | Accepted | 2026-01-25 |
 | [ADR-0012](0012-dynamic-ip-firewall.md) | Dynamic IP-Based Firewall | Accepted | 2026-01-25 |
+| [ADR-0013](0013-ssh-remote-execution.md) | SSH and Remote Execution | Accepted | 2026-01-25 |
 
 ## About ADRs
 
