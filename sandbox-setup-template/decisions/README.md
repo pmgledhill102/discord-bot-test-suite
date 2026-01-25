@@ -12,6 +12,7 @@ This directory contains Architecture Decision Records (ADRs) for the Claude Code
 | [ADR-0004](0004-region-selection.md) | Region Selection | Accepted | 2026-01-25 |
 | [ADR-0005](0005-machine-type.md) | Machine Type | Accepted | 2026-01-25 |
 | [ADR-0006](0006-cloud-vs-local-execution.md) | Cloud vs Local Execution | Accepted | 2026-01-25 |
+| [ADR-0007](0007-infrastructure-management-approach.md) | Infrastructure Management (gcloud vs Terraform) | Accepted | 2026-01-25 |
 
 ## About ADRs
 
