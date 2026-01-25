@@ -1,0 +1,6 @@
+[allowlist]
+description = "Test public key for contract tests (not a secret)"
+regexTarget = "match"
+regexes = [
+  '''398803f0f03317b6dc57069dbe7820e5f6cf7d5ff43ad6219710b19b0b49c159'''
+]
