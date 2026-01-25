@@ -16,6 +16,7 @@ This directory contains Architecture Decision Records (ADRs) for the Claude Code
 | [ADR-0008](0008-agent-agnostic-design.md) | Agent-Agnostic Design | Accepted | 2026-01-25 |
 | [ADR-0009](0009-api-key-management.md) | API Key Management | Accepted | 2026-01-25 |
 | [ADR-0010](0010-cloud-agnostic-design.md) | Cloud-Agnostic Design | Proposed | 2026-01-25 |
+| [ADR-0011](0011-tui-implementation-approach.md) | TUI Implementation Approach | Accepted | 2026-01-25 |
 
 ## About ADRs
 
