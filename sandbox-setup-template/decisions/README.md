@@ -11,6 +11,7 @@ This directory contains Architecture Decision Records (ADRs) for the Claude Code
 | [ADR-0003](0003-instance-provisioning-model.md) | Instance Provisioning Model | Accepted | 2026-01-25 |
 | [ADR-0004](0004-region-selection.md) | Region Selection | Accepted | 2026-01-25 |
 | [ADR-0005](0005-machine-type.md) | Machine Type | Accepted | 2026-01-25 |
+| [ADR-0006](0006-cloud-vs-local-execution.md) | Cloud vs Local Execution | Accepted | 2026-01-25 |
 
 ## About ADRs
 
