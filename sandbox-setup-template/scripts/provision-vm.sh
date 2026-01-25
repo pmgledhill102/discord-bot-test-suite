@@ -1,6 +1,9 @@
 #!/bin/bash
 # VM Provisioning Script - Installs all development tooling for Claude Code agents
 # Run as root via startup-script metadata or manually after VM creation
+#
+# This script installs all tools required to work with the discord-bot-test-suite
+# repository, including all languages, linters, and CI tools from pre-commit hooks.
 
 set -e
 
@@ -11,16 +14,37 @@ echo "=== Claude Sandbox VM Provisioning ==="
 echo "Started at: $(date)"
 echo "Hostname: $(hostname)"
 
-# Versions (update these as needed)
-NODE_VERSION="20"
-GO_VERSION="1.22.5"
-PYTHON_VERSION="3.11"
-RUST_VERSION="stable"
-JAVA_VERSION="21"
-RUBY_VERSION="3.3"
-PHP_VERSION="8.3"
-DOTNET_VERSION="8.0"
-DELTA_VERSION="0.18.2"
+# ============================================
+# Load versions from config file (if available)
+# ============================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VERSIONS_FILE="${SCRIPT_DIR}/../config/versions.env"
+
+if [ -f "$VERSIONS_FILE" ]; then
+    echo "Loading versions from $VERSIONS_FILE"
+    # shellcheck source=/dev/null
+    source "$VERSIONS_FILE"
+else
+    echo "No versions.env found, using defaults"
+fi
+
+# Default versions (overridden by versions.env if present)
+# These match the discord-bot-test-suite CI requirements
+NODE_VERSION="${NODE_VERSION:-24}"
+GO_VERSION="${GO_VERSION:-1.25.3}"
+PYTHON_VERSION="${PYTHON_VERSION:-3.11}"
+RUST_VERSION="${RUST_VERSION:-1.93}"
+JAVA_VERSION="${JAVA_VERSION:-21}"
+RUBY_VERSION="${RUBY_VERSION:-3.4}"
+PHP_VERSION="${PHP_VERSION:-8.5}"
+DOTNET_VERSION="${DOTNET_VERSION:-10.0}"
+GRADLE_VERSION="${GRADLE_VERSION:-8.12}"
+SBT_VERSION="${SBT_VERSION:-1.10.6}"
+DELTA_VERSION="${DELTA_VERSION:-0.18.2}"
+GOLANGCI_LINT_VERSION="${GOLANGCI_LINT_VERSION:-v2.8.0}"
+ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.7}"
+HADOLINT_VERSION="${HADOLINT_VERSION:-2.12.0}"
+KUBECTL_VERSION="${KUBECTL_VERSION:-1.30}"
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -35,7 +59,7 @@ apt-get update
 apt-get upgrade -y
 
 # ============================================
-# Core System Packages (from Anthropic devcontainer)
+# Core System Packages (from Anthropic devcontainer + CI requirements)
 # ============================================
 echo "=== Installing core system packages ==="
 apt-get install -y \
@@ -48,6 +72,7 @@ apt-get install -y \
     lsb-release \
     software-properties-common \
     build-essential \
+    cmake \
     git \
     less \
     procps \
@@ -67,18 +92,14 @@ apt-get install -y \
     tmux \
     screen \
     htop \
-    ncdu
+    ncdu \
+    clang-format
 
 # ============================================
 # git-delta (from Anthropic devcontainer)
 # ============================================
-echo "=== Installing git-delta ==="
+echo "=== Installing git-delta ${DELTA_VERSION} ==="
 ARCH=$(dpkg --print-architecture)
-if [ "$ARCH" = "amd64" ]; then
-    DELTA_ARCH="x86_64"
-else
-    DELTA_ARCH="aarch64"
-fi
 wget -q "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_${ARCH}.deb" -O /tmp/git-delta.deb
 dpkg -i /tmp/git-delta.deb || apt-get install -f -y
 rm /tmp/git-delta.deb
@@ -108,7 +129,6 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docke
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# Configure Docker
 systemctl enable docker
 systemctl start docker
 cat > /etc/docker/daemon.json <<EOF
@@ -123,13 +143,13 @@ EOF
 systemctl restart docker
 
 # ============================================
-# Node.js (Claude Code runtime)
+# Node.js (Claude Code runtime + JS/TS services)
 # ============================================
 echo "=== Installing Node.js ${NODE_VERSION} ==="
 curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
 apt-get install -y nodejs
 
-# Install global npm packages
+# Install global npm packages (including linting tools from pre-commit)
 npm install -g \
     @anthropic-ai/claude-code \
     yarn \
@@ -137,7 +157,9 @@ npm install -g \
     typescript \
     ts-node \
     eslint \
-    prettier
+    prettier \
+    cspell \
+    markdownlint-cli2
 
 # ============================================
 # Python
@@ -151,11 +173,10 @@ apt-get install -y \
     python${PYTHON_VERSION}-dev \
     python3-pip
 
-# Set as default python3
 update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1
 update-alternatives --install /usr/bin/python python /usr/bin/python${PYTHON_VERSION} 1
 
-# Install Python tools
+# Install Python tools (including pre-commit hooks: ruff, yamllint)
 pip3 install --break-system-packages \
     pipx \
     poetry \
@@ -165,7 +186,8 @@ pip3 install --break-system-packages \
     mypy \
     pytest \
     pre-commit \
-    httpie
+    httpie \
+    yamllint
 
 # ============================================
 # Go
@@ -176,26 +198,52 @@ rm -rf /usr/local/go
 tar -C /usr/local -xzf /tmp/go.tar.gz
 rm /tmp/go.tar.gz
 
-# Go environment
 cat > /etc/profile.d/go.sh <<'EOF'
 export PATH=$PATH:/usr/local/go/bin
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
 EOF
 
-# Install Go tools
 export PATH=$PATH:/usr/local/go/bin
 export GOPATH=/root/go
 export PATH=$PATH:$GOPATH/bin
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# Install Go tools (golangci-lint v2 from pre-commit)
+echo "=== Installing golangci-lint ${GOLANGCI_LINT_VERSION} ==="
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin ${GOLANGCI_LINT_VERSION}
+
 go install github.com/go-delve/delve/cmd/dlv@latest
+
+# ============================================
+# actionlint (GitHub Actions linting - from pre-commit)
+# ============================================
+echo "=== Installing actionlint ${ACTIONLINT_VERSION} ==="
+wget -q "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_$(dpkg --print-architecture).tar.gz" -O /tmp/actionlint.tar.gz
+tar -xzf /tmp/actionlint.tar.gz -C /usr/local/bin actionlint
+chmod +x /usr/local/bin/actionlint
+rm /tmp/actionlint.tar.gz
+
+# ============================================
+# hadolint (Dockerfile linting - from pre-commit)
+# ============================================
+echo "=== Installing hadolint ${HADOLINT_VERSION} ==="
+HADOLINT_ARCH=$(dpkg --print-architecture)
+if [ "$HADOLINT_ARCH" = "amd64" ]; then HADOLINT_ARCH="x86_64"; fi
+wget -q "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-${HADOLINT_ARCH}" -O /usr/local/bin/hadolint
+chmod +x /usr/local/bin/hadolint
+
+# ============================================
+# shellcheck (Shell linting - from pre-commit)
+# ============================================
+echo "=== Installing shellcheck ==="
+apt-get install -y shellcheck
 
 # ============================================
 # Rust
 # ============================================
-echo "=== Installing Rust ==="
+echo "=== Installing Rust ${RUST_VERSION} ==="
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain ${RUST_VERSION}
-source $HOME/.cargo/env
+source "$HOME/.cargo/env"
 rustup component add clippy rustfmt
 
 # ============================================
@@ -207,18 +255,52 @@ echo "deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.n
 apt-get update
 apt-get install -y temurin-${JAVA_VERSION}-jdk
 
-# Maven and Gradle
+# Maven
 apt-get install -y maven
-wget -q "https://services.gradle.org/distributions/gradle-8.8-bin.zip" -O /tmp/gradle.zip
+
+# Gradle
+echo "=== Installing Gradle ${GRADLE_VERSION} ==="
+wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -O /tmp/gradle.zip
 unzip -q /tmp/gradle.zip -d /opt
-ln -sf /opt/gradle-8.8/bin/gradle /usr/local/bin/gradle
+ln -sf /opt/gradle-${GRADLE_VERSION}/bin/gradle /usr/local/bin/gradle
 rm /tmp/gradle.zip
+
+# ============================================
+# Scala / sbt
+# ============================================
+echo "=== Installing sbt ${SBT_VERSION} ==="
+wget -q "https://github.com/sbt/sbt/releases/download/v${SBT_VERSION}/sbt-${SBT_VERSION}.tgz" -O /tmp/sbt.tgz
+tar -xzf /tmp/sbt.tgz -C /opt
+ln -sf /opt/sbt/bin/sbt /usr/local/bin/sbt
+rm /tmp/sbt.tgz
 
 # ============================================
 # Ruby
 # ============================================
-echo "=== Installing Ruby ==="
-apt-get install -y ruby-full
+echo "=== Installing Ruby ${RUBY_VERSION} ==="
+# Use rbenv for version management
+apt-get install -y \
+    autoconf \
+    bison \
+    libssl-dev \
+    libyaml-dev \
+    libreadline-dev \
+    zlib1g-dev \
+    libncurses-dev \
+    libffi-dev \
+    libgdbm-dev
+
+git clone https://github.com/rbenv/rbenv.git /opt/rbenv
+git clone https://github.com/rbenv/ruby-build.git /opt/rbenv/plugins/ruby-build
+
+export PATH="/opt/rbenv/bin:/opt/rbenv/shims:$PATH"
+eval "$(rbenv init -)"
+
+# Install Ruby (this takes a while)
+rbenv install ${RUBY_VERSION}.0 || rbenv install ${RUBY_VERSION}.1 || apt-get install -y ruby-full
+rbenv global ${RUBY_VERSION}.0 2>/dev/null || rbenv global ${RUBY_VERSION}.1 2>/dev/null || true
+
+# Install gems (rubocop from pre-commit)
 gem install bundler rubocop
 
 # ============================================
@@ -234,7 +316,8 @@ apt-get install -y \
     php${PHP_VERSION}-curl \
     php${PHP_VERSION}-mbstring \
     php${PHP_VERSION}-xml \
-    php${PHP_VERSION}-zip
+    php${PHP_VERSION}-zip \
+    php${PHP_VERSION}-sodium
 
 # Composer
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -247,7 +330,7 @@ wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-mi
 dpkg -i /tmp/packages-microsoft-prod.deb
 rm /tmp/packages-microsoft-prod.deb
 apt-get update
-apt-get install -y dotnet-sdk-${DOTNET_VERSION}
+apt-get install -y dotnet-sdk-${DOTNET_VERSION} || apt-get install -y dotnet-sdk-8.0
 
 # ============================================
 # Google Cloud CLI
@@ -259,12 +342,20 @@ apt-get update
 apt-get install -y google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin
 
 # ============================================
+# Terraform
+# ============================================
+echo "=== Installing Terraform ==="
+wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+apt-get update
+apt-get install -y terraform
+
+# ============================================
 # Kubernetes Tools
 # ============================================
 echo "=== Installing Kubernetes tools ==="
-# kubectl
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
 apt-get update
 apt-get install -y kubectl
 
@@ -285,22 +376,21 @@ apt-get install -y \
     default-mysql-client \
     redis-tools
 
-# MongoDB shell
 wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg
 echo "deb [signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 apt-get update
-apt-get install -y mongodb-mongosh
+apt-get install -y mongodb-mongosh || true
 
 # ============================================
 # Additional CLI Tools
 # ============================================
 echo "=== Installing additional CLI tools ==="
 
-# yq (YAML processor)
+# yq (YAML processor - used in CI)
 wget -q "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$(dpkg --print-architecture)" -O /usr/local/bin/yq
 chmod +x /usr/local/bin/yq
 
-# btop (better top)
+# btop
 apt-get install -y btop || true
 
 # micro editor
@@ -367,8 +457,13 @@ plugins=(git docker kubectl)
 source $ZSH/oh-my-zsh.sh
 
 # Path additions
-export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin:$HOME/.cargo/bin
+export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin:$HOME/.cargo/bin:/opt/rbenv/bin:/opt/rbenv/shims
 export GOPATH=$HOME/go
+
+# rbenv init
+if command -v rbenv &> /dev/null; then
+    eval "$(rbenv init -)"
+fi
 
 # Aliases
 alias ll='ls -la'
@@ -414,18 +509,13 @@ cat > /usr/local/bin/start-agents.sh <<'SCRIPT'
 AGENT_COUNT=${1:-12}
 SESSION_NAME="claude-agents"
 
-# Kill existing session
 tmux kill-session -t $SESSION_NAME 2>/dev/null || true
-
-# Create new session
 tmux new-session -d -s $SESSION_NAME -n "agent-1"
 
-# Create windows for each agent
 for i in $(seq 2 $AGENT_COUNT); do
     tmux new-window -t $SESSION_NAME -n "agent-$i"
 done
 
-# Start claude in each window
 for i in $(seq 1 $AGENT_COUNT); do
     tmux send-keys -t $SESSION_NAME:agent-$i "cd /workspaces/agent-$i && claude --dangerously-skip-permissions" Enter
 done
@@ -492,17 +582,31 @@ echo ""
 echo "=== Provisioning Complete ==="
 echo "Finished at: $(date)"
 echo ""
-echo "Installed:"
-echo "  - Node.js $(node --version)"
-echo "  - Python $(python3 --version)"
-echo "  - Go $(/usr/local/go/bin/go version)"
-echo "  - Rust $(rustc --version 2>/dev/null || echo 'installed')"
-echo "  - Java $(java --version 2>&1 | head -1)"
-echo "  - Ruby $(ruby --version)"
-echo "  - PHP $(php --version | head -1)"
-echo "  - .NET $(dotnet --version)"
-echo "  - Docker $(docker --version)"
-echo "  - Claude Code $(claude --version 2>/dev/null || echo 'installed')"
+echo "Installed versions:"
+echo "  - Node.js    : $(node --version 2>/dev/null || echo 'N/A')"
+echo "  - Python     : $(python3 --version 2>/dev/null || echo 'N/A')"
+echo "  - Go         : $(/usr/local/go/bin/go version 2>/dev/null | awk '{print $3}' || echo 'N/A')"
+echo "  - Rust       : $(rustc --version 2>/dev/null | awk '{print $2}' || echo 'N/A')"
+echo "  - Java       : $(java --version 2>&1 | head -1 || echo 'N/A')"
+echo "  - Ruby       : $(ruby --version 2>/dev/null | awk '{print $2}' || echo 'N/A')"
+echo "  - PHP        : $(php --version 2>/dev/null | head -1 | awk '{print $2}' || echo 'N/A')"
+echo "  - .NET       : $(dotnet --version 2>/dev/null || echo 'N/A')"
+echo "  - Gradle     : $(gradle --version 2>/dev/null | grep Gradle | awk '{print $2}' || echo 'N/A')"
+echo "  - sbt        : $(sbt --version 2>/dev/null | grep 'sbt script' | awk '{print $4}' || echo 'N/A')"
+echo "  - Docker     : $(docker --version 2>/dev/null | awk '{print $3}' | tr -d ',' || echo 'N/A')"
+echo "  - Terraform  : $(terraform --version 2>/dev/null | head -1 | awk '{print $2}' || echo 'N/A')"
+echo "  - Claude Code: $(claude --version 2>/dev/null || echo 'N/A')"
+echo ""
+echo "Linting tools:"
+echo "  - golangci-lint : $(golangci-lint --version 2>/dev/null | awk '{print $4}' || echo 'N/A')"
+echo "  - ruff          : $(ruff --version 2>/dev/null | awk '{print $2}' || echo 'N/A')"
+echo "  - eslint        : $(eslint --version 2>/dev/null || echo 'N/A')"
+echo "  - prettier      : $(prettier --version 2>/dev/null || echo 'N/A')"
+echo "  - rubocop       : $(rubocop --version 2>/dev/null || echo 'N/A')"
+echo "  - actionlint    : $(actionlint --version 2>/dev/null || echo 'N/A')"
+echo "  - hadolint      : $(hadolint --version 2>/dev/null || echo 'N/A')"
+echo "  - shellcheck    : $(shellcheck --version 2>/dev/null | grep version: | awk '{print $2}' || echo 'N/A')"
+echo "  - clang-format  : $(clang-format --version 2>/dev/null | awk '{print $3}' || echo 'N/A')"
 echo ""
 echo "Quick start:"
 echo "  1. SSH in: gcloud compute ssh $(hostname) --zone=ZONE --tunnel-through-iap"
