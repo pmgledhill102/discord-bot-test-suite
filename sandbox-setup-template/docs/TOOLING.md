@@ -6,18 +6,60 @@ This document lists all tools pre-installed on the Claude Sandbox VM by the prov
 
 The tooling list is based on:
 1. **Anthropic's official devcontainer** - [github.com/anthropics/claude-code/.devcontainer](https://github.com/anthropics/claude-code/tree/main/.devcontainer)
-2. **Docker's Claude Code sandbox template** - [docker/sandbox-templates:claude-code](https://docs.docker.com/ai/sandboxes/claude-code/)
-3. **Additional tools** commonly needed for full-stack development
+2. **discord-bot-test-suite CI** - Pre-commit hooks, GitHub workflows, and Dockerfiles
+3. **Docker's Claude Code sandbox template** - [docker/sandbox-templates:claude-code](https://docs.docker.com/ai/sandboxes/claude-code/)
+
+---
+
+## Language Runtimes
+
+Versions match the discord-bot-test-suite Dockerfiles and CI:
+
+| Runtime | Version | Package Managers | Linters/Formatters |
+|---------|---------|------------------|-------------------|
+| **Node.js** | 24 | npm, yarn, pnpm | eslint, prettier, cspell, markdownlint-cli2 |
+| **Python** | 3.11 | pip, pipx, poetry, uv | black, ruff, mypy, yamllint |
+| **Go** | 1.25 | go modules | golangci-lint v2.8.0 |
+| **Rust** | 1.93 | cargo, rustup | clippy, rustfmt |
+| **Java** | 21 (Temurin) | Maven, Gradle 8.12 | Spotless (via Maven) |
+| **Kotlin** | (JVM 21) | Gradle 8.12 | ktlint (via Gradle) |
+| **Scala** | 3.3 | sbt 1.10.6 | scalafmt (via sbt) |
+| **Ruby** | 3.4 | bundler, gem | rubocop |
+| **PHP** | 8.5 | composer | Laravel Pint (via Composer) |
+| **.NET** | 10.0 | dotnet CLI | dotnet format |
+| **C++** | (system) | cmake | clang-format |
+
+---
+
+## Pre-commit Hook Tools
+
+These tools are used by `.pre-commit-config.yaml`:
+
+| Tool | Version | Language | Purpose |
+|------|---------|----------|---------|
+| pre-commit-hooks | v4.5.0 | Python | General file checks |
+| prettier | v3.1.0 | Node.js | JSON/YAML/Markdown formatting |
+| yamllint | v1.35.1 | Python | YAML linting |
+| actionlint | v1.7.7 | Go | GitHub Actions linting |
+| cspell | latest | Node.js | Spelling check for Markdown |
+| markdownlint-cli2 | latest | Node.js | Markdown linting |
+| golangci-lint | v2.8.0 | Go | Go linting |
+| ruff | v0.9.6 | Python | Python linting/formatting |
+| rubocop | latest | Ruby | Ruby linting |
+| eslint | latest | Node.js | JavaScript/TypeScript linting |
+| clang-format | system | C++ | C++ formatting |
+| rustfmt | bundled | Rust | Rust formatting |
+| clippy | bundled | Rust | Rust linting |
+| shellcheck | v0.9.0 | Haskell | Shell script linting |
+| hadolint | v2.12.0 | Haskell | Dockerfile linting |
 
 ---
 
 ## Core Tools (from Anthropic Devcontainer)
 
-These tools are installed in Anthropic's official development container:
-
 | Tool | Version | Purpose |
 |------|---------|---------|
-| Node.js | 20 LTS | Claude Code runtime |
+| Node.js | 24 | Claude Code runtime |
 | npm | bundled | Node package manager |
 | git | latest | Version control |
 | gh | latest | GitHub CLI |
@@ -27,33 +69,11 @@ These tools are installed in Anthropic's official development container:
 | git-delta | 0.18.2 | Syntax-highlighted git diffs |
 | zsh | latest | Shell |
 | oh-my-zsh | latest | ZSH framework |
-| less | latest | Pager |
-| procps | latest | Process utilities |
-| sudo | latest | Privilege escalation |
-| man-db | latest | Manual pages |
-| unzip/zip | latest | Archive utilities |
-| gnupg2 | latest | GPG encryption |
-| nano/vim | latest | Text editors |
-| iptables/ipset | latest | Firewall (if needed) |
-| iproute2 | latest | Network utilities |
-| dnsutils | latest | DNS tools |
 
 ---
 
-## Language Runtimes
+## Node.js Global Packages
 
-| Runtime | Version | Package Managers | Linters/Formatters |
-|---------|---------|------------------|-------------------|
-| **Node.js** | 20 LTS | npm, yarn, pnpm | eslint, prettier |
-| **Python** | 3.11+ | pip, pipx, poetry, uv | black, ruff, mypy |
-| **Go** | 1.22+ | go modules | golangci-lint |
-| **Rust** | stable | cargo, rustup | clippy, rustfmt |
-| **Java** | 21 (Temurin) | Maven, Gradle | - |
-| **Ruby** | 3.3+ | bundler, gem | rubocop |
-| **PHP** | 8.3+ | composer | - |
-| **.NET** | 8.0 | dotnet CLI | - |
-
-### Node.js Global Packages
 ```
 @anthropic-ai/claude-code
 yarn
@@ -62,9 +82,14 @@ typescript
 ts-node
 eslint
 prettier
+cspell
+markdownlint-cli2
 ```
 
-### Python Packages (pip)
+---
+
+## Python Packages (pip)
+
 ```
 pipx
 poetry
@@ -75,20 +100,18 @@ mypy
 pytest
 pre-commit
 httpie
+yamllint
 semgrep
 ```
 
-### Go Tools
+---
+
+## Go Tools
+
 ```
-golangci-lint
+golangci-lint (v2.8.0)
 delve (dlv)
 grpcurl
-```
-
-### Rust Components
-```
-clippy
-rustfmt
 ```
 
 ---
@@ -106,6 +129,7 @@ rustfmt
 | kubectl | Kubernetes CLI |
 | helm | Kubernetes package manager |
 | k9s | Kubernetes TUI |
+| terraform | Infrastructure as code |
 
 ---
 
@@ -120,76 +144,35 @@ rustfmt
 
 ---
 
-## HTTP & API Tools
+## Configuration File
 
-| Tool | Purpose |
-|------|---------|
-| curl | HTTP client |
-| wget | Download utility |
-| httpie | Modern HTTP client |
-| grpcurl | gRPC client |
-
----
-
-## Text & Data Processing
-
-| Tool | Purpose |
-|------|---------|
-| jq | JSON processor |
-| yq | YAML processor |
-| ripgrep (rg) | Fast search |
-| fzf | Fuzzy finder |
-| git-delta | Diff viewer |
-
----
-
-## Editors
-
-| Editor | Notes |
-|--------|-------|
-| vim | Classic |
-| nano | Simple |
-| micro | Modern terminal editor |
-
----
-
-## Monitoring & System Tools
-
-| Tool | Purpose |
-|------|---------|
-| htop | Interactive process viewer |
-| btop | Resource monitor |
-| ncdu | Disk usage analyzer |
-| tmux | Terminal multiplexer |
-| screen | Terminal multiplexer |
-
----
-
-## Security & Scanning
-
-| Tool | Purpose |
-|------|---------|
-| trivy | Container/filesystem scanner |
-| semgrep | Static analysis |
-| pre-commit | Git hooks framework |
-
----
-
-## Version Reference
-
-Update these versions in `scripts/provision-vm.sh`:
+All versions are defined in `config/versions.env`:
 
 ```bash
-NODE_VERSION="20"
-GO_VERSION="1.22.5"
+# Language Runtimes (match Dockerfiles)
+NODE_VERSION="24"
 PYTHON_VERSION="3.11"
-RUST_VERSION="stable"
+GO_VERSION="1.25.3"
+RUST_VERSION="1.93"
 JAVA_VERSION="21"
-RUBY_VERSION="3.3"
-PHP_VERSION="8.3"
-DOTNET_VERSION="8.0"
+RUBY_VERSION="3.4"
+PHP_VERSION="8.5"
+DOTNET_VERSION="10.0"
+
+# Build Tools
+GRADLE_VERSION="8.12"
+SBT_VERSION="1.10.6"
+
+# Linting Tools (match pre-commit)
+GOLANGCI_LINT_VERSION="v2.8.0"
 DELTA_VERSION="0.18.2"
+ACTIONLINT_VERSION="1.7.7"
+HADOLINT_VERSION="2.12.0"
 ```
+
+To update versions:
+1. Edit `config/versions.env`
+2. Re-run `provision-vm.sh` or rebuild the VM
 
 ---
 
@@ -198,26 +181,25 @@ DELTA_VERSION="0.18.2"
 After provisioning, verify installations:
 
 ```bash
-# Core
-node --version
-git --version
-gh --version
-rg --version
-delta --version
-
 # Languages
-python3 --version
-go version
-rustc --version
-java --version
-ruby --version
-php --version
-dotnet --version
+node --version          # v24.x
+python3 --version       # 3.11.x
+go version              # go1.25.x
+rustc --version         # 1.93.x
+java --version          # 21.x
+ruby --version          # 3.4.x
+php --version           # 8.5.x
+dotnet --version        # 10.0.x
 
-# Cloud/Containers
-docker --version
-gcloud version
-kubectl version --client
+# Build tools
+gradle --version        # 8.12
+sbt --version          # 1.10.6
+
+# Linting
+golangci-lint --version # 2.8.0
+ruff --version          # 0.9.x
+actionlint --version    # 1.7.7
+hadolint --version      # 2.12.0
 
 # Claude Code
 claude --version
@@ -227,13 +209,13 @@ claude --version
 
 ## Adding Custom Tools
 
-To add tools for your specific projects, either:
+To add tools for your specific projects:
 
-1. **Modify `provision-vm.sh`** before creating the VM
-2. **Use Packer** to bake a custom VM image with additional tools
-3. **Install at runtime** via the sandbox user
+1. **Modify `config/versions.env`** - Add new version variables
+2. **Modify `scripts/provision-vm.sh`** - Add installation steps
+3. **Use Packer** - Bake a custom VM image with additional tools
+4. **Install at runtime** - Via the sandbox user:
 
-Example adding a tool at runtime:
 ```bash
 sudo su - sandbox
 npm install -g some-tool
