@@ -92,6 +92,20 @@ jobs:
         with:
           files: '**/*.md'
 
+  gitleaks:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   terraform:
     name: Lint Terraform
     runs-on: ubuntu-latest
@@ -135,7 +149,7 @@ jobs:
     name: Lint Complete
     runs-on: ubuntu-latest
     if: always()
-    needs: [actionlint, markdown, prettier, yaml-lint, cspell, terraform, services-yaml]
+    needs: [actionlint, markdown, prettier, yaml-lint, cspell, gitleaks, terraform, services-yaml]
     steps:
       - name: Check lint results
         run: |
