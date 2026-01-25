@@ -5,27 +5,27 @@ benchmark services.
 
 ## Image Size Comparison
 
-| Service              | Before | After    | Reduction | Base Image Change                         |
-| -------------------- | ------ | -------- | --------- | ----------------------------------------- |
-| rust-actix           | 32 MB  | 4.1 MB   | -87%      | debian:bookworm-slim → distroless/static  |
-| ruby-rails           | 222 MB | 122.5 MB | -45%      | ruby:3.4-slim → ruby:alpine               |
-| python-flask         | 73 MB  | 36.8 MB  | -50%      | python:3.14-slim → distroless/python3     |
-| python-django        | 77 MB  | 43.3 MB  | -44%      | python:3.14-slim → distroless/python3     |
-| cpp-drogon           | 30 MB  | 18.3 MB  | -39%      | ubuntu:24.04 → distroless/cc              |
-| java-micronaut       | 151 MB | 125.5 MB | -17%      | temurin:21-jre → distroless/java21        |
-| java-quarkus         | 155 MB | 129.7 MB | -16%      | temurin:21-jre → distroless/java21        |
-| scala-play           | 156 MB | 141.3 MB | -9%       | temurin:21-jre-alpine → distroless/java21 |
-| go-gin               | 9 MB   | 9.6 MB   | ~0%       | scratch (already optimal)                 |
-| java-spring2         | 149 MB | 149.1 MB | ~0%       | temurin:17-jre → distroless/java17        |
-| java-spring3         | 132 MB | 132.2 MB | ~0%       | temurin:21-jre-alpine → distroless/java21 |
-| java-spring4         | 133 MB | 133.1 MB | ~0%       | temurin:21-jre-alpine → distroless/java21 |
-| kotlin-ktor          | 127 MB | 127.1 MB | ~0%       | temurin:21-jre-alpine → distroless/java21 |
-| java-quarkus-native  | 31 MB  | 31.5 MB  | ~0%       | quarkus-micro-image (already optimal)     |
-| csharp-aspnet        | 57 MB  | 56.7 MB  | ~0%       | aspnet:alpine → chiseled                  |
-| csharp-aspnet-native | 10 MB  | 12.0 MB  | +20%      | runtime-deps:alpine → chiseled            |
-| php-laravel          | 47 MB  | 47.5 MB  | ~0%       | php:alpine (no distroless for PHP)        |
-| node-express         | 62 MB  | 67.0 MB  | +8%       | node:alpine → distroless/nodejs           |
-| typescript-fastify   | 64 MB  | 67.8 MB  | +6%       | node:alpine → distroless/nodejs           |
+| Service              | Before Optimization | After Optimization | Reduction | Base Image Change                         |
+| -------------------- | ------------------- | ------------------ | --------- | ----------------------------------------- |
+| rust-actix           | 32 MB               | 4.1 MB             | -87%      | debian:bookworm-slim → distroless/static  |
+| ruby-rails           | 222 MB              | 122.5 MB           | -45%      | ruby:3.4-slim → ruby:alpine               |
+| python-flask         | 73 MB               | 36.8 MB            | -50%      | python:3.14-slim → distroless/python3     |
+| python-django        | 77 MB               | 43.3 MB            | -44%      | python:3.14-slim → distroless/python3     |
+| cpp-drogon           | 30 MB               | 18.3 MB            | -39%      | ubuntu:24.04 → distroless/cc              |
+| java-micronaut       | 151 MB              | 125.5 MB           | -17%      | temurin:21-jre → distroless/java21        |
+| java-quarkus         | 155 MB              | 129.7 MB           | -16%      | temurin:21-jre → distroless/java21        |
+| scala-play           | 156 MB              | 141.3 MB           | -9%       | temurin:21-jre-alpine → distroless/java21 |
+| go-gin               | 9 MB                | 9.6 MB             | ~0%       | scratch (already optimal)                 |
+| java-spring2         | 149 MB              | 149.1 MB           | ~0%       | temurin:17-jre → distroless/java17        |
+| java-spring3         | 132 MB              | 132.2 MB           | ~0%       | temurin:21-jre-alpine → distroless/java21 |
+| java-spring4         | 133 MB              | 133.1 MB           | ~0%       | temurin:21-jre-alpine → distroless/java21 |
+| kotlin-ktor          | 127 MB              | 127.1 MB           | ~0%       | temurin:21-jre-alpine → distroless/java21 |
+| java-quarkus-native  | 31 MB               | 31.5 MB            | ~0%       | quarkus-micro-image (already optimal)     |
+| csharp-aspnet        | 57 MB               | 56.7 MB            | ~0%       | aspnet:alpine → chiseled                  |
+| csharp-aspnet-native | 10 MB               | 12.0 MB            | +20%      | runtime-deps:alpine → chiseled            |
+| php-laravel          | 47 MB               | 47.5 MB            | ~0%       | php:alpine (no distroless for PHP)        |
+| node-express         | 62 MB               | 67.0 MB            | +8%       | node:alpine → distroless/nodejs           |
+| typescript-fastify   | 64 MB               | 67.8 MB            | +6%       | node:alpine → distroless/nodejs           |
 
 **Total reduction**: ~200 MB across all services (1,497 MB → 1,297 MB)
 
