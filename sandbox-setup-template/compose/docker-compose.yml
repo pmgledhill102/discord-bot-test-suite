@@ -1,0 +1,95 @@
+# Claude Code Agent Orchestration
+# Manages multiple Claude Code agent containers
+
+version: "3.9"
+
+services:
+  agent:
+    image: ${AGENT_IMAGE:-claude-sandbox-agent:latest}
+    container_name: claude-agent-{{.Task.Slot}}
+    hostname: agent-{{.Task.Slot}}
+    restart: unless-stopped
+
+    environment:
+      # Agent identification
+      - AGENT_ID={{.Task.Slot}}
+
+      # API configuration (set in .env or via Secret Manager)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - API_KEY_SECRET=${API_KEY_SECRET:-anthropic-api-key}
+
+      # Git configuration
+      - GIT_USER_NAME=${GIT_USER_NAME:-Claude Agent}
+      - GIT_USER_EMAIL=${GIT_USER_EMAIL:-claude@example.com}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+
+      # Workspace configuration
+      - WORKSPACE_DIR=/workspaces/agent-{{.Task.Slot}}
+      - REPO_URL=${REPO_URL:-}
+
+      # Claude Code settings
+      - CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
+    volumes:
+      # Per-agent workspace (isolated)
+      - agent-{{.Task.Slot}}-workspace:/workspaces/agent-{{.Task.Slot}}
+
+      # Shared read-only configuration
+      - ./config:/config:ro
+
+      # Docker socket for docker-in-docker (optional, security consideration)
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+
+      # GCP credentials (if using workload identity)
+      # - /var/run/secrets/gcp:/var/run/secrets/gcp:ro
+
+    networks:
+      - sandbox-network
+
+    # Resource limits per agent
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 6G
+        reservations:
+          cpus: "0.5"
+          memory: 2G
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Keep stdin open for interactive use
+    stdin_open: true
+    tty: true
+
+    # Logging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  sandbox-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# Named volumes for agent workspaces
+# These persist across container restarts
+volumes:
+  agent-1-workspace:
+  agent-2-workspace:
+  agent-3-workspace:
+  agent-4-workspace:
+  agent-5-workspace:
+  agent-6-workspace:
+  agent-7-workspace:
+  agent-8-workspace:
+  agent-9-workspace:
+  agent-10-workspace:
+  agent-11-workspace:
+  agent-12-workspace:

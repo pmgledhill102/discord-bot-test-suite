@@ -1,0 +1,217 @@
+# Base image with all development tooling for Claude Code agents
+# This image is shared across all agent containers for efficiency
+
+FROM ubuntu:24.04
+
+LABEL maintainer="your-email@example.com"
+LABEL description="Base image for Claude Code sandbox agents with full development tooling"
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Install base system packages
+RUN apt-get update && apt-get install -y \
+    # Core utilities
+    curl \
+    wget \
+    git \
+    jq \
+    yq \
+    unzip \
+    zip \
+    tar \
+    gzip \
+    vim \
+    nano \
+    htop \
+    tree \
+    less \
+    # Build essentials
+    build-essential \
+    cmake \
+    make \
+    pkg-config \
+    autoconf \
+    automake \
+    libtool \
+    # SSL/TLS
+    ca-certificates \
+    openssl \
+    libssl-dev \
+    # Networking
+    openssh-client \
+    net-tools \
+    dnsutils \
+    iputils-ping \
+    # Compression
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    # Database clients
+    postgresql-client \
+    mysql-client \
+    sqlite3 \
+    libsqlite3-dev \
+    # Image/graphics (for some builds)
+    libpng-dev \
+    libjpeg-dev \
+    # XML/YAML processing
+    libxml2-dev \
+    libxslt1-dev \
+    # Misc libraries
+    libffi-dev \
+    libreadline-dev \
+    libncurses5-dev \
+    # Python build dependencies
+    python3-dev \
+    python3-pip \
+    python3-venv \
+    # Docker CLI (for docker-in-docker scenarios)
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ripgrep (critical for Claude Code search)
+RUN curl -LO https://github.com/BurntSushi/ripgrep/releases/download/14.1.0/ripgrep_14.1.0-1_amd64.deb \
+    && dpkg -i ripgrep_14.1.0-1_amd64.deb \
+    && rm ripgrep_14.1.0-1_amd64.deb
+
+# Install GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y gh \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20 LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g npm@latest \
+    && npm install -g yarn pnpm
+
+# Install Python 3.12 and tools
+RUN apt-get update && apt-get install -y \
+    python3.12 \
+    python3.12-venv \
+    python3.12-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
+    && python3 -m pip install --upgrade pip setuptools wheel \
+    && python3 -m pip install \
+        pipx \
+        poetry \
+        black \
+        flake8 \
+        pylint \
+        mypy \
+        pytest \
+        pre-commit
+
+# Install Go 1.22
+ENV GO_VERSION=1.22.5
+RUN curl -LO https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz \
+    && rm go${GO_VERSION}.linux-amd64.tar.gz
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV GOPATH="/go"
+ENV PATH="${GOPATH}/bin:${PATH}"
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup component add clippy rustfmt
+
+# Install Java 17 (OpenJDK) + Maven + Gradle
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    maven \
+    && rm -rf /var/lib/apt/lists/*
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Install Gradle
+ENV GRADLE_VERSION=8.7
+RUN curl -LO https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip \
+    && unzip -d /opt gradle-${GRADLE_VERSION}-bin.zip \
+    && rm gradle-${GRADLE_VERSION}-bin.zip \
+    && ln -s /opt/gradle-${GRADLE_VERSION}/bin/gradle /usr/local/bin/gradle
+
+# Install Ruby 3.3
+RUN apt-get update && apt-get install -y \
+    ruby-full \
+    ruby-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && gem install bundler
+
+# Install PHP 8.3 + Composer
+RUN apt-get update && apt-get install -y \
+    php8.3 \
+    php8.3-cli \
+    php8.3-common \
+    php8.3-curl \
+    php8.3-mbstring \
+    php8.3-xml \
+    php8.3-zip \
+    php8.3-mysql \
+    php8.3-pgsql \
+    php8.3-sqlite3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Install .NET SDK 8.0
+RUN wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y dotnet-sdk-8.0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install gcloud CLI
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - \
+    && apt-get update \
+    && apt-get install -y google-cloud-cli \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install AWS CLI v2
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf aws awscliv2.zip
+
+# Install common JS tooling
+RUN npm install -g \
+    typescript \
+    ts-node \
+    eslint \
+    prettier \
+    jest \
+    vitest
+
+# Create non-root user for agents
+RUN useradd -m -s /bin/bash agent \
+    && usermod -aG docker agent
+
+# Set up workspace directory
+RUN mkdir -p /workspaces /config \
+    && chown -R agent:agent /workspaces /config
+
+WORKDIR /workspaces
+
+# Default to agent user
+USER agent
+
+# Verify installations
+RUN node --version && \
+    python3 --version && \
+    go version && \
+    rustc --version && \
+    java --version && \
+    ruby --version && \
+    php --version && \
+    dotnet --version && \
+    gh --version && \
+    rg --version
+
+CMD ["/bin/bash"]
