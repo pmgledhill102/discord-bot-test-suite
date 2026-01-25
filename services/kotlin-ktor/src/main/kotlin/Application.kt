@@ -55,7 +55,8 @@ private val publisher: Publisher? by lazy {
             // Configure for emulator if specified
             if (emulatorHost.isNotEmpty()) {
                 val channel =
-                    ManagedChannelBuilder.forTarget(emulatorHost)
+                    ManagedChannelBuilder
+                        .forTarget(emulatorHost)
                         .usePlaintext()
                         .build()
 
@@ -94,13 +95,19 @@ private val publicKey: Ed25519PublicKeyParameters? by lazy {
 }
 
 @Serializable
-data class InteractionResponse(val type: Int)
+data class InteractionResponse(
+    val type: Int,
+)
 
 @Serializable
-data class ErrorResponse(val error: String)
+data class ErrorResponse(
+    val error: String,
+)
 
 @Serializable
-data class HealthResponse(val status: String)
+data class HealthResponse(
+    val status: String,
+)
 
 fun main() {
     if (publicKeyHex.isEmpty()) {
@@ -283,7 +290,8 @@ private fun publishToPubSub(
         }
 
         val message =
-            PubsubMessage.newBuilder()
+            PubsubMessage
+                .newBuilder()
                 .setData(ByteString.copyFromUtf8(data))
                 .putAllAttributes(attributes)
                 .build()
