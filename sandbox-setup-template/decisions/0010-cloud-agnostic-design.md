@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
@@ -180,46 +180,75 @@ type MachineType struct {
 }
 ```
 
-### Provider Implementations
+### Provider Implementations (Native SDKs)
+
+Per ADR-0011, we use native Go SDKs rather than shelling out to CLI tools.
 
 ```go
-// pkg/cloud/gcp/provider.go
+// internal/cloud/gcp/provider.go
+import (
+    compute "cloud.google.com/go/compute/apiv1"
+    computepb "cloud.google.com/go/compute/apiv1/computepb"
+)
+
 type GCPProvider struct {
     project string
     zone    string
+    client  *compute.InstancesClient
 }
 
 func (p *GCPProvider) StartVM(ctx context.Context, name string) error {
-    cmd := exec.CommandContext(ctx, "gcloud", "compute", "instances", "start",
-        name, "--zone", p.zone, "--project", p.project)
-    return cmd.Run()
+    op, err := p.client.Start(ctx, &computepb.StartInstanceRequest{
+        Project:  p.project,
+        Zone:     p.zone,
+        Instance: name,
+    })
+    if err != nil {
+        return fmt.Errorf("start instance: %w", err)
+    }
+    return op.Wait(ctx)
 }
 
-// pkg/cloud/aws/provider.go
+// internal/cloud/aws/provider.go
+import (
+    "github.com/aws/aws-sdk-go-v2/service/ec2"
+)
+
 type AWSProvider struct {
-    region     string
-    instanceID string  // AWS uses instance IDs, not names
+    region string
+    client *ec2.Client
 }
 
 func (p *AWSProvider) StartVM(ctx context.Context, name string) error {
-    // AWS needs instance ID, may need to look up by tag:Name
-    cmd := exec.CommandContext(ctx, "aws", "ec2", "start-instances",
-        "--instance-ids", p.instanceID, "--region", p.region)
-    return cmd.Run()
+    // Look up instance ID by Name tag
+    instanceID, err := p.getInstanceIDByName(ctx, name)
+    if err != nil {
+        return err
+    }
+    _, err = p.client.StartInstances(ctx, &ec2.StartInstancesInput{
+        InstanceIds: []string{instanceID},
+    })
+    return err
 }
 
-// pkg/cloud/azure/provider.go
+// internal/cloud/azure/provider.go
+import (
+    "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute"
+)
+
 type AzureProvider struct {
     resourceGroup string
     subscription  string
+    client        *armcompute.VirtualMachinesClient
 }
 
 func (p *AzureProvider) StartVM(ctx context.Context, name string) error {
-    cmd := exec.CommandContext(ctx, "az", "vm", "start",
-        "--name", name,
-        "--resource-group", p.resourceGroup,
-        "--subscription", p.subscription)
-    return cmd.Run()
+    poller, err := p.client.BeginStart(ctx, p.resourceGroup, name, nil)
+    if err != nil {
+        return fmt.Errorf("begin start: %w", err)
+    }
+    _, err = poller.PollUntilDone(ctx, nil)
+    return err
 }
 ```
 
@@ -301,18 +330,20 @@ regions:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### CLI Parity Check
+### API Parity Check (Reference)
 
-| Operation | gcloud | aws | az |
-|-----------|--------|-----|-----|
-| Check auth | `gcloud auth list` | `aws sts get-caller-identity` | `az account show` |
-| VM status | `gcloud compute instances describe` | `aws ec2 describe-instances` | `az vm show` |
-| Start VM | `gcloud compute instances start` | `aws ec2 start-instances` | `az vm start` |
-| Stop VM | `gcloud compute instances stop` | `aws ec2 stop-instances` | `az vm stop` |
-| Resize | `set-machine-type` | `modify-instance-attribute` | `az vm resize` |
-| Get IP | `--format='value(networkInterfaces[0].accessConfigs[0].natIP)'` | `describe-instances` + jq | `az vm list-ip-addresses` |
+While we use native SDKs (not CLI), this table shows equivalent operations exist across all clouds:
 
-All three clouds have CLI tools with similar capabilities. The abstraction is feasible.
+| Operation | GCP SDK | AWS SDK | Azure SDK |
+|-----------|---------|---------|-----------|
+| Check auth | Default credentials | Default credentials | Default credentials |
+| VM status | `InstancesClient.Get` | `DescribeInstances` | `VirtualMachinesClient.Get` |
+| Start VM | `InstancesClient.Start` | `StartInstances` | `VirtualMachinesClient.BeginStart` |
+| Stop VM | `InstancesClient.Stop` | `StopInstances` | `VirtualMachinesClient.BeginDeallocate` |
+| Resize | `InstancesClient.SetMachineType` | `ModifyInstanceAttribute` | `VirtualMachinesClient.BeginUpdate` |
+| Get IP | Instance.NetworkInterfaces | DescribeInstances | NetworkInterfacesClient.Get |
+
+All three cloud SDKs provide equivalent capabilities. The abstraction is feasible.
 
 ## Implementation Phases
 
