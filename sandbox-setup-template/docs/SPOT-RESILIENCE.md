@@ -34,8 +34,9 @@ Claude Code stores sessions in `~/.claude/` (SQLite database). Mount this on per
 
 ```bash
 # Create persistent disk (one-time)
+# 10GB is sufficient for Claude sessions + typical git repos
 gcloud compute disks create claude-persist \
-  --size=50GB \
+  --size=10GB \
   --type=pd-ssd \
   --zone=europe-north1-b
 
@@ -100,6 +101,40 @@ Name sessions for easy resumption after preemption:
 claude --resume agent-1-issue-123
 ```
 
+## Testing the Shutdown Hook
+
+Yes, you can test with a normal shutdown! The systemd hook triggers on any shutdown:
+
+```bash
+# Test 1: Run save script directly (doesn't actually shut down)
+sudo /usr/local/bin/save-claude-state.sh
+cat /var/log/claude-state-save.log
+
+# Test 2: Full shutdown test (will shut down the instance!)
+sudo shutdown now
+
+# Test 3: Reboot test (tests both save and restore)
+sudo reboot
+```
+
+**Difference from real preemption:**
+- Normal shutdown: SIGTERM with no time limit
+- Spot preemption: SIGTERM with **30 second hard limit**
+
+The script is designed to complete within 25 seconds, so both behave the same.
+
+**After restart, verify:**
+```bash
+# Check restore log
+cat /var/log/claude-state-restore.log
+
+# Check saved state
+ls -la /mnt/persist/session-state/latest/
+
+# Resume agents
+./start-agents-resilient.sh 12 continue
+```
+
 ## Monitoring Preemption
 
 Check if running on a preemptible instance:
@@ -114,4 +149,19 @@ Monitor for preemption notice:
 ```bash
 curl -s -H "Metadata-Flavor: Google" \
   "http://metadata.google.internal/computeMetadata/v1/instance/preempted"
+```
+
+## Storage Sizing
+
+| Component | Typical Size | Notes |
+|-----------|-------------|-------|
+| `~/.claude/` | 50-200 MB | Session database |
+| Session metadata | < 10 MB | State snapshots |
+| Git repos | Varies | Depends on projects |
+
+**Recommendation:** Start with **10GB**. You can resize the disk later if needed:
+
+```bash
+# Resize disk (instance must be stopped)
+gcloud compute disks resize claude-persist --size=20GB --zone=europe-north1-b
 ```
