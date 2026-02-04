@@ -1,6 +1,8 @@
 # Development Environment Setup
 
-This document describes how to configure a safe development environment for building and testing the Sandbox Manager TUI. The goal is to provide Claude Code (or another coding agent) with sufficient access to develop and test against real cloud resources, while limiting blast radius.
+This document describes how to configure a safe development environment for building and testing
+the Sandbox Manager TUI. The goal is to provide Claude Code (or another coding agent) with
+sufficient access to develop and test against real cloud resources, while limiting blast radius.
 
 ## Principles
 
@@ -11,7 +13,7 @@ This document describes how to configure a safe development environment for buil
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  Your GCP Organization / Personal Account                               │
 │                                                                         │
@@ -155,7 +157,7 @@ gcloud compute project-info set-usage-export-bucket $DEV_PROJECT_ID \
 
 ### Test Levels
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │  Level 1: Unit Tests (no cloud access)                              │
 │  • Mock cloud SDK clients                                           │
@@ -250,6 +252,7 @@ func TestRealVMOperations(t *testing.T) {
 ```
 
 Run integration tests:
+
 ```bash
 # Set credentials
 export GOOGLE_APPLICATION_CREDENTIALS="./dev-credentials.json"
@@ -326,6 +329,7 @@ func TestVMLifecycle(t *testing.T) {
 ```
 
 Run E2E tests:
+
 ```bash
 # Run E2E tests (slow, costs money)
 go test -tags=e2e -timeout=15m ./e2e/...
@@ -335,7 +339,7 @@ go test -tags=e2e -timeout=15m ./e2e/...
 
 Use consistent naming to identify and clean up test resources:
 
-```
+```text
 Pattern: {type}-{purpose}-{timestamp}
 
 Examples:
@@ -439,35 +443,35 @@ jobs:
 
 ### Within Dev Project (Allowed)
 
-| Action | Allowed | Notes |
-|--------|---------|-------|
-| Create VMs | ✓ | Any size, but budget alerts will fire |
-| Delete VMs | ✓ | Including accidental deletion of test VMs |
-| Start/Stop VMs | ✓ | Normal operations |
-| Create service accounts | ✓ | For testing SA workflows |
-| Create secrets | ✓ | For testing secret management |
-| View logs | ✓ | For debugging |
-| Modify IAM within project | ✓ | Can grant roles within the project |
+| Action                    | Allowed | Notes                                     |
+| ------------------------- | ------- | ----------------------------------------- |
+| Create VMs                | ✓       | Any size, but budget alerts will fire     |
+| Delete VMs                | ✓       | Including accidental deletion of test VMs |
+| Start/Stop VMs            | ✓       | Normal operations                         |
+| Create service accounts   | ✓       | For testing SA workflows                  |
+| Create secrets            | ✓       | For testing secret management             |
+| View logs                 | ✓       | For debugging                             |
+| Modify IAM within project | ✓       | Can grant roles within the project        |
 
 ### Outside Dev Project (Blocked)
 
-| Action | Blocked | Why |
-|--------|---------|-----|
-| Access other projects | ✓ | No IAM bindings |
-| Modify billing | ✓ | No billing admin role |
-| Create projects | ✓ | No org-level permissions |
-| Access production data | ✓ | Completely isolated |
-| Modify org policies | ✓ | No org admin role |
+| Action                 | Blocked | Why                      |
+| ---------------------- | ------- | ------------------------ |
+| Access other projects  | ✓       | No IAM bindings          |
+| Modify billing         | ✓       | No billing admin role    |
+| Create projects        | ✓       | No org-level permissions |
+| Access production data | ✓       | Completely isolated      |
+| Modify org policies    | ✓       | No org admin role        |
 
 ## Cost Estimation
 
-| Resource | Usage | Est. Monthly Cost |
-|----------|-------|-------------------|
-| E2E test VMs | ~10 runs × 10 min | ~$1 |
-| Integration tests | ~100 API calls/day | ~$0.10 |
-| Dev VM (manual testing) | ~20 hrs/month spot | ~$5 |
-| Persistent disks | ~50GB retained | ~$5 |
-| **Total** | | **~$12/month** |
+| Resource                | Usage              | Est. Monthly Cost |
+| ----------------------- | ------------------ | ----------------- |
+| E2E test VMs            | ~10 runs × 10 min  | ~$1               |
+| Integration tests       | ~100 API calls/day | ~$0.10            |
+| Dev VM (manual testing) | ~20 hrs/month spot | ~$5               |
+| Persistent disks        | ~50GB retained     | ~$5               |
+| **Total**               |                    | **~$12/month**    |
 
 Budget alert at $50 provides 4x headroom for unexpected usage.
 

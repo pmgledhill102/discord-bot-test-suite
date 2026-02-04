@@ -4,9 +4,12 @@ A terminal UI for managing sandboxed AI coding agents on cloud VMs.
 
 ## Overview
 
-cloudcoop provisions and manages cloud VMs configured as secure sandboxes for running multiple AI coding agents (Claude Code, Aider, Gemini CLI, etc.). Each agent runs in its own tmux session with full development tooling.
+cloudcoop provisions and manages cloud VMs configured as secure sandboxes for running
+multiple AI coding agents (Claude Code, Aider, Gemini CLI, etc.). Each agent runs in
+its own tmux session with full development tooling.
 
 **Key features:**
+
 - TUI for VM lifecycle management (start, stop, resize)
 - Agent-agnostic: supports Claude Code, Aider, Gemini CLI, and others
 - Cloud-agnostic: GCP first, AWS and Azure planned
@@ -15,7 +18,7 @@ cloudcoop provisions and manages cloud VMs configured as secure sandboxes for ru
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  Your Workstation                                               │
 │  ┌───────────────────────────────────────────────────────────┐  │
@@ -60,7 +63,7 @@ chmod +x cloudcoop
 
 ## TUI Interface
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  cloudcoop                                           v0.1.0     │
 ├─────────────────────────────────────────────────────────────────┤
@@ -92,13 +95,13 @@ cloud:
 
 vm:
   name: claude-sandbox
-  machine_type: arm-16cpu-32gb  # Normalized, mapped per cloud
+  machine_type: arm-16cpu-32gb # Normalized, mapped per cloud
   disk_size_gb: 50
   spot: true
 
 network:
   ip_allowlist:
-    mode: auto  # auto | manual | disabled
+    mode: auto # auto | manual | disabled
 
 agents:
   default: claude
@@ -106,22 +109,22 @@ agents:
 
 ## Agent Support
 
-| Agent | Autonomous Mode | Session Persistence |
-|-------|-----------------|---------------------|
-| Claude Code | `--dangerously-skip-permissions` | `--continue`, `--resume` |
-| Aider | `--yes-always` | Stateless |
-| Gemini CLI | TBD | TBD |
-| GitHub Copilot | Limited | OAuth-based |
+| Agent          | Autonomous Mode                  | Session Persistence      |
+| -------------- | -------------------------------- | ------------------------ |
+| Claude Code    | `--dangerously-skip-permissions` | `--continue`, `--resume` |
+| Aider          | `--yes-always`                   | Stateless                |
+| Gemini CLI     | TBD                              | TBD                      |
+| GitHub Copilot | Limited                          | OAuth-based              |
 
 ## Cost
 
 For c4a-highcpu-16 in europe-north2 (Stockholm):
 
-| Usage | Monthly Cost |
-|-------|-------------|
-| Spot 24/7 | ~$85 |
-| Spot 8h/day | ~$30 |
-| Stopped (disk only) | ~$5 |
+| Usage               | Monthly Cost |
+| ------------------- | ------------ |
+| Spot 24/7           | ~$85         |
+| Spot 8h/day         | ~$30         |
+| Stopped (disk only) | ~$5          |
 
 ## Documentation
 

@@ -86,7 +86,7 @@ echo ""
 
 # Create temp files
 RESULTS_FILE=$(mktemp)
-trap "rm -f $RESULTS_FILE" EXIT
+trap 'rm -f $RESULTS_FILE' EXIT
 
 # Query each region for the machine type availability and price
 log_info "Checking availability and pricing in each region..."

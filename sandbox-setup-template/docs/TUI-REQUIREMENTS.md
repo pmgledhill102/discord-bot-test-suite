@@ -5,6 +5,7 @@ A terminal-based user interface for managing AI coding agent sandboxes.
 ## Overview
 
 The TUI provides a simple interface to:
+
 1. Verify prerequisites and setup status
 2. Manage VM lifecycle (create, start, stop, resize)
 3. Monitor and manage agent sessions
@@ -12,6 +13,7 @@ The TUI provides a simple interface to:
 ## Implementation Approach
 
 Per ADR-0011 and ADR-0013:
+
 - **Language:** Go with Bubbletea (TUI) + Cobra (CLI)
 - **Cloud operations:** Native Go SDKs (not gcloud CLI)
 - **Remote commands:** Go SSH library for programmatic commands
@@ -19,7 +21,7 @@ Per ADR-0011 and ADR-0013:
 
 ## User Interface Concept
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  cloudcoop                                           v0.1.0     │
 ├─────────────────────────────────────────────────────────────────┤
@@ -50,13 +52,13 @@ Per ADR-0011 and ADR-0013:
 
 Check and display the status of required infrastructure:
 
-| Check | Description | Implementation |
-|-------|-------------|----------------|
-| GCP Authentication | SDK can authenticate | `google.FindDefaultCredentials()` |
-| Project Set | Correct project configured | Config file + SDK validation |
-| Service Account | SA exists with correct roles | IAM SDK `GetServiceAccount` |
-| VM Exists | Sandbox VM created | Compute SDK `Instances.Get` |
-| Firewall Rules | SSH access configured | Compute SDK `Firewalls.Get` |
+| Check              | Description                  | Implementation                    |
+| ------------------ | ---------------------------- | --------------------------------- |
+| GCP Authentication | SDK can authenticate         | `google.FindDefaultCredentials()` |
+| Project Set        | Correct project configured   | Config file + SDK validation      |
+| Service Account    | SA exists with correct roles | IAM SDK `GetServiceAccount`       |
+| VM Exists          | Sandbox VM created           | Compute SDK `Instances.Get`       |
+| Firewall Rules     | SSH access configured        | Compute SDK `Firewalls.Get`       |
 
 **Setup wizard:** If any prerequisite is missing, guide user through creation (see SETUP-FLOW.md).
 
@@ -72,6 +74,7 @@ instance, err := client.Get(ctx, &computepb.GetInstanceRequest{...})
 ```
 
 Display:
+
 - Instance name and zone
 - Current status (RUNNING, STOPPED, TERMINATED, etc.)
 - Machine type (e.g., c4a-highcpu-16)
@@ -102,7 +105,7 @@ Post-action: Confirm stopped, show disk-only cost estimate.
 
 Change machine type (requires stopped VM):
 
-```
+```text
 Current: c4a-highcpu-16 (16 vCPU, 32GB) - ~$0.12/hr spot
 Available sizes:
   [1] arm-8cpu-16gb   ( 8 vCPU, 16GB) - ~$0.06/hr spot
@@ -129,6 +132,7 @@ output, err := sshClient.Run(`tmux list-windows -t agents -F '#{window_index}|#{
 ```
 
 Display:
+
 - Window/pane index
 - Session name (e.g., "agent-1", "issue-142")
 - Agent type (claude, aider, etc.)
@@ -143,6 +147,7 @@ err := sshClient.Run(fmt.Sprintf(`tmux new-window -t agents -n %s '%s'`, name, a
 ```
 
 Options:
+
 - Select agent type (Claude, Aider, etc.)
 - Specify working directory
 - Resume existing session (`--continue` or `--resume`)
@@ -169,22 +174,22 @@ cmd.Run()
 
 ### 4. Quick Actions
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| S | Start | Start stopped VM |
-| T | Stop | Stop running VM |
-| R | Resize | Change machine type |
-| A | Add | Create new agent session |
-| K | Kill | Remove agent session |
-| C | Connect | SSH into agent session |
-| L | Logs | View recent activity logs |
-| Q | Quit | Exit TUI |
+| Key | Action  | Description               |
+| --- | ------- | ------------------------- |
+| S   | Start   | Start stopped VM          |
+| T   | Stop    | Stop running VM           |
+| R   | Resize  | Change machine type       |
+| A   | Add     | Create new agent session  |
+| K   | Kill    | Remove agent session      |
+| C   | Connect | SSH into agent session    |
+| L   | Logs    | View recent activity logs |
+| Q   | Quit    | Exit TUI                  |
 
 ### 5. Monitoring View
 
 Optional expanded view showing real-time agent activity:
 
-```
+```text
 ┌─ Agent 1: issue-142 ─────────────────────────────────────────┐
 │ Type: Claude Code                                            │
 │ Working on: go-gin service implementation                    │

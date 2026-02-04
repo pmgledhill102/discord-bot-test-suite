@@ -20,6 +20,7 @@ TOP_N=5
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+# shellcheck disable=SC2034 # BLUE defined for color palette consistency
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
@@ -140,7 +141,7 @@ echo ""
 
 # Create temp file for results
 RESULTS_FILE=$(mktemp)
-trap "rm -f $RESULTS_FILE" EXIT
+trap 'rm -f $RESULTS_FILE' EXIT
 
 log_info "Querying pricing for each European region..."
 echo ""

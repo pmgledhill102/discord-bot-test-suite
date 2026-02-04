@@ -146,7 +146,7 @@ systemctl restart docker
 # Node.js (Claude Code runtime + JS/TS services)
 # ============================================
 echo "=== Installing Node.js ${NODE_VERSION} ==="
-curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
+curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
 apt-get install -y nodejs
 
 # Install global npm packages (including linting tools from pre-commit)
@@ -168,13 +168,13 @@ echo "=== Installing Python ${PYTHON_VERSION} ==="
 add-apt-repository -y ppa:deadsnakes/ppa
 apt-get update
 apt-get install -y \
-    python${PYTHON_VERSION} \
-    python${PYTHON_VERSION}-venv \
-    python${PYTHON_VERSION}-dev \
+    "python${PYTHON_VERSION}" \
+    "python${PYTHON_VERSION}-venv" \
+    "python${PYTHON_VERSION}-dev" \
     python3-pip
 
-update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1
-update-alternatives --install /usr/bin/python python /usr/bin/python${PYTHON_VERSION} 1
+update-alternatives --install /usr/bin/python3 python3 "/usr/bin/python${PYTHON_VERSION}" 1
+update-alternatives --install /usr/bin/python python "/usr/bin/python${PYTHON_VERSION}" 1
 
 # Install Python tools (including pre-commit hooks: ruff, yamllint)
 pip3 install --break-system-packages \
@@ -210,7 +210,7 @@ export PATH=$PATH:$GOPATH/bin
 
 # Install Go tools (golangci-lint v2 from pre-commit)
 echo "=== Installing golangci-lint ${GOLANGCI_LINT_VERSION} ==="
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin ${GOLANGCI_LINT_VERSION}
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin "${GOLANGCI_LINT_VERSION}"
 
 go install github.com/go-delve/delve/cmd/dlv@latest
 
@@ -233,7 +233,7 @@ wget -q "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERS
 chmod +x /usr/local/bin/hadolint
 
 # ============================================
-# shellcheck (Shell linting - from pre-commit)
+# Install shellcheck (shell linting - from pre-commit)
 # ============================================
 echo "=== Installing shellcheck ==="
 apt-get install -y shellcheck
@@ -242,7 +242,8 @@ apt-get install -y shellcheck
 # Rust
 # ============================================
 echo "=== Installing Rust ${RUST_VERSION} ==="
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain ${RUST_VERSION}
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain "${RUST_VERSION}"
+# shellcheck source=/dev/null
 source "$HOME/.cargo/env"
 rustup component add clippy rustfmt
 
@@ -253,7 +254,7 @@ echo "=== Installing Java ${JAVA_VERSION} ==="
 wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/keyrings/adoptium.gpg > /dev/null
 echo "deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/adoptium.list
 apt-get update
-apt-get install -y temurin-${JAVA_VERSION}-jdk
+apt-get install -y "temurin-${JAVA_VERSION}-jdk"
 
 # Maven
 apt-get install -y maven
@@ -262,7 +263,7 @@ apt-get install -y maven
 echo "=== Installing Gradle ${GRADLE_VERSION} ==="
 wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -O /tmp/gradle.zip
 unzip -q /tmp/gradle.zip -d /opt
-ln -sf /opt/gradle-${GRADLE_VERSION}/bin/gradle /usr/local/bin/gradle
+ln -sf "/opt/gradle-${GRADLE_VERSION}/bin/gradle" /usr/local/bin/gradle
 rm /tmp/gradle.zip
 
 # ============================================
@@ -297,8 +298,8 @@ export PATH="/opt/rbenv/bin:/opt/rbenv/shims:$PATH"
 eval "$(rbenv init -)"
 
 # Install Ruby (this takes a while)
-rbenv install ${RUBY_VERSION}.0 || rbenv install ${RUBY_VERSION}.1 || apt-get install -y ruby-full
-rbenv global ${RUBY_VERSION}.0 2>/dev/null || rbenv global ${RUBY_VERSION}.1 2>/dev/null || true
+rbenv install "${RUBY_VERSION}.0" || rbenv install "${RUBY_VERSION}.1" || apt-get install -y ruby-full
+rbenv global "${RUBY_VERSION}.0" 2>/dev/null || rbenv global "${RUBY_VERSION}.1" 2>/dev/null || true
 
 # Install gems (rubocop from pre-commit)
 gem install bundler rubocop
@@ -310,14 +311,14 @@ echo "=== Installing PHP ${PHP_VERSION} ==="
 add-apt-repository -y ppa:ondrej/php
 apt-get update
 apt-get install -y \
-    php${PHP_VERSION} \
-    php${PHP_VERSION}-cli \
-    php${PHP_VERSION}-common \
-    php${PHP_VERSION}-curl \
-    php${PHP_VERSION}-mbstring \
-    php${PHP_VERSION}-xml \
-    php${PHP_VERSION}-zip \
-    php${PHP_VERSION}-sodium
+    "php${PHP_VERSION}" \
+    "php${PHP_VERSION}-cli" \
+    "php${PHP_VERSION}-common" \
+    "php${PHP_VERSION}-curl" \
+    "php${PHP_VERSION}-mbstring" \
+    "php${PHP_VERSION}-xml" \
+    "php${PHP_VERSION}-zip" \
+    "php${PHP_VERSION}-sodium"
 
 # Composer
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -326,11 +327,11 @@ curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin
 # .NET
 # ============================================
 echo "=== Installing .NET ${DOTNET_VERSION} ==="
-wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+wget "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
 dpkg -i /tmp/packages-microsoft-prod.deb
 rm /tmp/packages-microsoft-prod.deb
 apt-get update
-apt-get install -y dotnet-sdk-${DOTNET_VERSION} || apt-get install -y dotnet-sdk-8.0
+apt-get install -y "dotnet-sdk-${DOTNET_VERSION}" || apt-get install -y dotnet-sdk-8.0
 
 # ============================================
 # Google Cloud CLI
@@ -354,7 +355,7 @@ apt-get install -y terraform
 # Kubernetes Tools
 # ============================================
 echo "=== Installing Kubernetes tools ==="
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
 apt-get update
 apt-get install -y kubectl
@@ -443,7 +444,7 @@ chown -R sandbox:sandbox /home/sandbox/
 echo "=== Creating workspace directories ==="
 mkdir -p /workspaces
 for i in $(seq 1 16); do
-    mkdir -p /workspaces/agent-$i
+    mkdir -p "/workspaces/agent-$i"
 done
 chown -R sandbox:sandbox /workspaces
 

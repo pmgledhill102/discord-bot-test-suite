@@ -4,6 +4,7 @@
 set -e
 
 AGENT_COUNT=${1:-12}
+# shellcheck disable=SC2034
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Starting $AGENT_COUNT Claude Code agents..."
@@ -18,9 +19,9 @@ if [ -f /.dockerenv ] || [ -n "$SANDBOX_VM" ]; then
 
     # Start containers
     if command -v docker-compose &> /dev/null; then
-        docker-compose up -d --scale agent=$AGENT_COUNT
+        docker-compose up -d --scale "agent=$AGENT_COUNT"
     else
-        docker compose up -d --scale agent=$AGENT_COUNT
+        docker compose up -d --scale "agent=$AGENT_COUNT"
     fi
 
     echo "Agents started. Use 'docker ps' to see running containers."

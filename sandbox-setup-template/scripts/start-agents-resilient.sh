@@ -29,43 +29,43 @@ log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_info "Starting $AGENT_COUNT Claude agents (mode: $MODE)"
 
 # Kill existing session
-tmux kill-session -t $SESSION_NAME 2>/dev/null || true
+tmux kill-session -t "$SESSION_NAME" 2>/dev/null || true
 
 # Create new tmux session
-tmux new-session -d -s $SESSION_NAME -n "agent-1"
+tmux new-session -d -s "$SESSION_NAME" -n "agent-1"
 
 # Create windows for each agent
-for i in $(seq 2 $AGENT_COUNT); do
-    tmux new-window -t $SESSION_NAME -n "agent-$i"
+for i in $(seq 2 "$AGENT_COUNT"); do
+    tmux new-window -t "$SESSION_NAME" -n "agent-$i"
 done
 
 # Start Claude in each window based on mode
-for i in $(seq 1 $AGENT_COUNT); do
+for i in $(seq 1 "$AGENT_COUNT"); do
     WORKSPACE="/workspaces/agent-$i"
     SESSION_ID="agent-$i-$(date +%Y%m%d)"
 
     case "$MODE" in
         fresh)
             # Start fresh session with a named ID for later resumption
-            tmux send-keys -t $SESSION_NAME:agent-$i \
+            tmux send-keys -t "$SESSION_NAME:agent-$i" \
                 "cd $WORKSPACE && claude --dangerously-skip-permissions" Enter
             # Rename the session after it starts
             sleep 2
-            tmux send-keys -t $SESSION_NAME:agent-$i "/rename $SESSION_ID" Enter
+            tmux send-keys -t "$SESSION_NAME:agent-$i" "/rename $SESSION_ID" Enter
             ;;
         continue)
             # Continue most recent session for this workspace
-            tmux send-keys -t $SESSION_NAME:agent-$i \
+            tmux send-keys -t "$SESSION_NAME:agent-$i" \
                 "cd $WORKSPACE && claude --continue --dangerously-skip-permissions 2>/dev/null || claude --dangerously-skip-permissions" Enter
             ;;
         pick)
             # Open interactive session picker
-            tmux send-keys -t $SESSION_NAME:agent-$i \
+            tmux send-keys -t "$SESSION_NAME:agent-$i" \
                 "cd $WORKSPACE && claude --resume" Enter
             ;;
         *)
             log_warn "Unknown mode: $MODE. Using 'continue'."
-            tmux send-keys -t $SESSION_NAME:agent-$i \
+            tmux send-keys -t "$SESSION_NAME:agent-$i" \
                 "cd $WORKSPACE && claude --continue --dangerously-skip-permissions 2>/dev/null || claude --dangerously-skip-permissions" Enter
             ;;
     esac
@@ -76,24 +76,25 @@ log_info "Starting periodic state saver..."
 (
     while true; do
         sleep 300  # 5 minutes
-        if tmux has-session -t $SESSION_NAME 2>/dev/null; then
+        if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
             # Quick state snapshot
             TIMESTAMP=$(date +%Y%m%d-%H%M%S)
             SNAPSHOT_DIR="$PERSIST_MOUNT/session-state/periodic-$TIMESTAMP"
             mkdir -p "$SNAPSHOT_DIR"
 
             # Save tmux state
-            tmux list-windows -t $SESSION_NAME > "$SNAPSHOT_DIR/tmux-windows.txt" 2>/dev/null || true
+            tmux list-windows -t "$SESSION_NAME" > "$SNAPSHOT_DIR/tmux-windows.txt" 2>/dev/null || true
 
             # Save which agents are active
-            for j in $(seq 1 $AGENT_COUNT); do
-                PANE_PID=$(tmux display-message -p -t $SESSION_NAME:agent-$j '#{pane_pid}' 2>/dev/null || echo "")
+            for j in $(seq 1 "$AGENT_COUNT"); do
+                PANE_PID=$(tmux display-message -p -t "$SESSION_NAME:agent-$j" '#{pane_pid}' 2>/dev/null || echo "")
                 if [ -n "$PANE_PID" ]; then
                     echo "agent-$j:active:$PANE_PID" >> "$SNAPSHOT_DIR/agent-status.txt"
                 fi
             done
 
             # Keep only last 3 periodic snapshots
+            # shellcheck disable=SC2012
             ls -dt "$PERSIST_MOUNT/session-state"/periodic-* 2>/dev/null | tail -n +4 | xargs rm -rf 2>/dev/null || true
         else
             # Session gone, stop the saver
@@ -103,7 +104,7 @@ log_info "Starting periodic state saver..."
 ) &
 
 STATE_SAVER_PID=$!
-echo $STATE_SAVER_PID > /tmp/claude-state-saver.pid
+echo "$STATE_SAVER_PID" > /tmp/claude-state-saver.pid
 
 log_info "Started $AGENT_COUNT agent sessions in tmux session '$SESSION_NAME'"
 echo ""

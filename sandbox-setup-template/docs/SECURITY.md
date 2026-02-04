@@ -17,7 +17,7 @@ The sandbox is designed to:
 
 The VM runs under a dedicated service account with minimal permissions:
 
-```
+```text
 ✅ Allowed:
 - artifactregistry.reader      # Pull container images
 - logging.logWriter            # Write logs to Cloud Logging
@@ -44,13 +44,13 @@ Each agent runs in a Docker container with:
 
 ```yaml
 security_opt:
-  - no-new-privileges:true     # Prevent privilege escalation
+  - no-new-privileges:true # Prevent privilege escalation
 
 deploy:
   resources:
     limits:
-      cpus: "2"                # CPU limits
-      memory: 6G               # Memory limits
+      cpus: '2' # CPU limits
+      memory: 6G # Memory limits
 ```
 
 ### 4. Workload Identity (Recommended)
@@ -136,21 +136,25 @@ gcloud alpha monitoring policies create \
 ### If an Agent is Compromised
 
 1. **Stop all agents immediately:**
+
    ```bash
    ./scripts/stop-agents.sh
    ```
 
 2. **Revoke API key:**
+
    ```bash
    gcloud secrets versions disable anthropic-api-key --version=latest
    ```
 
 3. **Isolate the VM:**
+
    ```bash
    gcloud compute instances stop claude-sandbox --zone=ZONE
    ```
 
 4. **Review logs:**
+
    ```bash
    gcloud logging read "resource.type=gce_instance"
    ```

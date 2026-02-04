@@ -6,12 +6,12 @@ Strategies to reduce costs while maintaining sandbox effectiveness.
 
 Typical monthly costs (us-central1):
 
-| Component | On-Demand | With Optimization |
-|-----------|-----------|-------------------|
-| e2-standard-16 VM | ~$400 | ~$120 (spot) |
-| 200GB SSD disk | ~$34 | ~$34 |
-| Network egress | ~$20 | ~$20 |
-| **Total** | **~$454** | **~$174** |
+| Component         | On-Demand | With Optimization |
+| ----------------- | --------- | ----------------- |
+| e2-standard-16 VM | ~$400     | ~$120 (spot)      |
+| 200GB SSD disk    | ~$34      | ~$34              |
+| Network egress    | ~$20      | ~$20              |
+| **Total**         | **~$454** | **~$174**         |
 
 ## Optimization Strategies
 
@@ -25,11 +25,13 @@ use_spot = true
 ```
 
 **Trade-off:** VM may be stopped with 30 seconds notice. Suitable for:
+
 - Development and testing
 - Batch processing
 - Non-time-critical work
 
 **Mitigation:**
+
 - Use persistent volumes (data survives preemption)
 - Implement auto-restart scripts
 - Run critical tasks on on-demand instances
@@ -39,6 +41,7 @@ use_spot = true
 Stop the VM when not in use.
 
 **Create shutdown schedule:**
+
 ```bash
 # Create instance schedule
 gcloud compute resource-policies create instance-schedule sandbox-schedule \
@@ -55,6 +58,7 @@ gcloud compute instances add-resource-policies claude-sandbox \
 ```
 
 **Manual scripts:**
+
 ```bash
 # scripts/schedule-stop.sh
 gcloud compute instances stop claude-sandbox --zone=us-central1-a
@@ -68,13 +72,14 @@ gcloud compute instances start claude-sandbox --zone=us-central1-a
 Match VM size to actual usage.
 
 | Agent Count | Recommended Machine | Monthly Cost |
-|-------------|---------------------|--------------|
-| 2-4 | e2-standard-4 | ~$100 |
-| 4-6 | e2-standard-8 | ~$200 |
-| 8-10 | e2-standard-16 | ~$400 |
-| 10-16 | e2-standard-32 | ~$800 |
+| ----------- | ------------------- | ------------ |
+| 2-4         | e2-standard-4       | ~$100        |
+| 4-6         | e2-standard-8       | ~$200        |
+| 8-10        | e2-standard-16      | ~$400        |
+| 10-16       | e2-standard-32      | ~$800        |
 
 **Monitor and adjust:**
+
 ```bash
 # Check CPU/memory utilization
 gcloud monitoring metrics list --filter="metric.type=compute.googleapis.com/instance"
@@ -90,9 +95,9 @@ gcloud compute instances set-machine-type claude-sandbox \
 For sustained usage, commit to 1 or 3 years.
 
 | Commitment | Discount |
-|------------|----------|
-| 1 year | ~20% |
-| 3 years | ~40% |
+| ---------- | -------- |
+| 1 year     | ~20%     |
+| 3 years    | ~40%     |
 
 ```bash
 # Check current usage
@@ -107,13 +112,14 @@ gcloud compute commitments create sandbox-commitment \
 
 ### 5. Use Cheaper Disk Types
 
-| Disk Type | Cost/GB/month | Use Case |
-|-----------|---------------|----------|
-| pd-standard (HDD) | $0.04 | Archives, logs |
-| pd-balanced | $0.10 | General purpose |
-| pd-ssd | $0.17 | High performance |
+| Disk Type         | Cost/GB/month | Use Case         |
+| ----------------- | ------------- | ---------------- |
+| pd-standard (HDD) | $0.04         | Archives, logs   |
+| pd-balanced       | $0.10         | General purpose  |
+| pd-ssd            | $0.17         | High performance |
 
 **For most sandbox use cases, pd-balanced is sufficient:**
+
 ```hcl
 # terraform/variables.tf
 boot_disk_type = "pd-balanced"  # Instead of pd-ssd
@@ -136,17 +142,18 @@ docker system prune -a --volumes
 
 Some regions are 10-20% cheaper:
 
-| Region | Relative Cost |
-|--------|---------------|
-| us-central1 | Baseline |
-| us-east1 | Similar |
-| us-west1 | ~5% higher |
-| europe-west1 | ~10% higher |
-| asia-east1 | ~15% higher |
+| Region       | Relative Cost |
+| ------------ | ------------- |
+| us-central1  | Baseline      |
+| us-east1     | Similar       |
+| us-west1     | ~5% higher    |
+| europe-west1 | ~10% higher   |
+| asia-east1   | ~15% higher   |
 
 ### 8. Network Optimization
 
 **Reduce egress costs:**
+
 - Keep API responses small
 - Cache frequently accessed data
 - Use internal IPs when possible
@@ -191,13 +198,13 @@ ORDER BY 2 DESC
 
 For 12-agent sandbox (e2-standard-16):
 
-| Strategy | Monthly Cost | Annual Cost | Savings |
-|----------|-------------|-------------|---------|
-| On-demand 24/7 | $400 | $4,800 | - |
-| Spot 24/7 | $120 | $1,440 | 70% |
-| On-demand business hours | $170 | $2,040 | 57% |
-| Spot business hours | $50 | $600 | 88% |
-| 1-year committed | $320 | $3,840 | 20% |
+| Strategy                 | Monthly Cost | Annual Cost | Savings |
+| ------------------------ | ------------ | ----------- | ------- |
+| On-demand 24/7           | $400         | $4,800      | -       |
+| Spot 24/7                | $120         | $1,440      | 70%     |
+| On-demand business hours | $170         | $2,040      | 57%     |
+| Spot business hours      | $50          | $600        | 88%     |
+| 1-year committed         | $320         | $3,840      | 20%     |
 
 **Recommendation:** For development/testing, use spot instances with scheduled shutdown = 85%+ savings.
 

@@ -18,6 +18,7 @@ gcloud compute instances create claude-sandbox \
 ```
 
 Key flags:
+
 - `--boot-disk-auto-delete=no` - Disk survives instance deletion
 - `--provisioning-model=SPOT` - Use spot pricing (~70% discount)
 - `--instance-termination-action=STOP` - Stop (don't delete) on preemption
@@ -35,14 +36,15 @@ gcloud compute instances stop claude-sandbox --zone=europe-north2-a
 
 **What happens:**
 
-| Event | Result | Cost |
-|-------|--------|------|
-| Running (spot) | ~70% discount | ~$85/month if 24/7 |
-| GCP preempts | VM stops, disk persists | $0 compute |
-| You stop manually | VM stops, disk persists | $0 compute |
-| Stopped | Just disk storage | ~$5/month |
+| Event             | Result                  | Cost               |
+| ----------------- | ----------------------- | ------------------ |
+| Running (spot)    | ~70% discount           | ~$85/month if 24/7 |
+| GCP preempts      | VM stops, disk persists | $0 compute         |
+| You stop manually | VM stops, disk persists | $0 compute         |
+| Stopped           | Just disk storage       | ~$5/month          |
 
 **Everything persists:**
+
 - `~/.claude/` - All Claude sessions intact
 - `/workspaces/` - All git repos and work
 - Installed tools, configs, everything
@@ -96,6 +98,7 @@ claude --resume
 ```
 
 **Tip:** Name your sessions for easy resumption:
+
 ```bash
 # Inside Claude Code:
 /rename agent-1-issue-123
@@ -110,12 +113,12 @@ claude --resume agent-1-issue-123
 
 For c4a-highcpu-16 in europe-north2 (Stockholm):
 
-| Usage Pattern | Monthly Cost |
-|---------------|-------------|
-| On-demand 24/7 | ~$280 |
-| Spot 24/7 | ~$85 |
-| Spot 8h/day | ~$30 |
-| Stopped (disk only) | ~$5 |
+| Usage Pattern       | Monthly Cost |
+| ------------------- | ------------ |
+| On-demand 24/7      | ~$280        |
+| Spot 24/7           | ~$85         |
+| Spot 8h/day         | ~$30         |
+| Stopped (disk only) | ~$5          |
 
 ---
 

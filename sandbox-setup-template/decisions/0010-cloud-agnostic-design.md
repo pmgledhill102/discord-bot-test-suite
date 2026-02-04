@@ -7,6 +7,7 @@ Accepted
 ## Context
 
 The current design targets GCP exclusively. Users may prefer or require AWS or Azure due to:
+
 - Existing cloud credits or enterprise agreements
 - Organizational cloud standards
 - Regional availability or compliance requirements
@@ -16,49 +17,51 @@ The question is whether to abstract the cloud layer to support multiple provider
 
 ## Decision
 
-Design for **cloud abstraction from the start**, but implement **GCP first** as the reference provider.
+Design for **cloud abstraction from the start**, but implement **GCP first**
+as the reference provider.
 
-Use a provider interface pattern that isolates cloud-specific code, making it straightforward to add AWS and Azure support later.
+Use a provider interface pattern that isolates cloud-specific code,
+making it straightforward to add AWS and Azure support later.
 
 ## Complexity Assessment
 
 ### Service Mapping
 
-| Capability | GCP | AWS | Azure |
-|------------|-----|-----|-------|
-| **VM Service** | Compute Engine | EC2 | Virtual Machines |
-| **CLI** | gcloud | aws | az |
-| **Spot Instances** | Spot VMs | Spot Instances | Spot VMs |
-| **ARM Instances** | C4A (Axion) | Graviton (c7g/c8g) | Cobalt (Dpsv6) |
-| **IAM** | Service Accounts | IAM Roles + Instance Profiles | Managed Identities |
-| **Secrets** | Secret Manager | Secrets Manager | Key Vault |
-| **Regions** | europe-north2 | eu-north-1 | swedencentral |
-| **Zones** | europe-north2-a | eu-north-1a | swedencentral (no zones) |
+| Capability         | GCP              | AWS                           | Azure                    |
+| ------------------ | ---------------- | ----------------------------- | ------------------------ |
+| **VM Service**     | Compute Engine   | EC2                           | Virtual Machines         |
+| **CLI**            | gcloud           | aws                           | az                       |
+| **Spot Instances** | Spot VMs         | Spot Instances                | Spot VMs                 |
+| **ARM Instances**  | C4A (Axion)      | Graviton (c7g/c8g)            | Cobalt (Dpsv6)           |
+| **IAM**            | Service Accounts | IAM Roles + Instance Profiles | Managed Identities       |
+| **Secrets**        | Secret Manager   | Secrets Manager               | Key Vault                |
+| **Regions**        | europe-north2    | eu-north-1                    | swedencentral            |
+| **Zones**          | europe-north2-a  | eu-north-1a                   | swedencentral (no zones) |
 
 ### Conceptual Differences
 
-| Concept | Complexity | Notes |
-|---------|------------|-------|
-| Start/Stop VM | Low | All clouds support this similarly |
-| Resize VM | Low | Stop → change type → start (universal) |
-| Create VM | Medium | Different flags, but mappable |
-| Machine types | Medium | Naming differs, need mapping table |
-| Spot behavior | Medium | Different preemption semantics |
-| IAM/Permissions | High | Fundamentally different models |
-| Secrets | Medium | Similar concepts, different APIs |
-| Networking/Firewall | High | Very different models |
+| Concept             | Complexity | Notes                                  |
+| ------------------- | ---------- | -------------------------------------- |
+| Start/Stop VM       | Low        | All clouds support this similarly      |
+| Resize VM           | Low        | Stop → change type → start (universal) |
+| Create VM           | Medium     | Different flags, but mappable          |
+| Machine types       | Medium     | Naming differs, need mapping table     |
+| Spot behavior       | Medium     | Different preemption semantics         |
+| IAM/Permissions     | High       | Fundamentally different models         |
+| Secrets             | Medium     | Similar concepts, different APIs       |
+| Networking/Firewall | High       | Very different models                  |
 
 ### Effort Estimate
 
-| Component | GCP (done) | AWS (additional) | Azure (additional) |
-|-----------|------------|------------------|-------------------|
-| VM lifecycle | ✓ | ~2 days | ~2 days |
-| Machine type mapping | ✓ | ~1 day | ~1 day |
-| IAM setup docs | ✓ | ~2 days | ~2 days |
-| Secret management | ✓ | ~1 day | ~1 day |
-| Provisioning script | ✓ | ~3 days | ~3 days |
-| Testing | ✓ | ~2 days | ~2 days |
-| **Total** | Baseline | ~11 days | ~11 days |
+| Component            | GCP (done) | AWS (additional) | Azure (additional) |
+| -------------------- | ---------- | ---------------- | ------------------ |
+| VM lifecycle         | ✓          | ~2 days          | ~2 days            |
+| Machine type mapping | ✓          | ~1 day           | ~1 day             |
+| IAM setup docs       | ✓          | ~2 days          | ~2 days            |
+| Secret management    | ✓          | ~1 day           | ~1 day             |
+| Provisioning script  | ✓          | ~3 days          | ~3 days            |
+| Testing              | ✓          | ~2 days          | ~2 days            |
+| **Total**            | Baseline   | ~11 days         | ~11 days           |
 
 ## Options Considered
 
@@ -67,12 +70,14 @@ Use a provider interface pattern that isolates cloud-specific code, making it st
 Keep the current GCP-only implementation.
 
 **Pros:**
+
 - Simplest implementation
 - No abstraction overhead
 - Optimized for one platform
 - Faster initial delivery
 
 **Cons:**
+
 - Excludes AWS/Azure users
 - Cannot leverage existing cloud credits elsewhere
 - Vendor lock-in
@@ -82,6 +87,7 @@ Keep the current GCP-only implementation.
 Define interfaces for cloud operations, implement per provider.
 
 **Pros:**
+
 - Users can choose their preferred cloud
 - Leverage existing cloud relationships/credits
 - Future-proof for new clouds
@@ -89,6 +95,7 @@ Define interfaces for cloud operations, implement per provider.
 - Community can contribute providers
 
 **Cons:**
+
 - More upfront design work
 - Must maintain multiple implementations
 - Lowest common denominator features
@@ -99,10 +106,12 @@ Define interfaces for cloud operations, implement per provider.
 Use infrastructure-as-code tools that support multiple clouds.
 
 **Pros:**
+
 - Existing multi-cloud abstraction
 - Declarative infrastructure
 
 **Cons:**
+
 - Already rejected Terraform for runtime ops (ADR-0007)
 - Adds heavyweight dependency
 - Slow for simple operations
@@ -113,10 +122,12 @@ Use infrastructure-as-code tools that support multiple clouds.
 Run everything in containers, abstract at container orchestration level.
 
 **Pros:**
+
 - Cloud-agnostic by nature
 - Could use Kubernetes anywhere
 
 **Cons:**
+
 - Over-engineered for single VM use case
 - Adds significant complexity
 - Higher cost (K8s control plane)
@@ -258,7 +269,7 @@ func (p *AzureProvider) StartVM(ctx context.Context, name string) error {
 # ~/.config/sandbox-manager/config.yaml
 
 cloud:
-  provider: gcp  # gcp, aws, azure
+  provider: gcp # gcp, aws, azure
 
   gcp:
     project: my-project-id
@@ -267,8 +278,8 @@ cloud:
 
   aws:
     region: eu-north-1
-    instance_id: i-0abc123def456  # Or looked up by tag
-    profile: sandbox  # AWS CLI profile
+    instance_id: i-0abc123def456 # Or looked up by tag
+    profile: sandbox # AWS CLI profile
 
   azure:
     subscription: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -276,7 +287,7 @@ cloud:
 
 vm:
   name: claude-sandbox
-  machine_type: arm-16cpu-32gb  # Normalized, mapped per cloud
+  machine_type: arm-16cpu-32gb # Normalized, mapped per cloud
   disk_size_gb: 50
   spot: true
 
@@ -302,22 +313,22 @@ machine_types:
 # Built-in region normalization
 regions:
   europe-nordic:
-    gcp: europe-north1      # Finland
-    aws: eu-north-1         # Stockholm
-    azure: swedencentral    # Gävle
+    gcp: europe-north1 # Finland
+    aws: eu-north-1 # Stockholm
+    azure: swedencentral # Gävle
   europe-west:
-    gcp: europe-west1       # Belgium
-    aws: eu-west-1          # Ireland
-    azure: westeurope       # Netherlands
+    gcp: europe-west1 # Belgium
+    aws: eu-west-1 # Ireland
+    azure: westeurope # Netherlands
   us-east:
-    gcp: us-east1           # South Carolina
-    aws: us-east-1          # Virginia
-    azure: eastus           # Virginia
+    gcp: us-east1 # South Carolina
+    aws: us-east-1 # Virginia
+    azure: eastus # Virginia
 ```
 
 ### TUI Changes
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  Sandbox Manager                                     v0.2.0     │
 ├─────────────────────────────────────────────────────────────────┤
@@ -334,37 +345,41 @@ regions:
 
 While we use native SDKs (not CLI), this table shows equivalent operations exist across all clouds:
 
-| Operation | GCP SDK | AWS SDK | Azure SDK |
-|-----------|---------|---------|-----------|
-| Check auth | Default credentials | Default credentials | Default credentials |
-| VM status | `InstancesClient.Get` | `DescribeInstances` | `VirtualMachinesClient.Get` |
-| Start VM | `InstancesClient.Start` | `StartInstances` | `VirtualMachinesClient.BeginStart` |
-| Stop VM | `InstancesClient.Stop` | `StopInstances` | `VirtualMachinesClient.BeginDeallocate` |
-| Resize | `InstancesClient.SetMachineType` | `ModifyInstanceAttribute` | `VirtualMachinesClient.BeginUpdate` |
-| Get IP | Instance.NetworkInterfaces | DescribeInstances | NetworkInterfacesClient.Get |
+| Operation  | GCP SDK                          | AWS SDK                   | Azure SDK                               |
+| ---------- | -------------------------------- | ------------------------- | --------------------------------------- |
+| Check auth | Default credentials              | Default credentials       | Default credentials                     |
+| VM status  | `InstancesClient.Get`            | `DescribeInstances`       | `VirtualMachinesClient.Get`             |
+| Start VM   | `InstancesClient.Start`          | `StartInstances`          | `VirtualMachinesClient.BeginStart`      |
+| Stop VM    | `InstancesClient.Stop`           | `StopInstances`           | `VirtualMachinesClient.BeginDeallocate` |
+| Resize     | `InstancesClient.SetMachineType` | `ModifyInstanceAttribute` | `VirtualMachinesClient.BeginUpdate`     |
+| Get IP     | Instance.NetworkInterfaces       | DescribeInstances         | NetworkInterfacesClient.Get             |
 
 All three cloud SDKs provide equivalent capabilities. The abstraction is feasible.
 
 ## Implementation Phases
 
 ### Phase 1: GCP Reference (Current)
+
 - Complete GCP implementation
 - Define provider interface based on GCP experience
 - Document patterns for other providers
 
 ### Phase 2: Abstraction Layer
+
 - Refactor GCP code behind provider interface
 - Move GCP-specific code to `pkg/cloud/gcp/`
 - Update TUI to use provider interface
 - Test that GCP still works identically
 
 ### Phase 3: AWS Provider
+
 - Implement AWS provider
 - Add EC2, IAM, Secrets Manager support
 - Document AWS-specific setup
 - Test full workflow on AWS
 
 ### Phase 4: Azure Provider
+
 - Implement Azure provider
 - Add VM, Managed Identity, Key Vault support
 - Document Azure-specific setup

@@ -109,6 +109,7 @@ sync
 
 # 9. Clean up old state saves (keep last 10)
 log "Cleaning up old state saves..."
+# shellcheck disable=SC2012
 ls -dt "$STATE_DIR"/20* 2>/dev/null | tail -n +11 | xargs rm -rf 2>/dev/null || true
 
 log "=== State save complete ==="

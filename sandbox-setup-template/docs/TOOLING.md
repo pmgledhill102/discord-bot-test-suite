@@ -5,6 +5,7 @@ This document lists all tools pre-installed on the Claude Sandbox VM by the prov
 ## Sources
 
 The tooling list is based on:
+
 1. **Anthropic's official devcontainer** - [github.com/anthropics/claude-code/.devcontainer](https://github.com/anthropics/claude-code/tree/main/.devcontainer)
 2. **discord-bot-test-suite CI** - Pre-commit hooks, GitHub workflows, and Dockerfiles
 3. **Docker's Claude Code sandbox template** - [docker/sandbox-templates:claude-code](https://docs.docker.com/ai/sandboxes/claude-code/)
@@ -15,19 +16,19 @@ The tooling list is based on:
 
 Versions match the discord-bot-test-suite Dockerfiles and CI:
 
-| Runtime | Version | Package Managers | Linters/Formatters |
-|---------|---------|------------------|-------------------|
-| **Node.js** | 24 | npm, yarn, pnpm | eslint, prettier, cspell, markdownlint-cli2 |
-| **Python** | 3.11 | pip, pipx, poetry, uv | black, ruff, mypy, yamllint |
-| **Go** | 1.25 | go modules | golangci-lint v2.8.0 |
-| **Rust** | 1.93 | cargo, rustup | clippy, rustfmt |
-| **Java** | 21 (Temurin) | Maven, Gradle 8.12 | Spotless (via Maven) |
-| **Kotlin** | (JVM 21) | Gradle 8.12 | ktlint (via Gradle) |
-| **Scala** | 3.3 | sbt 1.10.6 | scalafmt (via sbt) |
-| **Ruby** | 3.4 | bundler, gem | rubocop |
-| **PHP** | 8.5 | composer | Laravel Pint (via Composer) |
-| **.NET** | 10.0 | dotnet CLI | dotnet format |
-| **C++** | (system) | cmake | clang-format |
+| Runtime     | Version      | Package Managers      | Linters/Formatters                          |
+| ----------- | ------------ | --------------------- | ------------------------------------------- |
+| **Node.js** | 24           | npm, yarn, pnpm       | eslint, prettier, cspell, markdownlint-cli2 |
+| **Python**  | 3.11         | pip, pipx, poetry, uv | black, ruff, mypy, yamllint                 |
+| **Go**      | 1.25         | go modules            | golangci-lint v2.8.0                        |
+| **Rust**    | 1.93         | cargo, rustup         | clippy, rustfmt                             |
+| **Java**    | 21 (Temurin) | Maven, Gradle 8.12    | Spotless (via Maven)                        |
+| **Kotlin**  | (JVM 21)     | Gradle 8.12           | ktlint (via Gradle)                         |
+| **Scala**   | 3.3          | sbt 1.10.6            | scalafmt (via sbt)                          |
+| **Ruby**    | 3.4          | bundler, gem          | rubocop                                     |
+| **PHP**     | 8.5          | composer              | Laravel Pint (via Composer)                 |
+| **.NET**    | 10.0         | dotnet CLI            | dotnet format                               |
+| **C++**     | (system)     | cmake                 | clang-format                                |
 
 ---
 
@@ -35,46 +36,46 @@ Versions match the discord-bot-test-suite Dockerfiles and CI:
 
 These tools are used by `.pre-commit-config.yaml`:
 
-| Tool | Version | Language | Purpose |
-|------|---------|----------|---------|
-| pre-commit-hooks | v4.5.0 | Python | General file checks |
-| prettier | v3.1.0 | Node.js | JSON/YAML/Markdown formatting |
-| yamllint | v1.35.1 | Python | YAML linting |
-| actionlint | v1.7.7 | Go | GitHub Actions linting |
-| cspell | latest | Node.js | Spelling check for Markdown |
-| markdownlint-cli2 | latest | Node.js | Markdown linting |
-| golangci-lint | v2.8.0 | Go | Go linting |
-| ruff | v0.9.6 | Python | Python linting/formatting |
-| rubocop | latest | Ruby | Ruby linting |
-| eslint | latest | Node.js | JavaScript/TypeScript linting |
-| clang-format | system | C++ | C++ formatting |
-| rustfmt | bundled | Rust | Rust formatting |
-| clippy | bundled | Rust | Rust linting |
-| shellcheck | v0.9.0 | Haskell | Shell script linting |
-| hadolint | v2.12.0 | Haskell | Dockerfile linting |
+| Tool              | Version | Language | Purpose                       |
+| ----------------- | ------- | -------- | ----------------------------- |
+| pre-commit-hooks  | v4.5.0  | Python   | General file checks           |
+| prettier          | v3.1.0  | Node.js  | JSON/YAML/Markdown formatting |
+| yamllint          | v1.35.1 | Python   | YAML linting                  |
+| actionlint        | v1.7.7  | Go       | GitHub Actions linting        |
+| cspell            | latest  | Node.js  | Spelling check for Markdown   |
+| markdownlint-cli2 | latest  | Node.js  | Markdown linting              |
+| golangci-lint     | v2.8.0  | Go       | Go linting                    |
+| ruff              | v0.9.6  | Python   | Python linting/formatting     |
+| rubocop           | latest  | Ruby     | Ruby linting                  |
+| eslint            | latest  | Node.js  | JavaScript/TypeScript linting |
+| clang-format      | system  | C++      | C++ formatting                |
+| rustfmt           | bundled | Rust     | Rust formatting               |
+| clippy            | bundled | Rust     | Rust linting                  |
+| shellcheck        | v0.9.0  | Haskell  | Shell script linting          |
+| hadolint          | v2.12.0 | Haskell  | Dockerfile linting            |
 
 ---
 
 ## Core Tools (from Anthropic Devcontainer)
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Node.js | 24 | Claude Code runtime |
-| npm | bundled | Node package manager |
-| git | latest | Version control |
-| gh | latest | GitHub CLI |
-| jq | latest | JSON processor |
-| fzf | latest | Fuzzy finder |
-| ripgrep (rg) | latest | Fast code search |
-| git-delta | 0.18.2 | Syntax-highlighted git diffs |
-| zsh | latest | Shell |
-| oh-my-zsh | latest | ZSH framework |
+| Tool         | Version | Purpose                      |
+| ------------ | ------- | ---------------------------- |
+| Node.js      | 24      | Claude Code runtime          |
+| npm          | bundled | Node package manager         |
+| git          | latest  | Version control              |
+| gh           | latest  | GitHub CLI                   |
+| jq           | latest  | JSON processor               |
+| fzf          | latest  | Fuzzy finder                 |
+| ripgrep (rg) | latest  | Fast code search             |
+| git-delta    | 0.18.2  | Syntax-highlighted git diffs |
+| zsh          | latest  | Shell                        |
+| oh-my-zsh    | latest  | ZSH framework                |
 
 ---
 
 ## Node.js Global Packages
 
-```
+```text
 @anthropic-ai/claude-code
 yarn
 pnpm
@@ -90,7 +91,7 @@ markdownlint-cli2
 
 ## Python Packages (pip)
 
-```
+```text
 pipx
 poetry
 uv
@@ -108,7 +109,7 @@ semgrep
 
 ## Go Tools
 
-```
+```text
 golangci-lint (v2.8.0)
 delve (dlv)
 grpcurl
@@ -118,29 +119,29 @@ grpcurl
 
 ## Container & Cloud Tools
 
-| Tool | Purpose |
-|------|---------|
-| docker | Container runtime |
+| Tool           | Purpose                       |
+| -------------- | ----------------------------- |
+| docker         | Container runtime             |
 | docker-compose | Multi-container orchestration |
-| docker-buildx | Extended build capabilities |
-| gcloud | Google Cloud CLI |
-| gsutil | Cloud Storage CLI |
-| bq | BigQuery CLI |
-| kubectl | Kubernetes CLI |
-| helm | Kubernetes package manager |
-| k9s | Kubernetes TUI |
-| terraform | Infrastructure as code |
+| docker-buildx  | Extended build capabilities   |
+| gcloud         | Google Cloud CLI              |
+| gsutil         | Cloud Storage CLI             |
+| bq             | BigQuery CLI                  |
+| kubectl        | Kubernetes CLI                |
+| helm           | Kubernetes package manager    |
+| k9s            | Kubernetes TUI                |
+| terraform      | Infrastructure as code        |
 
 ---
 
 ## Database Clients
 
-| Client | Database |
-|--------|----------|
-| psql | PostgreSQL |
-| mysql | MySQL/MariaDB |
-| redis-cli | Redis |
-| mongosh | MongoDB |
+| Client    | Database      |
+| --------- | ------------- |
+| psql      | PostgreSQL    |
+| mysql     | MySQL/MariaDB |
+| redis-cli | Redis         |
+| mongosh   | MongoDB       |
 
 ---
 
@@ -171,6 +172,7 @@ HADOLINT_VERSION="2.12.0"
 ```
 
 To update versions:
+
 1. Edit `config/versions.env`
 2. Re-run `provision-vm.sh` or rebuild the VM
 
