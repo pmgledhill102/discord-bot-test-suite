@@ -64,13 +64,13 @@ discord-bot-test-suite/
 
 ### Current Metrics
 
-| Dimension | Count |
-|-----------|-------|
-| Service implementations | 19 |
-| Languages | 12 |
-| Frameworks | 19 |
-| CI/CD workflows | 24 |
-| Service types | 1 (Discord webhook) |
+| Dimension               | Count               |
+| ----------------------- | ------------------- |
+| Service implementations | 19                  |
+| Languages               | 12                  |
+| Frameworks              | 19                  |
+| CI/CD workflows         | 24                  |
+| Service types           | 1 (Discord webhook) |
 
 ### Current Limitations for Scaling
 
@@ -215,13 +215,13 @@ gs://perf-agent-registry/
 
 **Benefits:**
 
-| Aspect | Benefit |
-|--------|---------|
-| Adding service type | Deploy Agent + upload YAML. No Perf Manager changes. |
-| Removing service type | Delete YAML file. |
-| Disabling temporarily | Set `enabled: false` in manifest. |
-| Versioning | GCS object versioning tracks changes. |
-| Debugging | `gsutil cat gs://perf-agent-registry/agents/*.yaml` |
+| Aspect                | Benefit                                              |
+| --------------------- | ---------------------------------------------------- |
+| Adding service type   | Deploy Agent + upload YAML. No Perf Manager changes. |
+| Removing service type | Delete YAML file.                                    |
+| Disabling temporarily | Set `enabled: false` in manifest.                    |
+| Versioning            | GCS object versioning tracks changes.                |
+| Debugging             | `gsutil cat gs://perf-agent-registry/agents/*.yaml`  |
 
 ---
 
@@ -236,7 +236,7 @@ gs://perf-agent-registry/
 **Rationale:** At 5-6 service types with 20 implementations each (~100+ services), a monorepo becomes
 unmanageable. Each service type has distinct concerns that map well to repository boundaries.
 
-*See full analysis in Critical Analysis section.*
+_See full analysis in Critical Analysis section._
 
 ---
 
@@ -250,11 +250,11 @@ different protocols, payloads, and validation requirements.
 
 **Options Considered:**
 
-| Option | Description |
-|--------|-------------|
+| Option                         | Description                                        |
+| ------------------------------ | -------------------------------------------------- |
 | A. Manager knows all protocols | Manager contains Discord, gRPC, REST specific code |
-| B. Plugin architecture | Manager loads plugins at runtime |
-| C. Delegated Agents | Each service repo provides its own test executor |
+| B. Plugin architecture         | Manager loads plugins at runtime                   |
+| C. Delegated Agents            | Each service repo provides its own test executor   |
 
 **Decision:** Option C - Delegated Agents
 
@@ -290,14 +290,14 @@ hardcoded configuration, GitHub API scanning, or external registry.
 
 ```yaml
 # gs://perf-agent-registry/agents/discord-webhook.yaml
-schema_version: "1.0"
+schema_version: '1.0'
 service_type: discord-webhook
 enabled: true
-description: "Discord interaction webhook handlers"
+description: 'Discord interaction webhook handlers'
 
 agent:
   endpoint: https://discord-perf-agent-xxxxx-uc.a.run.app
-  type: cloud_run_service  # See ADR-004 for hosting options
+  type: cloud_run_service # See ADR-004 for hosting options
 
   # For on-demand invocation (Cloud Run Job)
   # job_name: discord-perf-agent-job
@@ -313,14 +313,14 @@ implementations:
   - name: rust-actix
     status: active
   - name: java-spring3
-    status: disabled  # Temporarily excluded from benchmarks
+    status: disabled # Temporarily excluded from benchmarks
   # ...
 
 metadata:
   owner: platform-team
   contact: platform@example.com
   last_updated: 2026-01-24T14:30:00Z
-  version: "1.2.0"
+  version: '1.2.0'
 ```
 
 **Schema Validation:**
@@ -351,7 +351,7 @@ hosting model significantly impacts cost, complexity, and benchmark accuracy.
 **Key Constraint:** Cloud Run services take ~15 minutes to scale to zero after deployment.
 Cold start benchmarks require services to be at zero instances.
 
-*See detailed analysis in next section.*
+_See detailed analysis in next section._
 
 ---
 
@@ -401,12 +401,12 @@ Agent manifests in GCS need to be valid to ensure reliable discovery and invocat
 
 **Validation Points:**
 
-| Point | When | Action on Failure |
-|-------|------|-------------------|
-| Pre-commit hook | Before commit | Block commit |
-| CI pipeline | On PR/push | Fail build |
-| Pre-upload | Before GCS upload | Fail deployment |
-| Discovery | When Perf Manager reads | Log warning, skip agent |
+| Point           | When                    | Action on Failure       |
+| --------------- | ----------------------- | ----------------------- |
+| Pre-commit hook | Before commit           | Block commit            |
+| CI pipeline     | On PR/push              | Fail build              |
+| Pre-upload      | Before GCS upload       | Fail deployment         |
+| Discovery       | When Perf Manager reads | Log warning, skip agent |
 
 **Schema Location:**
 
@@ -565,13 +565,13 @@ agent:
   endpoint: https://discord-perf-agent-xxxxx-uc.a.run.app
 ```
 
-| Aspect | Assessment |
-|--------|------------|
-| **Simplicity** | ✅ Very simple. Call endpoint, get results. |
-| **Latency** | ✅ Immediate response (no deployment wait). |
-| **Cost at 19 services** | ✅ Acceptable (~$20-50/month for idle services). |
-| **Cost at 100+ services** | ❌ Problematic (~$100-300/month for idle services). |
-| **Services under test** | Note: These are the Agents, not the 100+ services being tested. Agents deploy services on-demand. |
+| Aspect                    | Assessment                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Simplicity**            | ✅ Very simple. Call endpoint, get results.                                                       |
+| **Latency**               | ✅ Immediate response (no deployment wait).                                                       |
+| **Cost at 19 services**   | ✅ Acceptable (~$20-50/month for idle services).                                                  |
+| **Cost at 100+ services** | ❌ Problematic (~$100-300/month for idle services).                                               |
+| **Services under test**   | Note: These are the Agents, not the 100+ services being tested. Agents deploy services on-demand. |
 
 **Scaling Analysis:**
 
@@ -615,12 +615,12 @@ agent:
   region: us-central1
 ```
 
-| Aspect | Assessment |
-|--------|------------|
-| **Cost** | ✅ Pay only when running. |
-| **Simplicity** | ⚠️ Moderate. Jobs need monitoring. |
-| **Total runtime** | ❌ Very long. Sequential = hours. Parallel = resource contention. |
-| **Job timeout** | ⚠️ Cloud Run Jobs have 1-hour default timeout (max 24h). |
+| Aspect              | Assessment                                                                  |
+| ------------------- | --------------------------------------------------------------------------- |
+| **Cost**            | ✅ Pay only when running.                                                   |
+| **Simplicity**      | ⚠️ Moderate. Jobs need monitoring.                                          |
+| **Total runtime**   | ❌ Very long. Sequential = hours. Parallel = resource contention.           |
+| **Job timeout**     | ⚠️ Cloud Run Jobs have 1-hour default timeout (max 24h).                    |
 | **Parallelization** | ⚠️ Can run Agent jobs in parallel, but each Agent still has internal waits. |
 
 **Runtime estimate (sequential Agents):**
@@ -692,13 +692,13 @@ Perf Manager:
 4. Perf Manager aggregates
 ```
 
-| Aspect | C1: Internal phases | C2: Scheduled | C3: Event-driven |
-|--------|---------------------|---------------|------------------|
-| **Complexity** | Low | Medium | High |
-| **Job duration** | Long (includes wait) | Short (split) | Short (split) |
-| **Coordination** | Simple | Scheduler setup | Pub/Sub setup |
-| **Failure handling** | Simple | Need idempotency | Need idempotency |
-| **Observability** | Good | Split across jobs | Split, needs tracing |
+| Aspect               | C1: Internal phases  | C2: Scheduled     | C3: Event-driven     |
+| -------------------- | -------------------- | ----------------- | -------------------- |
+| **Complexity**       | Low                  | Medium            | High                 |
+| **Job duration**     | Long (includes wait) | Short (split)     | Short (split)        |
+| **Coordination**     | Simple               | Scheduler setup   | Pub/Sub setup        |
+| **Failure handling** | Simple               | Need idempotency  | Need idempotency     |
+| **Observability**    | Good                 | Split across jobs | Split, needs tracing |
 
 **Verdict:** ⚠️ **C2 (Scheduled) is recommended** - More complex but much more efficient
 
@@ -793,12 +793,12 @@ scale-to-zero.
 
 **Agent API for Phased Execution:**
 
-| Endpoint | Purpose | Triggered By |
-|----------|---------|--------------|
-| `POST /deploy` | Deploy services, schedule measurement | Perf Manager |
-| `POST /measure` | Measure cold starts and warm requests | Cloud Scheduler |
-| `GET /status/{run_id}` | Check progress of a run | Perf Manager (polling) |
-| `POST /cleanup` | Remove deployed services | Perf Manager |
+| Endpoint               | Purpose                               | Triggered By           |
+| ---------------------- | ------------------------------------- | ---------------------- |
+| `POST /deploy`         | Deploy services, schedule measurement | Perf Manager           |
+| `POST /measure`        | Measure cold starts and warm requests | Cloud Scheduler        |
+| `GET /status/{run_id}` | Check progress of a run               | Perf Manager (polling) |
+| `POST /cleanup`        | Remove deployed services              | Perf Manager           |
 
 **GCS State Management:**
 
@@ -825,13 +825,13 @@ gs://perf-benchmark-state/
       "implementation": "go-gin",
       "service_name": "discord-go-gin-abc123",
       "service_url": "https://discord-go-gin-abc123-xxxxx-uc.a.run.app",
-      "dimensions": {"implementation": "go-gin", "cpu": "1", "memory": "512Mi"}
+      "dimensions": { "implementation": "go-gin", "cpu": "1", "memory": "512Mi" }
     },
     {
       "implementation": "rust-actix",
       "service_name": "discord-rust-actix-abc123",
       "service_url": "https://discord-rust-actix-abc123-xxxxx-uc.a.run.app",
-      "dimensions": {"implementation": "rust-actix", "cpu": "1", "memory": "512Mi"}
+      "dimensions": { "implementation": "rust-actix", "cpu": "1", "memory": "512Mi" }
     }
   ]
 }
@@ -839,22 +839,22 @@ gs://perf-benchmark-state/
 
 **Benefits of Phased Approach:**
 
-| Aspect | Benefit |
-|--------|---------|
-| **Compute efficiency** | No idle time waiting for scale-to-zero |
-| **Cost** | Pay only for active deployment/measurement |
-| **Parallelism** | All agents can deploy simultaneously |
-| **Scalability** | Works for 100+ services across matrix configurations |
-| **Reliability** | State persisted in GCS survives failures |
+| Aspect                 | Benefit                                              |
+| ---------------------- | ---------------------------------------------------- |
+| **Compute efficiency** | No idle time waiting for scale-to-zero               |
+| **Cost**               | Pay only for active deployment/measurement           |
+| **Parallelism**        | All agents can deploy simultaneously                 |
+| **Scalability**        | Works for 100+ services across matrix configurations |
+| **Reliability**        | State persisted in GCS survives failures             |
 
 **Trade-offs:**
 
-| Complexity | Mitigation |
-|------------|------------|
-| Cloud Scheduler setup | Terraform module provided |
-| State management in GCS | Clear schema, idempotent operations |
-| Split observability | Structured logging with run_id correlation |
-| Failure recovery | Status files enable retry of failed phases |
+| Complexity              | Mitigation                                 |
+| ----------------------- | ------------------------------------------ |
+| Cloud Scheduler setup   | Terraform module provided                  |
+| State management in GCS | Clear schema, idempotent operations        |
+| Split observability     | Structured logging with run_id correlation |
+| Failure recovery        | Status files enable retry of failed phases |
 
 **Failure Handling:**
 
@@ -882,49 +882,49 @@ If measurement fails midway:
 
 **Phased execution cost model:**
 
-| Phase | Duration | Compute Cost |
-|-------|----------|--------------|
-| Deploy (6 agents parallel) | ~5 min | ~$0.50 |
-| Wait for scale-to-zero | ~15-20 min | $0 (no compute) |
-| Measure (6 agents parallel) | ~20 min | ~$2.00 |
-| Aggregation | ~2 min | ~$0.20 |
-| **Total per full run** | ~45 min | **~$2.70** |
+| Phase                       | Duration   | Compute Cost    |
+| --------------------------- | ---------- | --------------- |
+| Deploy (6 agents parallel)  | ~5 min     | ~$0.50          |
+| Wait for scale-to-zero      | ~15-20 min | $0 (no compute) |
+| Measure (6 agents parallel) | ~20 min    | ~$2.00          |
+| Aggregation                 | ~2 min     | ~$0.20          |
+| **Total per full run**      | ~45 min    | **~$2.70**      |
 
 **Comparison with "wait in agent" approach:**
 
-| Approach | Compute Time | Cost per Run |
-|----------|--------------|--------------|
-| Wait in agent | 6 × 35 min = 210 min | ~$10.50 |
-| Phased scheduled | ~27 min active | ~$2.70 |
-| **Savings** | 183 min | **~$7.80 (74%)** |
+| Approach         | Compute Time         | Cost per Run     |
+| ---------------- | -------------------- | ---------------- |
+| Wait in agent    | 6 × 35 min = 210 min | ~$10.50          |
+| Phased scheduled | ~27 min active       | ~$2.70           |
+| **Savings**      | 183 min              | **~$7.80 (74%)** |
 
 **Always-deployed Agents:**
 
-| Component | Count | Monthly Cost (idle) |
-|-----------|-------|---------------------|
-| Perf Agents | 6 | ~$30-60 |
+| Component   | Count | Monthly Cost (idle) |
+| ----------- | ----- | ------------------- |
+| Perf Agents | 6     | ~$30-60             |
 
 **Services under test (deployed per run, cleaned up after):**
 
 With phased execution, services can be deployed fresh for each run and cleaned up after, enabling
 configuration matrix testing (different CPU, memory, etc.).
 
-| Scenario | Services Deployed | Cost |
-|----------|-------------------|------|
-| Simple (19 impl × 1 config) | 19 | ~$1/run |
-| CPU study (4 impl × 4 configs) | 16 | ~$1/run |
-| Full matrix (19 impl × 4 CPU × 2 boost) | 152 | ~$8/run |
+| Scenario                                | Services Deployed | Cost    |
+| --------------------------------------- | ----------------- | ------- |
+| Simple (19 impl × 1 config)             | 19                | ~$1/run |
+| CPU study (4 impl × 4 configs)          | 16                | ~$1/run |
+| Full matrix (19 impl × 4 CPU × 2 boost) | 152               | ~$8/run |
 
 ---
 
 ### Decision Summary
 
-| Component | Hosting Strategy | Rationale |
-|-----------|------------------|-----------|
-| Perf Agents | Always-deployed Cloud Run services | Few in number, need immediate availability for scheduling |
-| Services under test | Deployed per run, cleaned up after | Enables configuration matrix testing |
-| Perf Manager | Cloud Run Job (triggered) | Orchestrates phased execution |
-| Phase coordination | Cloud Scheduler + GCS state | Efficient, no idle compute during scale-to-zero wait |
+| Component           | Hosting Strategy                   | Rationale                                                 |
+| ------------------- | ---------------------------------- | --------------------------------------------------------- |
+| Perf Agents         | Always-deployed Cloud Run services | Few in number, need immediate availability for scheduling |
+| Services under test | Deployed per run, cleaned up after | Enables configuration matrix testing                      |
+| Perf Manager        | Cloud Run Job (triggered)          | Orchestrates phased execution                             |
+| Phase coordination  | Cloud Scheduler + GCS state        | Efficient, no idle compute during scale-to-zero wait      |
 
 ---
 
@@ -1000,13 +1000,13 @@ all protocols) would create a monolithic, tightly-coupled system that's hard to 
 
 ## Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Agent interface drift | Medium | High | Schema validation, versioning |
-| GCS registry corruption | Low | High | Object versioning, backups |
-| Complex debugging across repos | Medium | Medium | Distributed tracing, clear logs |
-| Duplicate maintenance burden | Medium | Low | Shared libraries, templates |
-| Scale-to-zero timing issues | Medium | Medium | Detection logic, flagged measurements |
+| Risk                           | Likelihood | Impact | Mitigation                            |
+| ------------------------------ | ---------- | ------ | ------------------------------------- |
+| Agent interface drift          | Medium     | High   | Schema validation, versioning         |
+| GCS registry corruption        | Low        | High   | Object versioning, backups            |
+| Complex debugging across repos | Medium     | Medium | Distributed tracing, clear logs       |
+| Duplicate maintenance burden   | Medium     | Low    | Shared libraries, templates           |
+| Scale-to-zero timing issues    | Medium     | Medium | Detection logic, flagged measurements |
 
 ---
 
@@ -1031,20 +1031,20 @@ See [CONFIG-EXTENSIBILITY.md](./CONFIG-EXTENSIBILITY.md) for multi-dimensional t
 
 ### Appendix D: Proposed Service Types
 
-| Service Type | Purpose | Agent Complexity |
-|--------------|---------|------------------|
-| Discord Webhook | Signature validation + Pub/Sub | Medium (Ed25519) |
-| REST CRUD | Database CRUD operations | Medium (SQL setup) |
-| gRPC Unary | Binary protocol handling | Medium (Protobuf) |
-| Queue Worker | Pub/Sub consumption | Low |
-| WebSocket | Persistent connections | High (stateful) |
-| GraphQL | Query parsing + execution | Medium |
+| Service Type    | Purpose                        | Agent Complexity   |
+| --------------- | ------------------------------ | ------------------ |
+| Discord Webhook | Signature validation + Pub/Sub | Medium (Ed25519)   |
+| REST CRUD       | Database CRUD operations       | Medium (SQL setup) |
+| gRPC Unary      | Binary protocol handling       | Medium (Protobuf)  |
+| Queue Worker    | Pub/Sub consumption            | Low                |
+| WebSocket       | Persistent connections         | High (stateful)    |
+| GraphQL         | Query parsing + execution      | Medium             |
 
 ---
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 0.1 | 2026-01-24 | Architecture Review | Initial draft |
-| 0.2 | 2026-01-24 | Architecture Review | Revised to delegated agent pattern, GCS registry, hosting analysis |
+| Version | Date       | Author              | Changes                                                            |
+| ------- | ---------- | ------------------- | ------------------------------------------------------------------ |
+| 0.1     | 2026-01-24 | Architecture Review | Initial draft                                                      |
+| 0.2     | 2026-01-24 | Architecture Review | Revised to delegated agent pattern, GCS registry, hosting analysis |
