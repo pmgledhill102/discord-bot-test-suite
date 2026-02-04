@@ -44,27 +44,27 @@
 
 ## Key Numbers
 
-| Current State | Future State |
-|---------------|--------------|
-| 1 service type | 5-6 service types |
-| 19 implementations | ~100-120 implementations |
-| 1 repository | 7 repositories |
+| Current State                | Future State                                |
+| ---------------------------- | ------------------------------------------- |
+| 1 service type               | 5-6 service types                           |
+| 19 implementations           | ~100-120 implementations                    |
+| 1 repository                 | 7 repositories                              |
 | Benchmark tool knows Discord | Perf Manager knows nothing service-specific |
 
 ---
 
 ## 8 Key Decisions
 
-| # | Decision | Rationale |
-|---|----------|-----------|
-| 1 | **Multi-repository** | Scalability at 100+ services |
-| 2 | **Delegated Agent pattern** | No service-specific code in Manager |
-| 3 | **GCS-based registry** | Pluggable, no Manager changes for new types |
-| 4 | **Service account auth** | Native GCP, no secrets to manage |
-| 5 | **Manifest schema validation** | Catch errors early in CI |
-| 6 | **Always-deployed Agents** | Only 5-6 agents, immediate availability for scheduling |
-| 7 | **Phased scheduled execution** | No idle compute waiting for scale-to-zero |
-| 8 | **Opaque agent config with dimension tags** | Multi-dimensional testing without Manager changes |
+| #   | Decision                                    | Rationale                                              |
+| --- | ------------------------------------------- | ------------------------------------------------------ |
+| 1   | **Multi-repository**                        | Scalability at 100+ services                           |
+| 2   | **Delegated Agent pattern**                 | No service-specific code in Manager                    |
+| 3   | **GCS-based registry**                      | Pluggable, no Manager changes for new types            |
+| 4   | **Service account auth**                    | Native GCP, no secrets to manage                       |
+| 5   | **Manifest schema validation**              | Catch errors early in CI                               |
+| 6   | **Always-deployed Agents**                  | Only 5-6 agents, immediate availability for scheduling |
+| 7   | **Phased scheduled execution**              | No idle compute waiting for scale-to-zero              |
+| 8   | **Opaque agent config with dimension tags** | Multi-dimensional testing without Manager changes      |
 
 ---
 
@@ -123,20 +123,20 @@ Phase 1: Deploy (~5 min)     Phase 2: Measure (~20 min)
 
 ### Component Hosting
 
-| Component | Strategy | Why |
-|-----------|----------|-----|
-| **Perf Agents** (5-6) | Always deployed | Need to be available for scheduling |
+| Component               | Strategy                           | Why                                  |
+| ----------------------- | ---------------------------------- | ------------------------------------ |
+| **Perf Agents** (5-6)   | Always deployed                    | Need to be available for scheduling  |
 | **Services under test** | Deployed per run, cleaned up after | Enables configuration matrix testing |
-| **Perf Manager** | Cloud Run Job | Orchestrates phased execution |
-| **Phase coordination** | Cloud Scheduler + GCS state | Efficient, reliable |
+| **Perf Manager**        | Cloud Run Job                      | Orchestrates phased execution        |
+| **Phase coordination**  | Cloud Scheduler + GCS state        | Efficient, reliable                  |
 
 ### Cost Impact
 
-| Approach | Compute Time | Cost per Run |
-|----------|--------------|--------------|
-| Wait in agent | 210 min | ~$10.50 |
-| Phased scheduled | ~27 min active | ~$2.70 |
-| **Savings** | 183 min | **74%** |
+| Approach         | Compute Time   | Cost per Run |
+| ---------------- | -------------- | ------------ |
+| Wait in agent    | 210 min        | ~$10.50      |
+| Phased scheduled | ~27 min active | ~$2.70       |
+| **Savings**      | 183 min        | **74%**      |
 
 ---
 
@@ -189,11 +189,11 @@ Future:    implementation × cpu × memory × startup_boost
 
 **Research questions this enables:**
 
-| Question | How |
-|----------|-----|
-| Does Go benefit from 4 CPUs as much as Java? | CPU scaling study |
+| Question                                         | How                     |
+| ------------------------------------------------ | ----------------------- |
+| Does Go benefit from 4 CPUs as much as Java?     | CPU scaling study       |
 | Which languages benefit most from Startup Boost? | Boost on/off comparison |
-| What's the minimum viable config per language? | Cost optimization study |
+| What's the minimum viable config per language?   | Cost optimization study |
 
 **How it stays Manager-agnostic:**
 
@@ -269,11 +269,11 @@ cloudrun-service-grpc-unary/        ← gRPC services + Agent
 
 ## Documents
 
-| Document | Purpose |
-|----------|---------|
-| [MULTI-REPO-PROPOSAL.md](./MULTI-REPO-PROPOSAL.md) | Full architecture + ADRs |
-| [PERF-MANAGER-SPEC.md](./PERF-MANAGER-SPEC.md) | Manager specification |
-| [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md) | Agent specification |
+| Document                                             | Purpose                            |
+| ---------------------------------------------------- | ---------------------------------- |
+| [MULTI-REPO-PROPOSAL.md](./MULTI-REPO-PROPOSAL.md)   | Full architecture + ADRs           |
+| [PERF-MANAGER-SPEC.md](./PERF-MANAGER-SPEC.md)       | Manager specification              |
+| [PERF-AGENT-SPEC.md](./PERF-AGENT-SPEC.md)           | Agent specification                |
 | [CONFIG-EXTENSIBILITY.md](./CONFIG-EXTENSIBILITY.md) | Multi-dimensional testing patterns |
 
 ---
