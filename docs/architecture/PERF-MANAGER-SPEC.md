@@ -26,13 +26,13 @@ That knowledge lives entirely in the Perf Agents.
 
 ## What Perf Manager Does NOT Do
 
-| Responsibility | Owner |
-|---------------|-------|
-| Ed25519 signature generation | Discord Perf Agent |
-| Protobuf serialization | gRPC Perf Agent |
-| SQL database setup | REST CRUD Perf Agent |
-| Contract validation | Each respective Agent |
-| Service-specific payloads | Each respective Agent |
+| Responsibility               | Owner                 |
+| ---------------------------- | --------------------- |
+| Ed25519 signature generation | Discord Perf Agent    |
+| Protobuf serialization       | gRPC Perf Agent       |
+| SQL database setup           | REST CRUD Perf Agent  |
+| Contract validation          | Each respective Agent |
+| Service-specific payloads    | Each respective Agent |
 | Cold start measurement logic | Each respective Agent |
 
 The Perf Manager only sees standardized results.
@@ -268,12 +268,12 @@ type Storage interface {
 
 **Report Types:**
 
-| Type | Format | Purpose |
-|------|--------|---------|
-| Summary | Markdown | Human-readable overview |
-| Detailed | Markdown | Full results with all metrics |
-| JSON | JSON | Programmatic consumption |
-| Comparison | Markdown | Diff against baseline |
+| Type       | Format   | Purpose                       |
+| ---------- | -------- | ----------------------------- |
+| Summary    | Markdown | Human-readable overview       |
+| Detailed   | Markdown | Full results with all metrics |
+| JSON       | JSON     | Programmatic consumption      |
+| Comparison | Markdown | Diff against baseline         |
 
 **Report Sections:**
 
@@ -294,27 +294,28 @@ type Storage interface {
 
 ## Summary
 
-| Metric | Value |
-|--------|-------|
-| Service Types Tested | 6 |
-| Implementations Tested | 114 |
-| Successful | 112 |
-| Failed | 2 |
+| Metric                 | Value |
+| ---------------------- | ----- |
+| Service Types Tested   | 6     |
+| Implementations Tested | 114   |
+| Successful             | 112   |
+| Failed                 | 2     |
 
 ## Cold Start Rankings (Top 10)
 
-| Rank | Service Type | Implementation | P50 | P99 | Δ Baseline |
-|------|--------------|----------------|-----|-----|------------|
-| 1 | discord-webhook | go-gin | 145ms | 220ms | -5% |
-| 2 | discord-webhook | rust-actix | 160ms | 240ms | +2% |
-| 3 | rest-crud | go-gin | 180ms | 280ms | 0% |
+| Rank | Service Type    | Implementation | P50   | P99   | Δ Baseline |
+| ---- | --------------- | -------------- | ----- | ----- | ---------- |
+| 1    | discord-webhook | go-gin         | 145ms | 220ms | -5%        |
+| 2    | discord-webhook | rust-actix     | 160ms | 240ms | +2%        |
+| 3    | rest-crud       | go-gin         | 180ms | 280ms | 0%         |
+
 ...
 
 ## Regressions (>10% slower than baseline)
 
-| Service Type | Implementation | Metric | Baseline | Current | Change |
-|--------------|----------------|--------|----------|---------|--------|
-| discord-webhook | java-spring3 | cold_start_p50 | 800ms | 920ms | +15% |
+| Service Type    | Implementation | Metric         | Baseline | Current | Change |
+| --------------- | -------------- | -------------- | -------- | ------- | ------ |
+| discord-webhook | java-spring3   | cold_start_p50 | 800ms    | 920ms   | +15%   |
 
 ## Errors
 
@@ -391,7 +392,7 @@ Examples:
 ```yaml
 # perf-manager.yaml
 
-version: "1.0"
+version: '1.0'
 
 gcp:
   project_id: ${GCP_PROJECT_ID}
@@ -409,24 +410,24 @@ benchmark:
   cold_start_iterations: 10
   warm_request_count: 100
   warm_request_concurrency: 10
-  timeout: 30m                    # Per-agent timeout
+  timeout: 30m # Per-agent timeout
 
 execution:
-  parallel_agents: true           # Run agents in parallel
-  max_parallel: 3                 # Max concurrent agent invocations
-  continue_on_error: true         # Don't abort on single agent failure
+  parallel_agents: true # Run agents in parallel
+  max_parallel: 3 # Max concurrent agent invocations
+  continue_on_error: true # Don't abort on single agent failure
 
 reporting:
   generate_on_completion: true
   formats: [markdown, json]
   comparison:
-    regression_threshold: 10      # Percent change to flag as regression
-    improvement_threshold: 10     # Percent change to flag as improvement
+    regression_threshold: 10 # Percent change to flag as regression
+    improvement_threshold: 10 # Percent change to flag as improvement
 
 # Optional: filter which agents to run
 filter:
-  service_types: []               # Empty = all
-  exclude_types: []               # Explicit exclusions
+  service_types: [] # Empty = all
+  exclude_types: [] # Explicit exclusions
 ```
 
 ---
@@ -480,13 +481,13 @@ resource "google_cloud_scheduler_job" "perf_manager_daily" {
 # Required roles for Perf Manager service account
 
 # Read agent registry
-- roles/storage.objectViewer  # on perf-agent-registry bucket
+- roles/storage.objectViewer # on perf-agent-registry bucket
 
 # Write results
-- roles/storage.objectAdmin   # on perf-results bucket
+- roles/storage.objectAdmin # on perf-results bucket
 
 # Invoke Perf Agents
-- roles/run.invoker           # granted per-agent by each agent's IAM
+- roles/run.invoker # granted per-agent by each agent's IAM
 
 # Optional: Cloud Logging
 - roles/logging.logWriter
@@ -578,11 +579,11 @@ Content-Type: application/json
 
 ### Agent Invocation Errors
 
-| Error Type | Handling |
-|------------|----------|
-| Network timeout | Retry once, then mark agent as failed |
-| HTTP 4xx | Log error, skip agent (configuration issue) |
-| HTTP 5xx | Retry with backoff, then mark failed |
+| Error Type       | Handling                                         |
+| ---------------- | ------------------------------------------------ |
+| Network timeout  | Retry once, then mark agent as failed            |
+| HTTP 4xx         | Log error, skip agent (configuration issue)      |
+| HTTP 5xx         | Retry with backoff, then mark failed             |
 | Invalid response | Log warning, include partial results if possible |
 
 ### Aggregation Policy
@@ -611,15 +612,15 @@ Content-Type: application/json
 
 ### Key Events
 
-| Event | Severity | Description |
-|-------|----------|-------------|
-| `run_started` | INFO | Benchmark run initiated |
-| `agent_invocation_start` | INFO | Calling agent endpoint |
-| `agent_invocation_complete` | INFO | Agent returned results |
-| `agent_invocation_error` | ERROR | Agent call failed |
-| `results_saved` | INFO | Results written to GCS |
-| `report_generated` | INFO | Report created |
-| `run_completed` | INFO | Full run finished |
+| Event                       | Severity | Description             |
+| --------------------------- | -------- | ----------------------- |
+| `run_started`               | INFO     | Benchmark run initiated |
+| `agent_invocation_start`    | INFO     | Calling agent endpoint  |
+| `agent_invocation_complete` | INFO     | Agent returned results  |
+| `agent_invocation_error`    | ERROR    | Agent call failed       |
+| `results_saved`             | INFO     | Results written to GCS  |
+| `report_generated`          | INFO     | Report created          |
+| `run_completed`             | INFO     | Full run finished       |
 
 ---
 
@@ -680,7 +681,7 @@ cloudrun-perf-manager/
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 0.1 | 2026-01-24 | Architecture Review | Initial draft |
-| 0.2 | 2026-01-24 | Architecture Review | Simplified for delegated agent pattern |
+| Version | Date       | Author              | Changes                                |
+| ------- | ---------- | ------------------- | -------------------------------------- |
+| 0.1     | 2026-01-24 | Architecture Review | Initial draft                          |
+| 0.2     | 2026-01-24 | Architecture Review | Simplified for delegated agent pattern |

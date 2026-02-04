@@ -30,14 +30,14 @@ Values: go-gin, rust-actix, python-flask, java-spring3, ...
 
 Additional dimensions to investigate:
 
-| Dimension | Values | Research Question |
-|-----------|--------|-------------------|
-| **CPU allocation** | 0.5, 1, 2, 4 vCPUs | How does CPU affect cold start? Is there diminishing returns? |
-| **Memory allocation** | 256Mi, 512Mi, 1Gi, 2Gi | Does more memory help? Language-specific effects? |
-| **Startup CPU Boost** | enabled, disabled | Which languages/frameworks benefit most? |
-| **Execution environment** | gen1, gen2 | Performance differences? |
-| **Concurrency** | 1, 10, 80, 250 | Impact on warm request throughput? |
-| **Min instances** | 0, 1 | Cold start elimination vs cost? |
+| Dimension                 | Values                 | Research Question                                             |
+| ------------------------- | ---------------------- | ------------------------------------------------------------- |
+| **CPU allocation**        | 0.5, 1, 2, 4 vCPUs     | How does CPU affect cold start? Is there diminishing returns? |
+| **Memory allocation**     | 256Mi, 512Mi, 1Gi, 2Gi | Does more memory help? Language-specific effects?             |
+| **Startup CPU Boost**     | enabled, disabled      | Which languages/frameworks benefit most?                      |
+| **Execution environment** | gen1, gen2             | Performance differences?                                      |
+| **Concurrency**           | 1, 10, 80, 250         | Impact on warm request throughput?                            |
+| **Min instances**         | 0, 1                   | Cold start elimination vs cost?                               |
 
 ### Research Questions This Enables
 
@@ -293,9 +293,9 @@ Test a single implementation across one dimension:
 agent_config:
   study_type: cpu_scaling
   implementation: go-gin
-  cpu_values: ["0.5", "1", "2", "4"]
+  cpu_values: ['0.5', '1', '2', '4']
   fixed_config:
-    memory: "512Mi"
+    memory: '512Mi'
     startup_boost: true
 ```
 
@@ -314,21 +314,21 @@ The Perf Manager aggregates results by dimension values:
 
 ## go-gin
 
-| CPU | P50 | P90 | P99 | Δ from 1 CPU |
-|-----|-----|-----|-----|--------------|
-| 0.5 | 210ms | 280ms | 350ms | +45% |
-| 1   | 145ms | 180ms | 220ms | baseline |
-| 2   | 98ms | 125ms | 160ms | -32% |
-| 4   | 85ms | 110ms | 140ms | -41% |
+| CPU | P50   | P90   | P99   | Δ from 1 CPU |
+| --- | ----- | ----- | ----- | ------------ |
+| 0.5 | 210ms | 280ms | 350ms | +45%         |
+| 1   | 145ms | 180ms | 220ms | baseline     |
+| 2   | 98ms  | 125ms | 160ms | -32%         |
+| 4   | 85ms  | 110ms | 140ms | -41%         |
 
 ## java-spring3
 
-| CPU | P50 | P90 | P99 | Δ from 1 CPU |
-|-----|-----|-----|-----|--------------|
-| 0.5 | 2400ms | 3100ms | 3800ms | +50% |
-| 1   | 1600ms | 2100ms | 2600ms | baseline |
-| 2   | 950ms | 1200ms | 1500ms | -41% |
-| 4   | 720ms | 920ms | 1150ms | -55% |
+| CPU | P50    | P90    | P99    | Δ from 1 CPU |
+| --- | ------ | ------ | ------ | ------------ |
+| 0.5 | 2400ms | 3100ms | 3800ms | +50%         |
+| 1   | 1600ms | 2100ms | 2600ms | baseline     |
+| 2   | 950ms  | 1200ms | 1500ms | -41%         |
+| 4   | 720ms  | 920ms  | 1150ms | -55%         |
 
 **Insight:** Java benefits more from additional CPUs than Go (55% vs 41% improvement at 4 CPUs).
 ```
@@ -339,7 +339,7 @@ The Perf Manager aggregates results by dimension values:
 # Startup Boost Effectiveness
 
 | Implementation | Without Boost | With Boost | Improvement |
-|----------------|---------------|------------|-------------|
+| -------------- | ------------- | ---------- | ----------- |
 | go-gin         | 145ms         | 140ms      | 3%          |
 | rust-actix     | 160ms         | 155ms      | 3%          |
 | java-spring3   | 1600ms        | 1100ms     | 31%         |
@@ -376,8 +376,8 @@ description: Measure cold start impact of CPU allocation
 agent_config:
   test_matrix:
     implementations: [go-gin, java-spring3, python-flask, csharp-aspnet]
-    cpu: ["0.5", "1", "2", "4"]
-    memory: ["512Mi"]
+    cpu: ['0.5', '1', '2', '4']
+    memory: ['512Mi']
     startup_boost: [true]
 ```
 
@@ -389,8 +389,8 @@ description: Measure effectiveness of Startup CPU Boost across implementations
 agent_config:
   test_matrix:
     implementations: all
-    cpu: ["1"]
-    memory: ["512Mi"]
+    cpu: ['1']
+    memory: ['512Mi']
     startup_boost: [true, false]
 ```
 
@@ -402,8 +402,8 @@ description: Measure impact of memory allocation on cold start
 agent_config:
   test_matrix:
     implementations: [java-spring3, python-django, ruby-rails]
-    cpu: ["1"]
-    memory: ["256Mi", "512Mi", "1Gi", "2Gi"]
+    cpu: ['1']
+    memory: ['256Mi', '512Mi', '1Gi', '2Gi']
     startup_boost: [true]
 ```
 
@@ -415,8 +415,8 @@ description: Find minimum viable configuration per implementation
 agent_config:
   test_matrix:
     implementations: all
-    cpu: ["0.5", "1"]
-    memory: ["256Mi", "512Mi"]
+    cpu: ['0.5', '1']
+    memory: ['256Mi', '512Mi']
     startup_boost: [false]
   acceptance_criteria:
     cold_start_p99_max_ms: 1000
@@ -549,13 +549,13 @@ Full 608-config matrix with 10 iterations each:
 
 Beyond Cloud Run configuration, the framework could support:
 
-| Dimension | Values | Research Question |
-|-----------|--------|-------------------|
-| **Region** | us-central1, europe-west1, asia-east1 | Regional performance differences? |
-| **VPC connector** | with, without | Network latency impact? |
-| **Custom domain** | with, without | SSL/routing overhead? |
-| **Container base image** | distroless, alpine, debian | Image size impact on cold start? |
-| **Build optimization** | debug, release, size-optimized | Binary size vs performance? |
+| Dimension                | Values                                | Research Question                 |
+| ------------------------ | ------------------------------------- | --------------------------------- |
+| **Region**               | us-central1, europe-west1, asia-east1 | Regional performance differences? |
+| **VPC connector**        | with, without                         | Network latency impact?           |
+| **Custom domain**        | with, without                         | SSL/routing overhead?             |
+| **Container base image** | distroless, alpine, debian            | Image size impact on cold start?  |
+| **Build optimization**   | debug, release, size-optimized        | Binary size vs performance?       |
 
 These would require Agent modifications but zero Perf Manager changes.
 
@@ -578,6 +578,6 @@ configuration for each language?" without architectural changes.
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 0.1 | 2026-01-24 | Architecture Review | Initial draft |
+| Version | Date       | Author              | Changes       |
+| ------- | ---------- | ------------------- | ------------- |
+| 0.1     | 2026-01-24 | Architecture Review | Initial draft |
