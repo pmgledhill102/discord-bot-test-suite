@@ -144,11 +144,11 @@ for service in ${SERVICES}; do
             # Parse duration (simple h/d/m parsing)
             OLDER_SECONDS=0
             if [[ "${OLDER_THAN}" =~ ^([0-9]+)h$ ]]; then
-                OLDER_SECONDS=$((${BASH_REMATCH[1]} * 3600))
+                OLDER_SECONDS=$((BASH_REMATCH[1] * 3600))
             elif [[ "${OLDER_THAN}" =~ ^([0-9]+)d$ ]]; then
-                OLDER_SECONDS=$((${BASH_REMATCH[1]} * 86400))
+                OLDER_SECONDS=$((BASH_REMATCH[1] * 86400))
             elif [[ "${OLDER_THAN}" =~ ^([0-9]+)m$ ]]; then
-                OLDER_SECONDS=$((${BASH_REMATCH[1]} * 60))
+                OLDER_SECONDS=$((BASH_REMATCH[1] * 60))
             fi
 
             AGE=$((NOW_EPOCH - CREATE_EPOCH))

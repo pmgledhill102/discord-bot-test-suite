@@ -24,7 +24,7 @@ case "${1:-help}" in
     docker-compose -f "$COMPOSE_FILE" up -d
     echo ""
     echo "Waiting for emulator to be ready..."
-    for i in {1..30}; do
+    for _ in {1..30}; do
       if curl -s "http://$PUBSUB_HOST" > /dev/null 2>&1; then
         echo "Pub/Sub emulator is ready!"
         echo ""

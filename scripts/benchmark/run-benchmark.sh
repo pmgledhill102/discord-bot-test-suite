@@ -13,6 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source the services library
+# shellcheck source=/dev/null
 source "$PROJECT_ROOT/scripts/lib/services.sh"
 
 # Default settings
@@ -61,9 +62,11 @@ benchmark_service() {
     local service=$1
     local iteration=$2
     local image_name="discord-${service}:benchmark"
-    local run_id=$(head -c 8 /dev/urandom | xxd -p)
+    local run_id
+    run_id=$(head -c 8 /dev/urandom | xxd -p)
     local container_name="bench-${service}-${run_id}"
-    local port=$(find_free_port)
+    local port
+    port=$(find_free_port)
 
     # Check image exists
     if ! docker image inspect "$image_name" >/dev/null 2>&1; then
@@ -83,7 +86,8 @@ benchmark_service() {
     echo -n "  Iteration $iteration: "
 
     # Record start time
-    local start_time=$(python3 -c 'import time; print(time.time())')
+    local start_time
+    start_time=$(python3 -c 'import time; print(time.time())')
 
     # Start container
     docker run -d \
@@ -108,19 +112,23 @@ benchmark_service() {
     if ! $health_ok; then
         echo "TIMEOUT (health check failed)"
         cleanup
-        echo '{"status": "timeout", "service": "'$service'", "iteration": '$iteration'}' > "$result_file"
+        echo '{"status": "timeout", "service": "'"$service"'", "iteration": '"$iteration"'}' > "$result_file"
         return 1
     fi
 
-    local startup_time=$(python3 -c "print(${healthy_time} - ${start_time})")
+    local startup_time
+    startup_time=$(python3 -c "print(${healthy_time} - ${start_time})")
 
     # Measure ping response time (average of 5 requests)
     local ping_times=()
     for i in {1..5}; do
-        local ping_start=$(python3 -c 'import time; print(time.time())')
+        local ping_start
+        ping_start=$(python3 -c 'import time; print(time.time())')
         curl -s "http://localhost:$port/health" >/dev/null 2>&1
-        local ping_end=$(python3 -c 'import time; print(time.time())')
-        local ping_time=$(python3 -c "print(${ping_end} - ${ping_start})")
+        local ping_end
+        ping_end=$(python3 -c 'import time; print(time.time())')
+        local ping_time
+        ping_time=$(python3 -c "print(${ping_end} - ${ping_start})")
         ping_times+=("$ping_time")
     done
 
@@ -129,12 +137,15 @@ benchmark_service() {
     for pt in "${ping_times[@]}"; do
         ping_sum=$(python3 -c "print(${ping_sum} + ${pt})")
     done
-    local avg_ping=$(python3 -c "print(${ping_sum} / 5)")
+    local avg_ping
+    avg_ping=$(python3 -c "print(${ping_sum} / 5)")
 
     # Get memory usage
-    local memory_bytes=$(docker stats "$container_name" --no-stream --format "{{.MemUsage}}" | awk '{print $1}')
+    local memory_bytes
+    memory_bytes=$(docker stats "$container_name" --no-stream --format "{{.MemUsage}}" | awk '{print $1}')
     # Convert to bytes (handles MiB, GiB, KiB)
-    local memory_mb=$(python3 -c "
+    local memory_mb
+    memory_mb=$(python3 -c "
 mem = '$memory_bytes'
 if 'GiB' in mem:
     print(float(mem.replace('GiB', '')) * 1024)
@@ -147,7 +158,8 @@ else:
 ")
 
     # Get image size
-    local image_size_mb=$(docker image inspect "$image_name" --format='{{.Size}}' | awk '{printf "%.2f", $1/1024/1024}')
+    local image_size_mb
+    image_size_mb=$(docker image inspect "$image_name" --format='{{.Size}}' | awk '{printf "%.2f", $1/1024/1024}')
 
     echo "startup=${startup_time}s, ping=${avg_ping}s, mem=${memory_mb}MB"
 
