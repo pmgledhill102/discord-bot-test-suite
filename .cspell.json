@@ -89,6 +89,7 @@
     "resourcemanager",
     "rhysd",
     "rubocop",
+    "rustc",
     "ruff",
     "runpb",
     "scalafmt",
