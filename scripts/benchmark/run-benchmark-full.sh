@@ -16,6 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source the services library
+# shellcheck source=/dev/null
 source "$PROJECT_ROOT/scripts/lib/services.sh"
 
 # Default settings
@@ -129,9 +130,11 @@ benchmark_ping() {
     local service=$1
     local iteration=$2
     local image_name="discord-${service}:benchmark"
-    local run_id=$(head -c 8 /dev/urandom | xxd -p)
+    local run_id
+    run_id=$(head -c 8 /dev/urandom | xxd -p)
     local container_name="bench-ping-${service}-${run_id}"
-    local port=$(find_free_port)
+    local port
+    port=$(find_free_port)
 
     # Check image exists
     if ! docker image inspect "$image_name" >/dev/null 2>&1; then
@@ -140,7 +143,8 @@ benchmark_ping() {
     fi
 
     # Record start time
-    local start_time=$(python3 -c 'import time; print(time.time())')
+    local start_time
+    start_time=$(python3 -c 'import time; print(time.time())')
 
     # Start container (NO Pub/Sub for ping test)
     docker run -d \
@@ -170,22 +174,29 @@ benchmark_ping() {
         return 1
     fi
 
-    local startup_time=$(python3 -c "print(${healthy_time} - ${start_time})")
+    local startup_time
+    startup_time=$(python3 -c "print(${healthy_time} - ${start_time})")
 
     # Measure ping response time (average of 5 requests)
     local ping_sum=0
     for i in {1..5}; do
-        local ping_start=$(python3 -c 'import time; print(time.time())')
+        local ping_start
+        ping_start=$(python3 -c 'import time; print(time.time())')
         curl -s "http://localhost:$port/health" >/dev/null 2>&1
-        local ping_end=$(python3 -c 'import time; print(time.time())')
-        local ping_time=$(python3 -c "print(${ping_end} - ${ping_start})")
+        local ping_end
+        ping_end=$(python3 -c 'import time; print(time.time())')
+        local ping_time
+        ping_time=$(python3 -c "print(${ping_end} - ${ping_start})")
         ping_sum=$(python3 -c "print(${ping_sum} + ${ping_time})")
     done
-    local avg_ping=$(python3 -c "print(${ping_sum} / 5)")
+    local avg_ping
+    avg_ping=$(python3 -c "print(${ping_sum} / 5)")
 
     # Get memory usage
-    local memory_bytes=$(docker stats "$container_name" --no-stream --format "{{.MemUsage}}" | awk '{print $1}')
-    local memory_mb=$(python3 -c "
+    local memory_bytes
+    memory_bytes=$(docker stats "$container_name" --no-stream --format "{{.MemUsage}}" | awk '{print $1}')
+    local memory_mb
+    memory_mb=$(python3 -c "
 mem = '$memory_bytes'
 if 'GiB' in mem:
     print(float(mem.replace('GiB', '')) * 1024)
@@ -209,9 +220,11 @@ benchmark_interaction() {
     local service=$1
     local iteration=$2
     local image_name="discord-${service}:benchmark"
-    local run_id=$(head -c 8 /dev/urandom | xxd -p)
+    local run_id
+    run_id=$(head -c 8 /dev/urandom | xxd -p)
     local container_name="bench-interact-${service}-${run_id}"
-    local port=$(find_free_port)
+    local port
+    port=$(find_free_port)
 
     # Check image exists
     if ! docker image inspect "$image_name" >/dev/null 2>&1; then
@@ -223,7 +236,8 @@ benchmark_interaction() {
     clear_pubsub
 
     # Record start time
-    local start_time=$(python3 -c 'import time; print(time.time())')
+    local start_time
+    start_time=$(python3 -c 'import time; print(time.time())')
 
     # Start container WITH Pub/Sub configuration
     docker run -d \
@@ -257,29 +271,41 @@ benchmark_interaction() {
         return 1
     fi
 
-    local startup_time=$(python3 -c "print(${healthy_time} - ${start_time})")
+    local startup_time
+    startup_time=$(python3 -c "print(${healthy_time} - ${start_time})")
 
     # Create signed slash command request
-    local request_data=$(python3 "$SCRIPT_DIR/benchmark_helper.py" create-slash --name "benchmark-test")
-    local body=$(echo "$request_data" | python3 -c "import sys,json; print(json.load(sys.stdin)['body'])")
-    local signature=$(echo "$request_data" | python3 -c "import sys,json; print(json.load(sys.stdin)['signature'])")
-    local timestamp=$(echo "$request_data" | python3 -c "import sys,json; print(json.load(sys.stdin)['timestamp'])")
+    local request_data
+    request_data=$(python3 "$SCRIPT_DIR/benchmark_helper.py" create-slash --name "benchmark-test")
+    local body
+    body=$(echo "$request_data" | python3 -c "import sys,json; print(json.load(sys.stdin)['body'])")
+    local signature
+    signature=$(echo "$request_data" | python3 -c "import sys,json; print(json.load(sys.stdin)['signature'])")
+    local timestamp
+    timestamp=$(echo "$request_data" | python3 -c "import sys,json; print(json.load(sys.stdin)['timestamp'])")
 
     # Send interaction request and measure time
-    local request_start=$(python3 -c 'import time; print(time.time())')
+    local request_start
+    request_start=$(python3 -c 'import time; print(time.time())')
 
-    local response=$(curl -s -w "\n%{http_code}" \
+    local response
+    response=$(curl -s -w "\n%{http_code}" \
         -X POST "http://localhost:$port/" \
         -H "Content-Type: application/json" \
         -H "X-Signature-Ed25519: $signature" \
         -H "X-Signature-Timestamp: $timestamp" \
         -d "$body")
 
-    local response_time=$(python3 -c 'import time; print(time.time())')
-    local http_code=$(echo "$response" | tail -n1)
-    local response_body=$(echo "$response" | sed '$d')
+    local response_time
+    response_time=$(python3 -c 'import time; print(time.time())')
+    local http_code
+    http_code=$(echo "$response" | tail -n1)
+    local response_body
+    # shellcheck disable=SC2034
+    response_body=$(echo "$response" | sed '$d')
 
-    local interaction_latency=$(python3 -c "print(${response_time} - ${request_start})")
+    local interaction_latency
+    interaction_latency=$(python3 -c "print(${response_time} - ${request_start})")
 
     # Check response
     if [[ "$http_code" != "200" ]]; then
@@ -297,9 +323,13 @@ benchmark_interaction() {
     # Give service time to publish
     sleep 0.5
 
-    local pubsub_start=$(python3 -c 'import time; print(time.time())')
-    local message=$(pull_pubsub_message 5)
-    local pubsub_end=$(python3 -c 'import time; print(time.time())')
+    local pubsub_start
+    # shellcheck disable=SC2034
+    pubsub_start=$(python3 -c 'import time; print(time.time())')
+    local message
+    message=$(pull_pubsub_message 5)
+    local pubsub_end
+    pubsub_end=$(python3 -c 'import time; print(time.time())')
 
     if [[ -n "$message" ]]; then
         pubsub_received="true"
@@ -308,8 +338,10 @@ benchmark_interaction() {
     fi
 
     # Get memory usage
-    local memory_bytes=$(docker stats "$container_name" --no-stream --format "{{.MemUsage}}" | awk '{print $1}')
-    local memory_mb=$(python3 -c "
+    local memory_bytes
+    memory_bytes=$(docker stats "$container_name" --no-stream --format "{{.MemUsage}}" | awk '{print $1}')
+    local memory_mb
+    memory_mb=$(python3 -c "
 mem = '$memory_bytes'
 if 'GiB' in mem:
     print(float(mem.replace('GiB', '')) * 1024)
@@ -341,38 +373,49 @@ benchmark_service() {
     fi
 
     local result_file="$RESULTS_DIR/${service}-${iteration}.json"
-    local image_size_mb=$(docker image inspect "$image_name" --format='{{.Size}}' | awk '{printf "%.2f", $1/1024/1024}')
+    local image_size_mb
+    image_size_mb=$(docker image inspect "$image_name" --format='{{.Size}}' | awk '{printf "%.2f", $1/1024/1024}')
 
     echo "  Iteration $iteration:"
 
     # Run ping benchmark
     echo -n "    Ping test: "
-    local ping_result=$(benchmark_ping "$service" "$iteration")
+    local ping_result
+    ping_result=$(benchmark_ping "$service" "$iteration")
     if [[ "$ping_result" == "timeout" ]]; then
         echo "TIMEOUT"
-        echo '{"status": "timeout", "service": "'$service'", "iteration": '$iteration', "test": "ping"}' > "$result_file"
+        echo '{"status": "timeout", "service": "'"$service"'", "iteration": '"$iteration"', "test": "ping"}' > "$result_file"
         return 1
     fi
 
-    local ping_startup=$(echo "$ping_result" | cut -d',' -f1)
-    local ping_latency=$(echo "$ping_result" | cut -d',' -f2)
-    local ping_memory=$(echo "$ping_result" | cut -d',' -f3)
+    local ping_startup
+    ping_startup=$(echo "$ping_result" | cut -d',' -f1)
+    local ping_latency
+    ping_latency=$(echo "$ping_result" | cut -d',' -f2)
+    local ping_memory
+    ping_memory=$(echo "$ping_result" | cut -d',' -f3)
     echo "startup=${ping_startup}s, ping=${ping_latency}s, mem=${ping_memory}MB"
 
     # Run interaction benchmark
     echo -n "    Interaction test: "
-    local interact_result=$(benchmark_interaction "$service" "$iteration")
+    local interact_result
+    interact_result=$(benchmark_interaction "$service" "$iteration")
     if [[ "$interact_result" == "timeout" || "$interact_result" == error* ]]; then
         echo "FAILED ($interact_result)"
-        echo '{"status": "error", "service": "'$service'", "iteration": '$iteration', "test": "interaction", "error": "'$interact_result'"}' > "$result_file"
+        echo '{"status": "error", "service": "'"$service"'", "iteration": '"$iteration"', "test": "interaction", "error": "'"$interact_result"'"}' > "$result_file"
         return 1
     fi
 
-    local interact_startup=$(echo "$interact_result" | cut -d',' -f1)
-    local interact_latency=$(echo "$interact_result" | cut -d',' -f2)
-    local pubsub_received=$(echo "$interact_result" | cut -d',' -f3)
-    local pubsub_latency=$(echo "$interact_result" | cut -d',' -f4)
-    local interact_memory=$(echo "$interact_result" | cut -d',' -f5)
+    local interact_startup
+    interact_startup=$(echo "$interact_result" | cut -d',' -f1)
+    local interact_latency
+    interact_latency=$(echo "$interact_result" | cut -d',' -f2)
+    local pubsub_received
+    pubsub_received=$(echo "$interact_result" | cut -d',' -f3)
+    local pubsub_latency
+    pubsub_latency=$(echo "$interact_result" | cut -d',' -f4)
+    local interact_memory
+    interact_memory=$(echo "$interact_result" | cut -d',' -f5)
     echo "startup=${interact_startup}s, latency=${interact_latency}s, pubsub=${pubsub_received}, mem=${interact_memory}MB"
 
     # Save combined result

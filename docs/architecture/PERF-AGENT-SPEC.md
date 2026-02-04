@@ -18,14 +18,14 @@ A Perf Agent is a service-specific test executor that:
 
 Each service type has exactly one Perf Agent. The Agent handles all service-specific concerns:
 
-| Service Type | Agent Knows About |
-|--------------|-------------------|
+| Service Type    | Agent Knows About                                       |
+| --------------- | ------------------------------------------------------- |
 | Discord Webhook | Ed25519 signatures, Discord payloads, interaction types |
-| REST CRUD | HTTP verbs, SQL setup, database connections |
-| gRPC Unary | Protocol Buffers, gRPC calls, binary serialization |
-| Queue Worker | Pub/Sub messages, acknowledgment, dead-letter handling |
-| WebSocket | Connection establishment, message framing, ping/pong |
-| GraphQL | Query parsing, schema validation, resolvers |
+| REST CRUD       | HTTP verbs, SQL setup, database connections             |
+| gRPC Unary      | Protocol Buffers, gRPC calls, binary serialization      |
+| Queue Worker    | Pub/Sub messages, acknowledgment, dead-letter handling  |
+| WebSocket       | Connection establishment, message framing, ping/pong    |
+| GraphQL         | Query parsing, schema validation, resolvers             |
 
 ---
 
@@ -293,14 +293,14 @@ Content-Type: application/json
 
 **Request Fields:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `run_id` | string | Yes | Unique identifier for this benchmark run |
-| `implementations` | string[] | No | Implementations to test (empty = all active) |
-| `config.cold_start_iterations` | int | Yes | Number of cold start measurements |
-| `config.warm_request_count` | int | Yes | Number of warm requests to send |
-| `config.warm_request_concurrency` | int | Yes | Concurrent warm requests |
-| `config.profile` | string | No | Deployment profile (default: "default") |
+| Field                             | Type     | Required | Description                                  |
+| --------------------------------- | -------- | -------- | -------------------------------------------- |
+| `run_id`                          | string   | Yes      | Unique identifier for this benchmark run     |
+| `implementations`                 | string[] | No       | Implementations to test (empty = all active) |
+| `config.cold_start_iterations`    | int      | Yes      | Number of cold start measurements            |
+| `config.warm_request_count`       | int      | Yes      | Number of warm requests to send              |
+| `config.warm_request_concurrency` | int      | Yes      | Concurrent warm requests                     |
+| `config.profile`                  | string   | No       | Deployment profile (default: "default")      |
 
 **Response:**
 
@@ -364,21 +364,21 @@ Content-Type: application/json
 
 **Response Fields:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `service_type` | string | The service type this agent tests |
-| `agent_version` | string | Agent version for debugging |
-| `run_id` | string | Echo of request run_id |
-| `start_time` | ISO 8601 | When benchmarking started |
-| `end_time` | ISO 8601 | When benchmarking completed |
-| `results` | array | Per-implementation results |
-| `results[].implementation` | string | Implementation name |
-| `results[].status` | string | "success", "failed", "skipped" |
-| `results[].contract_compliance` | float | Percentage of contract tests passed |
-| `results[].cold_start` | object | Cold start measurements |
-| `results[].warm_requests` | object | Warm request measurements |
-| `results[].metadata` | object | Additional metadata |
-| `errors` | array | Errors that occurred |
+| Field                           | Type     | Description                         |
+| ------------------------------- | -------- | ----------------------------------- |
+| `service_type`                  | string   | The service type this agent tests   |
+| `agent_version`                 | string   | Agent version for debugging         |
+| `run_id`                        | string   | Echo of request run_id              |
+| `start_time`                    | ISO 8601 | When benchmarking started           |
+| `end_time`                      | ISO 8601 | When benchmarking completed         |
+| `results`                       | array    | Per-implementation results          |
+| `results[].implementation`      | string   | Implementation name                 |
+| `results[].status`              | string   | "success", "failed", "skipped"      |
+| `results[].contract_compliance` | float    | Percentage of contract tests passed |
+| `results[].cold_start`          | object   | Cold start measurements             |
+| `results[].warm_requests`       | object   | Warm request measurements           |
+| `results[].metadata`            | object   | Additional metadata                 |
+| `errors`                        | array    | Errors that occurred                |
 
 ---
 
@@ -392,9 +392,9 @@ Content-Type: application/json
 {
   "service_type": "discord-webhook",
   "implementations": [
-    {"name": "go-gin", "status": "active", "service_url": "https://..."},
-    {"name": "rust-actix", "status": "active", "service_url": "https://..."},
-    {"name": "java-spring3", "status": "disabled", "reason": "Known issue #123"}
+    { "name": "go-gin", "status": "active", "service_url": "https://..." },
+    { "name": "rust-actix", "status": "active", "service_url": "https://..." },
+    { "name": "java-spring3", "status": "disabled", "reason": "Known issue #123" }
   ]
 }
 ```
@@ -845,15 +845,15 @@ Each Agent publishes a manifest to the GCS registry:
 ```yaml
 # agent/manifest.yaml (uploaded to gs://perf-agent-registry/agents/discord-webhook.yaml)
 
-schema_version: "1.0"
+schema_version: '1.0'
 service_type: discord-webhook
 enabled: true
-description: "Discord interaction webhook handlers - Ed25519 signature validation and Pub/Sub publishing"
+description: 'Discord interaction webhook handlers - Ed25519 signature validation and Pub/Sub publishing'
 
 agent:
   endpoint: https://discord-perf-agent-xxxxx-uc.a.run.app
   type: cloud_run_service
-  version: "1.2.0"
+  version: '1.2.0'
 
 repository:
   url: https://github.com/org/cloudrun-service-discord
@@ -871,13 +871,13 @@ implementations:
     service_name: discord-python-flask
   - name: java-spring3
     status: disabled
-    reason: "Known cold start regression - investigating"
+    reason: 'Known cold start regression - investigating'
   # ... more implementations
 
 contract:
   path: contract/openapi.yaml
   test_vectors: contract/test-vectors/
-  version: "1.0.0"
+  version: '1.0.0'
 
 metadata:
   owner: platform-team
@@ -968,9 +968,9 @@ For validation in CI and by the Perf Manager:
     "metadata": {
       "type": "object",
       "properties": {
-        "owner": {"type": "string"},
-        "contact": {"type": "string"},
-        "last_updated": {"type": "string", "format": "date-time"}
+        "owner": { "type": "string" },
+        "contact": { "type": "string" },
+        "last_updated": { "type": "string", "format": "date-time" }
       }
     }
   }
@@ -1154,14 +1154,14 @@ When the Agent encounters an error, include it in the response:
 
 ### Error Phases
 
-| Phase | Description |
-|-------|-------------|
-| `discovery` | Finding service URL |
-| `scale_to_zero` | Waiting for service to scale down |
-| `contract_validation` | Running contract tests |
-| `cold_start` | Measuring cold start |
-| `warm_requests` | Measuring warm requests |
-| `internal` | Agent internal error |
+| Phase                 | Description                       |
+| --------------------- | --------------------------------- |
+| `discovery`           | Finding service URL               |
+| `scale_to_zero`       | Waiting for service to scale down |
+| `contract_validation` | Running contract tests            |
+| `cold_start`          | Measuring cold start              |
+| `warm_requests`       | Measuring warm requests           |
+| `internal`            | Agent internal error              |
 
 ### Partial Results
 
@@ -1237,6 +1237,6 @@ When implementing a new Perf Agent:
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 0.1 | 2026-01-24 | Architecture Review | Initial draft |
+| Version | Date       | Author              | Changes       |
+| ------- | ---------- | ------------------- | ------------- |
+| 0.1     | 2026-01-24 | Architecture Review | Initial draft |
