@@ -11,6 +11,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RESULTS_FILE="$SCRIPT_DIR/build-results.json"
 
 # Source the services library
+# shellcheck source=/dev/null
 source "$PROJECT_ROOT/scripts/lib/services.sh"
 
 # Get all services from YAML (bash 3.2 compatible)
@@ -25,7 +26,7 @@ if [[ "$1" == "--parallel" ]]; then
 fi
 
 # Initialize results JSON
-echo '{"builds": [], "timestamp": "'$(date -Iseconds)'"}' > "$RESULTS_FILE"
+echo '{"builds": [], "timestamp": "'"$(date -Iseconds)"'"}' > "$RESULTS_FILE"
 
 build_service() {
     local service=$1
@@ -42,21 +43,27 @@ build_service() {
     echo "Building: $service"
     echo "=========================================="
 
-    local start_time=$(date +%s.%N)
+    local start_time
+    start_time=$(date +%s.%N)
 
     # Build the image
     if docker build -t "$image_name" "$service_dir" > /dev/null 2>&1; then
-        local end_time=$(date +%s.%N)
-        local build_time=$(echo "$end_time - $start_time" | bc)
+        local end_time
+        end_time=$(date +%s.%N)
+        local build_time
+        build_time=$(echo "$end_time - $start_time" | bc)
 
         # Get image size
-        local image_size=$(docker image inspect "$image_name" --format='{{.Size}}')
-        local image_size_mb=$(echo "scale=2; $image_size / 1024 / 1024" | bc)
+        local image_size
+        image_size=$(docker image inspect "$image_name" --format='{{.Size}}')
+        local image_size_mb
+        image_size_mb=$(echo "scale=2; $image_size / 1024 / 1024" | bc)
 
         echo "✓ $service: ${build_time}s, ${image_size_mb}MB"
 
         # Append to results (using temp file for atomic update)
-        local tmp_file=$(mktemp)
+        local tmp_file
+        tmp_file=$(mktemp)
         jq --arg svc "$service" \
            --arg img "$image_name" \
            --argjson time "$build_time" \
@@ -67,12 +74,15 @@ build_service() {
 
         return 0
     else
-        local end_time=$(date +%s.%N)
-        local build_time=$(echo "$end_time - $start_time" | bc)
+        local end_time
+        end_time=$(date +%s.%N)
+        local build_time
+        build_time=$(echo "$end_time - $start_time" | bc)
 
         echo "✗ $service: FAILED after ${build_time}s"
 
-        local tmp_file=$(mktemp)
+        local tmp_file
+        tmp_file=$(mktemp)
         jq --arg svc "$service" \
            --argjson time "$build_time" \
            '.builds += [{"service": $svc, "build_time_seconds": $time, "status": "failed"}]' \

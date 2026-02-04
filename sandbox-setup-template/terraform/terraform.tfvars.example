@@ -1,0 +1,33 @@
+# Copy this file to terraform.tfvars and customize
+
+project_id = "your-gcp-project-id"
+region     = "us-central1"
+zone       = "us-central1-a"
+
+# VM Configuration
+vm_name           = "claude-sandbox"
+machine_type      = "e2-standard-16"  # 16 vCPUs, 64 GB RAM
+boot_disk_size_gb = 200
+boot_disk_type    = "pd-ssd"
+
+# Cost savings: use spot instances (can be preempted)
+use_spot = false
+
+# Number of agents to support
+agent_count = 12
+
+# Security: Use IAP for SSH (recommended)
+enable_iap = true
+
+# Security: Direct SSH from specific IPs (less secure, use IAP instead)
+# allowed_ssh_ranges = ["YOUR_IP/32"]
+
+# Create Secret Manager secret for API key
+create_api_key_secret = true
+
+# Labels
+labels = {
+  environment = "sandbox"
+  purpose     = "claude-agents"
+  owner       = "your-name"
+}
