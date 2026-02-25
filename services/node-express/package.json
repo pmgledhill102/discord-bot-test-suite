@@ -16,8 +16,8 @@
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.18.0",
-    "eslint": "^9.18.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.1",
     "globals": "^17.1.0"
   }
 }
