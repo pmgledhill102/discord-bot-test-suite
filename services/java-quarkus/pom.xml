@@ -14,8 +14,8 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <quarkus.platform.version>3.31.3</quarkus.platform.version>
-        <google-cloud-pubsub.version>1.148.0</google-cloud-pubsub.version>
+        <quarkus.platform.version>3.34.1</quarkus.platform.version>
+        <google-cloud-pubsub.version>1.150.0</google-cloud-pubsub.version>
     </properties>
 
     <dependencyManagement>
@@ -88,7 +88,7 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.4.0</version>
                 <configuration>
                     <java>
                         <googleJavaFormat>
