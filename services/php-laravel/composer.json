@@ -5,7 +5,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.5",
-    "laravel/framework": "^12.46",
+    "laravel/framework": "^13.1",
     "google/cloud-pubsub": "^2.0"
   },
   "require-dev": {
