@@ -1,6 +1,6 @@
 [versions]
-kotlin = "2.3.20"
-ktor = "3.4.2"
+kotlin = "2.3.21"
+ktor = "3.4.3"
 logback = "1.5.32"
 bouncycastle = "1.84"
 google-cloud-pubsub = "1.150.1"
