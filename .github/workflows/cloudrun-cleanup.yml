@@ -6,9 +6,12 @@
 name: 'Cloud Run Cleanup'
 
 on:
-  schedule:
-    # Run daily at 2am UTC
-    - cron: '0 2 * * *'
+  # Scheduled run disabled: the dedicated GCP project this targets has been
+  # deleted, so the daily job was failing. Re-enable by uncommenting the
+  # schedule block below once a replacement project is provisioned.
+  # schedule:
+  #   # Run daily at 2am UTC
+  #   - cron: '0 2 * * *'
 
   workflow_dispatch:
     inputs:
