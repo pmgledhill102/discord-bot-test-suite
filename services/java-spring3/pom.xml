@@ -19,7 +19,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <google-cloud-pubsub.version>1.150.1</google-cloud-pubsub.version>
+        <google-cloud-pubsub.version>1.150.2</google-cloud-pubsub.version>
     </properties>
 
     <dependencies>
