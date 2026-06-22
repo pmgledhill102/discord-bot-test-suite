@@ -10,16 +10,16 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@google-cloud/pubsub": "^5.2.2",
-    "fastify": "^5.7.3",
+    "@google-cloud/pubsub": "^5.3.1",
+    "fastify": "^5.8.5",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.18.0",
-    "@types/node": "^25.0.10",
-    "eslint": "^9.18.0",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.21.0"
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.0.0",
+    "eslint": "^10.5.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1"
   },
   "engines": {
     "node": ">=22"
