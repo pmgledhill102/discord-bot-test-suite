@@ -6,10 +6,15 @@
 # - Tier 2 (manual review): Major versions, Docker base images, GitHub Actions
 
 version: 2
+# NOTE: version updates are paused. Every ecosystem below sets
+# open-pull-requests-limit: 0, which stops Dependabot opening version-update
+# PRs (GitHub security alerts/updates are unaffected). Remove those lines to
+# resume routine dependency PRs.
 updates:
   # GitHub Actions (manual review - infrastructure changes)
   - package-ecosystem: 'github-actions'
     directory: '/'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -26,6 +31,7 @@ updates:
   # Go modules (contract tests)
   - package-ecosystem: 'gomod'
     directory: '/'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -42,6 +48,7 @@ updates:
   # Go service
   - package-ecosystem: 'gomod'
     directory: '/services/go-gin'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -58,6 +65,7 @@ updates:
   # Python services
   - package-ecosystem: 'pip'
     directory: '/services/python-django'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -73,6 +81,7 @@ updates:
 
   - package-ecosystem: 'pip'
     directory: '/services/python-flask'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -89,6 +98,7 @@ updates:
   # Node.js services
   - package-ecosystem: 'npm'
     directory: '/services/node-express'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -104,6 +114,7 @@ updates:
 
   - package-ecosystem: 'npm'
     directory: '/services/typescript-fastify'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -120,6 +131,7 @@ updates:
   # Java services
   - package-ecosystem: 'maven'
     directory: '/services/java-spring4'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -138,6 +150,7 @@ updates:
 
   - package-ecosystem: 'maven'
     directory: '/services/java-spring3'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -156,6 +169,7 @@ updates:
 
   - package-ecosystem: 'maven'
     directory: '/services/java-spring2'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -174,6 +188,7 @@ updates:
 
   - package-ecosystem: 'maven'
     directory: '/services/java-micronaut'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -189,6 +204,7 @@ updates:
 
   - package-ecosystem: 'maven'
     directory: '/services/java-quarkus'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -204,6 +220,7 @@ updates:
 
   - package-ecosystem: 'maven'
     directory: '/services/java-quarkus-native'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -220,6 +237,7 @@ updates:
   # Kotlin service
   - package-ecosystem: 'gradle'
     directory: '/services/kotlin-ktor'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -236,6 +254,7 @@ updates:
   # Scala service
   - package-ecosystem: 'gradle'
     directory: '/services/scala-play'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -252,6 +271,7 @@ updates:
   # Rust service
   - package-ecosystem: 'cargo'
     directory: '/services/rust-actix'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -268,6 +288,7 @@ updates:
   # .NET services
   - package-ecosystem: 'nuget'
     directory: '/services/csharp-aspnet'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -283,6 +304,7 @@ updates:
 
   - package-ecosystem: 'nuget'
     directory: '/services/csharp-aspnet-native'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -299,6 +321,7 @@ updates:
   # Ruby service
   - package-ecosystem: 'bundler'
     directory: '/services/ruby-rails'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -315,6 +338,7 @@ updates:
   # PHP service
   - package-ecosystem: 'composer'
     directory: '/services/php-laravel'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -331,6 +355,7 @@ updates:
   # C++ service (vcpkg)
   - package-ecosystem: 'docker'
     directory: '/services/cpp-drogon'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -343,6 +368,7 @@ updates:
   # Docker base images (manual review - infrastructure changes)
   - package-ecosystem: 'docker'
     directory: '/'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -360,6 +386,7 @@ updates:
   # Terraform
   - package-ecosystem: 'terraform'
     directory: '/terraform'
+    open-pull-requests-limit: 0 # paused: no version-update PRs while project is dormant
     schedule:
       interval: 'weekly'
       day: 'monday'

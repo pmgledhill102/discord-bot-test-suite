@@ -28,15 +28,18 @@ on:
         default: ''
         type: string
 
-  schedule:
-    # Run weekly on Sunday at 2am UTC
-    - cron: '0 2 * * 0'
-
-  pull_request:
-    branches: [main]
-    paths:
-      - 'tests/cloudrun/**'
-      - '.github/workflows/cloudrun-benchmark.yml'
+  # Scheduled and PR runs disabled: this benchmark targets the dedicated GCP
+  # project, which has been deleted, so these runs were failing. Re-enable by
+  # uncommenting the blocks below once a replacement project is provisioned.
+  # schedule:
+  #   # Run weekly on Sunday at 2am UTC
+  #   - cron: '0 2 * * 0'
+  #
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - 'tests/cloudrun/**'
+  #     - '.github/workflows/cloudrun-benchmark.yml'
 
 env:
   AR_REPOSITORY: discord-services

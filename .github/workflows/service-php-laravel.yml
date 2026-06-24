@@ -5,23 +5,13 @@
 
 name: 'Service: PHP/Laravel'
 
+# Automated CI is paused. The dedicated GCP project this repo deploys to has
+# been deleted, so the 'Push Image to AR' / Cloud Run deploy job failed on
+# every push to main, and build/contract-test runs are not needed while the
+# project is dormant. Run manually from the Actions tab when needed; restore
+# the push/pull_request triggers (see git history) to re-enable automatic CI.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'services/php-laravel/**'
-      - 'tests/contract/**'
-      - 'docker-compose.pubsub.yml'
-      - '.github/workflows/service-php-laravel.yml'
-      - '.github/actions/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'services/php-laravel/**'
-      - 'tests/contract/**'
-      - 'docker-compose.pubsub.yml'
-      - '.github/workflows/service-php-laravel.yml'
-      - '.github/actions/**'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

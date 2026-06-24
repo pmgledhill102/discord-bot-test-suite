@@ -5,17 +5,12 @@
 
 name: Contract Tests Lint
 
+# Automated CI is paused while the project is dormant (the dedicated GCP
+# project has been deleted and deploys are on hold). Run manually from the
+# Actions tab when needed; restore the push/pull_request triggers (see git
+# history) to re-enable automatic CI.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'tests/contract/**'
-      - '.github/workflows/contract-tests-lint.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'tests/contract/**'
-      - '.github/workflows/contract-tests-lint.yml'
+  workflow_dispatch:
 
 jobs:
   lint:
