@@ -5,11 +5,12 @@
 
 name: Lint
 
+# Automated CI is paused while the project is dormant (the dedicated GCP
+# project has been deleted and deploys are on hold). Run manually from the
+# Actions tab when needed; restore the push/pull_request triggers (see git
+# history) to re-enable automatic CI.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   actionlint:
