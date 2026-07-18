@@ -1,7 +1,0 @@
-{
-  "database": "dolt",
-  "backend": "dolt",
-  "dolt_mode": "embedded",
-  "dolt_database": "discord_bot_test_suite",
-  "project_id": "c0c021a5-cfd4-44ae-9f30-282e400bb80d"
-}
