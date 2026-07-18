@@ -48,14 +48,18 @@ go test ./tests/contract/...
 docker-compose -f docker-compose.test.yml down
 ```
 
-### Issue Tracking (bd/beads)
+### Issue Tracking (GitHub Issues)
+
+See `agentic-coding-config` `docs/github-issues-workflow.md` for conventions
+(P0-P4 priority labels, `type: *` labels, blocked-by dependencies). Use
+`gh issue list` / direct reads, never `gh search issues`, for anything
+time-sensitive.
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress
-bd close <id>
-bd sync               # Sync with git
+gh issue list --search "is:open -is:blocked"   # Find available work
+gh issue view <n>                              # View issue details
+gh issue edit <n> --add-assignee @me           # Claim work
+gh issue close <n> --comment "Shipped in #<pr>"  # Complete work
 ```
 
 ### Pub/Sub Emulator
@@ -94,7 +98,6 @@ Work is NOT complete until `git push` succeeds:
 
 ```bash
 git pull --rebase
-bd sync
 git push
 git status  # Must show "up to date with origin"
 ```

@@ -1,16 +1,20 @@
 # Agent Instructions
 
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
+This project uses **GitHub Issues** for issue tracking — see
+`agentic-coding-config` `docs/github-issues-workflow.md` for conventions
+(P0-P4 priority labels, `type: *` labels, blocked-by dependencies).
 
 ## Quick Reference
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Sync with git
+gh issue list --search "is:open -is:blocked"   # Find available work
+gh issue view <n>                              # View issue details
+gh issue edit <n> --add-assignee @me           # Claim work
+gh issue close <n> --comment "Shipped in #<pr>"  # Complete work
 ```
+
+Use `gh issue list` / direct reads, never `gh search issues`, for anything
+time-sensitive (search is eventually consistent).
 
 ## Feature Branch Workflow
 
@@ -18,13 +22,13 @@ bd sync               # Sync with git
 
 ### Creating a Feature Branch
 
-When starting work on a bead:
+When starting work on an issue:
 
 ```bash
-bd update <id> --status in_progress   # Claim the work
+gh issue edit <n> --add-assignee @me   # Claim the work
 git checkout -b <branch-name>          # Create feature branch
-# Branch naming: <bead-id>-<short-description>
-# Example: c5k.10-fix-ci-failures
+# Branch naming: issue-<n>-<short-description>
+# Example: issue-42-fix-ci-failures
 ```
 
 ### Pull Request Workflow
@@ -60,13 +64,11 @@ git checkout -b <branch-name>          # Create feature branch
    gh pr merge --squash --delete-branch
    ```
 
-5. **Close the bead:**
+5. **Close the issue** (automatic if the PR body says `Closes #<n>`):
 
    ```bash
    git checkout main && git pull
-   bd close <id>
-   bd sync
-   git push
+   gh issue close <n> --comment "Shipped in #<pr>"
    ```
 
 ### Branch Protection Rules
@@ -78,13 +80,13 @@ The `main` branch has these protections enabled:
 - **Require branch up-to-date** - Must be current with main before merge
 - **No force pushes** - History cannot be rewritten
 
-### Bead Lifecycle with PRs
+### Issue Lifecycle with PRs
 
 ```text
-ready → in_progress → [branch] → [PR] → [CI passes] → [merge] → closed
+ready → assigned → [branch] → [PR] → [CI passes] → [merge] → closed
 ```
 
-Each bead maps to one feature branch and one PR. Keep PRs focused and atomic.
+Each issue maps to one feature branch and one PR. Keep PRs focused and atomic.
 
 ## Landing the Plane (Session Completion)
 
@@ -99,7 +101,6 @@ Each bead maps to one feature branch and one PR. Keep PRs focused and atomic.
 
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```
@@ -114,5 +115,3 @@ Each bead maps to one feature branch and one PR. Keep PRs focused and atomic.
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
-
-Use 'bd' for task tracking
