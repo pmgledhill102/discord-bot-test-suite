@@ -10,7 +10,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@google-cloud/pubsub": "^5.3.1",
+    "@google-cloud/pubsub": "^6.0.1",
     "fastify": "^5.8.5",
     "tweetnacl": "^1.0.3"
   },
